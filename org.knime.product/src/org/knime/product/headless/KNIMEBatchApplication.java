@@ -33,7 +33,7 @@ import org.knime.workbench.repository.RepositoryManager;
 public class KNIMEBatchApplication implements IPlatformRunnable {
 
     /**
-     * {@inheritDoc}
+     * @see org.eclipse.core.runtime.IPlatformRunnable#run(java.lang.Object)
      */
     public Object run(final Object args) throws Exception {
         // unless the user specified this property, we set it to true here

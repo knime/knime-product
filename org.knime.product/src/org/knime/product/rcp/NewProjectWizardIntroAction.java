@@ -43,61 +43,73 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ---------------------------------------------------------------------
+ * -------------------------------------------------------------------
  *
  * History
- *   11.08.2011 (meinl): created
+ *   28.08.2005 (Florian Georg): created
  */
 package org.knime.product.rcp;
 
-import org.eclipse.jface.action.Action;
-import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PartInitException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Properties;
+
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.ui.PlatformUI;
-import org.knime.core.node.NodeLogger;
+import org.eclipse.ui.intro.IIntroManager;
+import org.eclipse.ui.intro.IIntroPart;
+import org.eclipse.ui.intro.IIntroSite;
+import org.eclipse.ui.intro.config.IIntroAction;
+import org.knime.workbench.ui.wizards.project.NewProjectWizard;
 
 /**
- * Simple action that opens a browser window with the tips and tricks page.
+ * This action is called when the user clicks "Open KNIME Workbench" in the
+ * intro page. It creates a new project with the standard name "KNIME_project"
+ * if no project exists in the workspace.
  *
+ * @see NewProjectWizard
+ *
+ * @author Fabian Dill, University of Konstanz
  * @author Thorsten Meinl, University of Konstanz
  */
-class TipsAndTricksAction extends Action {
-    private static final NodeLogger LOGGER = NodeLogger
-            .getLogger(KNIMEApplicationWorkbenchAdvisor.class.getPackage()
-                    .toString() + ".TipsAndTricks");
-
-    private static final String ID = "KNIMETipsAndTricks";
-
-    /**
-     *
-     */
-    public TipsAndTricksAction() {
-        super("&Tips and Tricks");
-        setToolTipText("Opens the Tips&Tricks window");
-        setId(ID);
-    }
+public class NewProjectWizardIntroAction implements IIntroAction {
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void run() {
-        openTipsAndTricks();
-    }
-
-    /**
-     * Opens the tips and tricks window in an editor.
-     */
-    static void openTipsAndTricks() {
+    public void run(final IIntroSite site, final Properties params) {
         try {
-            IWorkbenchWindow w =
-                    PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-            IWorkbenchPage page = w.getActivePage();
-            page.showView("org.eclipse.ui.internal.introview");
-            page.toggleZoom(page.getActivePartReference());
-        } catch (PartInitException ex) {
-            LOGGER.error("Cannot open Tips&Tricks view", ex);
+            // close the intro page
+            IIntroManager introManager =
+                    PlatformUI.getWorkbench().getIntroManager();
+            IIntroPart introPart = introManager.getIntro();
+            if (introPart != null) {
+                introManager.closeIntro(introPart);
+            }
+            if (ResourcesPlugin.getWorkspace().getRoot().getProjects().length == 0) {
+                PlatformUI.getWorkbench().getProgressService()
+                        .busyCursorWhile(new IRunnableWithProgress() {
+                            @Override
+                            public void run(final IProgressMonitor monitor)
+                                    throws InvocationTargetException,
+                                    InterruptedException {
+                                try {
+                                    // call static method on NewProjectWizard
+                                    NewProjectWizard.doFinish(new Path(
+                                            "KNIME_project"), monitor);
+                                } catch (CoreException ce) {
+                                    throw new RuntimeException(ce);
+                                }
+                            }
+                        });
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
+
 }

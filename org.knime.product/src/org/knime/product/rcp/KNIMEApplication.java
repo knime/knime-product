@@ -119,6 +119,7 @@ public class KNIMEApplication implements IApplication {
 
             // initialize KNIMEConstants as early as possible in order to avoid deadlocks during startup
             KNIMEConstants.BUILD.toString();
+            KNIMEConstants.initKNIMEIcon();
 
             parseApplicationArguments(appContext);
 

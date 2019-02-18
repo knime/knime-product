@@ -27,6 +27,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Properties;
 
+import javax.swing.SwingUtilities;
+
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -120,7 +122,8 @@ public class KNIMEApplication implements IApplication {
             // initialize KNIMEConstants as early as possible in order to avoid deadlocks during startup
             KNIMEConstants.BUILD.toString();
             //needs to be called in order to initialize the deprecated KNIMEConstants.KNIME16X16 property
-            KNIMEConstants.getKNIMEIcon16X16();
+            //need to be lazily (later) invoked, otherwise it will hang on MacOS
+            SwingUtilities.invokeLater(() -> KNIMEConstants.getKNIMEIcon16X16());
 
             parseApplicationArguments(appContext);
 

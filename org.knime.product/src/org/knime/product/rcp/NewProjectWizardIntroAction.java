@@ -64,14 +64,11 @@ import org.knime.workbench.explorer.filesystem.AbstractExplorerFileStore;
 import org.knime.workbench.explorer.localworkspace.LocalWorkspaceFileStore;
 import org.knime.workbench.explorer.view.AbstractContentProvider;
 import org.knime.workbench.explorer.view.actions.NewWorkflowWizard;
-import org.knime.workbench.ui.wizards.project.NewProjectWizard;
 
 /**
  * This action is called when the user clicks "Open KNIME Workbench" in the
  * intro page. It creates a new project with the standard name "KNIME_project"
  * if no project exists in the workspace.
- *
- * @see NewProjectWizard
  *
  * @author Fabian Dill, University of Konstanz
  * @author Thorsten Meinl, University of Konstanz

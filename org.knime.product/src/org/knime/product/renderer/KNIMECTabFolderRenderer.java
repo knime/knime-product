@@ -36,6 +36,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.ToolBar;
+import org.knime.core.util.ColorUtilities;
 
 /**
  * This class is a copy of the org.eclipse.e4.ui.workbench.renderers.swt.CTabRendering class with
@@ -550,7 +551,7 @@ ICTabRendering {
         if (!active && !onBottom) {
             RGB blendColor = gc.getDevice()
                     .getSystemColor(SWT.COLOR_WIDGET_LIGHT_SHADOW).getRGB();
-            RGB topGradient = blend(blendColor, tabOutlineColor.getRGB(), 40);
+            RGB topGradient = ColorUtilities.blend(blendColor, tabOutlineColor.getRGB(), 40);
             gradientLineTop = new Color(gc.getDevice(), topGradient);
             foregroundPattern = new Pattern(gc.getDevice(), 0, 0, 0,
                     bounds.height + 1, gradientLineTop, gc.getDevice()
@@ -793,18 +794,6 @@ ICTabRendering {
             finalArray[j + 1] = tempY;
         }
         return finalArray;
-    }
-
-    static RGB blend(final RGB c1, final RGB c2, final int ratio) {
-        int r = blend(c1.red, c2.red, ratio);
-        int g = blend(c1.green, c2.green, ratio);
-        int b = blend(c1.blue, c2.blue, ratio);
-        return new RGB(r, g, b);
-    }
-
-    static int blend(final int v1, final int v2, final int ratio) {
-        int b = (ratio * v1 + (100 - ratio) * v2) / 100;
-        return Math.min(255, b);
     }
 
     void drawShadow(final Display display, final Rectangle bounds, final GC gc) {

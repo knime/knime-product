@@ -48,6 +48,8 @@
  */
 package org.knime.product.profiles;
 
+import static java.util.Collections.unmodifiableList;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Reader;
@@ -107,6 +109,8 @@ import org.osgi.framework.FrameworkUtil;
  */
 public class ProfileManager {
     private static final ProfileManager INSTANCE = new ProfileManager();
+
+    private static final String PROFILES_FOLDER = "profiles";
 
     private final List<Runnable> m_collectedLogs = new ArrayList<>(2);
 
@@ -257,9 +261,9 @@ public class ProfileManager {
 
         URI profileLocation = m_provider.getProfilesLocation();
         Path localProfileLocation;
-        if ("file".equalsIgnoreCase(profileLocation.getScheme())) {
+        if (isLocalProfile(profileLocation)) {
             localProfileLocation = Paths.get(profileLocation);
-        } else if (profileLocation.getScheme().startsWith("http")) {
+        } else if (isRemoteProfile(profileLocation)) {
             localProfileLocation = downloadProfiles(profileLocation);
         } else {
             throw new IllegalArgumentException("Profiles from '" + profileLocation.getScheme() + " are not supported");
@@ -272,6 +276,14 @@ public class ProfileManager {
                 .collect(Collectors.toList());
     }
 
+    private static boolean isLocalProfile(final URI profileLocation) {
+        return "file".equalsIgnoreCase(profileLocation.getScheme());
+    }
+
+    private static boolean isRemoteProfile(final URI profileLocation) {
+        return profileLocation.getScheme().startsWith("http");
+    }
+
     private Path getStateLocation() {
         Bundle myself = FrameworkUtil.getBundle(getClass());
         return Platform.getStateLocation(myself).toFile().toPath();
@@ -279,7 +291,7 @@ public class ProfileManager {
 
     private Path downloadProfiles(final URI profileLocation) {
         Path stateDir = getStateLocation();
-        Path profileDir = stateDir.resolve("profiles");
+        Path profileDir = stateDir.resolve(PROFILES_FOLDER);
 
         try {
             // compute list of profiles that are requested but not present locally yet
@@ -398,5 +410,34 @@ public class ProfileManager {
         try (OutputStream os = Files.newOutputStream(originHeadersCache)) {
             props.store(os, "");
         }
+    }
+
+    /**
+     * The path to the local profiles directory (either a local profiles folder or download and 'cached' profiles from a
+     * remote location).
+     *
+     * @return the local profiles directory or an empty optional if no profiles available
+     */
+    public Optional<Path> getLocalProfilesLocation() {
+        URI profileLocation = m_provider.getProfilesLocation();
+        if (profileLocation == null) {
+            return Optional.empty();
+        }
+        if (isLocalProfile(profileLocation)) {
+            return Optional.of(Paths.get(m_provider.getProfilesLocation()));
+        } else if (isRemoteProfile(profileLocation)) {
+            return Optional.of(getStateLocation().resolve(PROFILES_FOLDER));
+        } else {
+            throw new IllegalArgumentException("Profiles from '" + profileLocation.getScheme() + " are not supported");
+        }
+    }
+
+    /**
+     * Returns the list of requested profiles. See also {@link IProfileProvider#getRequestedProfiles()}.
+     *
+     * @return the list, never <code>null</code> but can be empty
+     */
+    public List<String> getRequestProfiles() {
+        return unmodifiableList(m_provider.getRequestedProfiles());
     }
 }

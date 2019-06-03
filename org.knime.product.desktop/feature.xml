@@ -738,6 +738,10 @@ propagated with or for interoperation with KNIME.
    <includes
          id="org.knime.features.ensembles"
          version="0.0.0"/>
+         
+   <includes
+         id="org.knime.features.database"
+         version="0.0.0"/>
 
    <includes
          id="org.knime.features.dbdrivers"

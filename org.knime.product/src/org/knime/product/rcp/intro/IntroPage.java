@@ -133,6 +133,9 @@ import org.xml.sax.SAXException;
  */
 @SuppressWarnings("restriction")
 public class IntroPage implements LocationListener {
+
+    private static final boolean USE_INTRO_PAGE_4_0 = Boolean.getBoolean("knime.intro.4");
+
     private static final NodeLogger LOGGER = NodeLogger.getLogger(IntroPage.class);
 
     private static final String BROWSER_ID = "org.knime.intro.page";
@@ -179,7 +182,8 @@ public class IntroPage implements LocationListener {
             }
 
             ReentrantLock introFileLock = new ReentrantLock();
-            m_introFile = copyTemplate("intro/intro.xhtml");
+            String introFile = USE_INTRO_PAGE_4_0 ? "intro4.0/intro.xhtml" : "intro/intro.xhtml";
+            m_introFile = copyTemplate(introFile);
             new MRUInjector(m_introFile, introFileLock, m_prefs, m_freshWorkspace, m_parserFactory, m_xpathFactory,
                 m_transformerFactory).run();
             KNIMEConstants.GLOBAL_THREAD_POOL.submit(new BugfixMessageInjector(m_introFile, introFileLock, m_prefs,

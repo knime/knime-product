@@ -96,15 +96,17 @@ class MRUInjector extends AbstractInjector {
     @Override
     protected void injectData(final Document doc, final XPath xpath) throws Exception {
         Bundle myBundle = FrameworkUtil.getBundle(getClass());
-        URL cssBaseUrl = FileLocator.toFileURL(myBundle.getEntry("/intro/css"));
+        String cssEntry = IntroPage.USE_INTRO_PAGE_4_0 ? "/intro4.0" : "/intro/css";
+        URL cssBaseUrl = FileLocator.toFileURL(myBundle.getEntry(cssEntry));
 
         Element base = (Element)xpath.evaluate("/html/head/base", doc.getDocumentElement(), XPathConstants.NODE);
         base.setAttribute("href", cssBaseUrl.toExternalForm());
 
-        Element mruList =
-            (Element)xpath.evaluate("/html/body//ul[@id='mruList']", doc.getDocumentElement(), XPathConstants.NODE);
-        insertMRUList(mruList);
-
+        if (!IntroPage.USE_INTRO_PAGE_4_0) {
+            Element mruList =
+                    (Element)xpath.evaluate("/html/body//ul[@id='mruList']", doc.getDocumentElement(), XPathConstants.NODE);
+            insertMRUList(mruList);
+        }
     }
 
     /**

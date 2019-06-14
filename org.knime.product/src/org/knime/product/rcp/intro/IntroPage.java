@@ -134,7 +134,7 @@ import org.xml.sax.SAXException;
 @SuppressWarnings("restriction")
 public class IntroPage implements LocationListener {
 
-    private static final boolean USE_INTRO_PAGE_4_0 = Boolean.getBoolean("knime.intro.4");
+    static final boolean USE_INTRO_PAGE_4_0 = Boolean.getBoolean("knime.intro.4");
 
     private static final NodeLogger LOGGER = NodeLogger.getLogger(IntroPage.class);
 
@@ -186,18 +186,21 @@ public class IntroPage implements LocationListener {
             m_introFile = copyTemplate(introFile);
             new MRUInjector(m_introFile, introFileLock, m_prefs, m_freshWorkspace, m_parserFactory, m_xpathFactory,
                 m_transformerFactory).run();
-            KNIMEConstants.GLOBAL_THREAD_POOL.submit(new BugfixMessageInjector(m_introFile, introFileLock, m_prefs,
-                m_freshWorkspace, m_parserFactory, m_xpathFactory, m_transformerFactory));
-            KNIMEConstants.GLOBAL_THREAD_POOL.submit(new NewReleaseMessageInjector(m_introFile, introFileLock, m_prefs,
-                m_freshWorkspace, m_parserFactory, m_xpathFactory, m_transformerFactory));
+            if (!USE_INTRO_PAGE_4_0) {
+                KNIMEConstants.GLOBAL_THREAD_POOL.submit(new BugfixMessageInjector(m_introFile, introFileLock, m_prefs,
+                    m_freshWorkspace, m_parserFactory, m_xpathFactory, m_transformerFactory));
+                KNIMEConstants.GLOBAL_THREAD_POOL.submit(new NewReleaseMessageInjector(m_introFile, introFileLock,
+                    m_prefs, m_freshWorkspace, m_parserFactory, m_xpathFactory, m_transformerFactory));
 
-            Map<String, String> customizationInfo = getBrandingInfo();
-            KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TipsAndNewsInjector(m_introFile, introFileLock, m_prefs,
-                m_freshWorkspace, m_parserFactory, m_xpathFactory, m_transformerFactory, customizationInfo));
-
-            if (!customizationInfo.isEmpty()) {
-                KNIMEConstants.GLOBAL_THREAD_POOL.submit(new CustomizationInjector(m_introFile, introFileLock, m_prefs,
+                Map<String, String> customizationInfo = getBrandingInfo();
+                KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TipsAndNewsInjector(m_introFile, introFileLock, m_prefs,
                     m_freshWorkspace, m_parserFactory, m_xpathFactory, m_transformerFactory, customizationInfo));
+
+                if (!customizationInfo.isEmpty()) {
+                    KNIMEConstants.GLOBAL_THREAD_POOL
+                        .submit(new CustomizationInjector(m_introFile, introFileLock, m_prefs, m_freshWorkspace,
+                            m_parserFactory, m_xpathFactory, m_transformerFactory, customizationInfo));
+                }
             }
         } catch (IOException | ParserConfigurationException | SAXException | XPathExpressionException
                 | TransformerFactoryConfigurationError | TransformerException ex) {

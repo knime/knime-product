@@ -560,21 +560,28 @@ a:hover {
     word-break: break-word;
 }
 
-.carousel-tile article > div > div > a {
-    display: inline-block;
-	background-color: #FFFFFF;
-    color: #3E3A39;
-    padding: 5px 15px;
-    border: thin solid #3E3A39;
-    font-weight: 300;
+.button-primary {
+	color: #3E3A39;
+    background-color: #FFD800;
+    display: block;
+    text-align: center;
+    font-weight: 500;
     font-size: 16px;
+    line-height: 19px;
+    padding: 12px;
+    text-decoration: none;
+    margin-bottom: 10px;
+    border: 0;
     text-decoration: none;
 }
 
-.carousel-tile article > div > div > a:hover {
-	background-color: #FFD800;
-	border: thin solid #FFD800;
+.button-primary:hover,
+.button-primary:active,
+.button-primary:focus {
+	outline: none;
 	text-decoration: none;
+    background-color: #3E3A39;
+    color: #FFFFFF;
 }
 
 body > h2 {
@@ -665,36 +672,4 @@ a .text {
 }
 #links-and-mru:hover .hide-button {
 	display: block;
-}
-
-/* Fontello Icons Styles*/
-
-
-
-.icon-wrench, .icon-book-open, .icon-chart-line, .icon-download, .icon-angle-circled-right {
-	    margin-right: 0.7em !important;
-}
-
-/* Media Queries */
-
-@media only screen and (max-width: 650px) {
-	div#intro-text,
-	div#news-graphic,
-	div#links,
-	div#mru {
-		float: none;
-		width: 100%;
-		display: block;
-		margin: 10px 0;
-	}
-	
-	div#intro,
-	div#news-graphic {
-		margin-bottom: 0;
-	}
-	
-	#links-and-mru .hide-button {
-    	right: 5px;
-    	top: 15px;
-	}
 }

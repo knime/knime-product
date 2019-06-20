@@ -165,8 +165,8 @@ public class IntroPage implements LocationListener {
     }
 
     private IntroPage() {
-        // in fresh workspaces, workbench.xml does not exist yet
-        m_freshWorkspace = !Files.exists(getWorkbenchStateFile());
+        // in fresh workspaces, workbench.xmi does not exist yet
+        m_freshWorkspace = Files.exists(getWorkbenchStateFile());
 
         try {
             // workaround for a bug in XPathFinderFactory on MacOS X
@@ -186,11 +186,10 @@ public class IntroPage implements LocationListener {
             m_introFile = copyTemplate(introFile);
             Map<String, String> customizationInfo = getBrandingInfo();
 
-            if(USE_INTRO_PAGE_4_0) {
+            if (USE_INTRO_PAGE_4_0) {
                 new TileInjector(m_introFile, introFileLock, m_prefs, m_freshWorkspace, m_parserFactory, m_xpathFactory,
-                m_transformerFactory).run();
-            }
-            else {
+                    m_transformerFactory).run();
+            } else {
                 new MRUInjector(m_introFile, introFileLock, m_prefs, m_freshWorkspace, m_parserFactory, m_xpathFactory,
                 m_transformerFactory).run();
                 KNIMEConstants.GLOBAL_THREAD_POOL.submit(new BugfixMessageInjector(m_introFile, introFileLock, m_prefs,

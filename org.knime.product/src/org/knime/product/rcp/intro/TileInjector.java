@@ -71,6 +71,9 @@ import org.w3c.dom.Element;
  */
 class TileInjector extends AbstractInjector {
 
+    private static final String EXAMPLE_WORKFLOW_URI =
+            "knime://LOCAL/Example%20Workflows/Basic%20Examples/Visual%20Analysis%20of%20Sales%20Data/workflow.knime";
+
     private static final String TITLE_FIRST = "Welcome";
     private static final String TITLE = "Welcome back";
     private static final String SUBTITLE_FIRST = "Looks like you're using KNIME for the first time...";
@@ -127,7 +130,8 @@ class TileInjector extends AbstractInjector {
     }
 
     private static Element createOpenExampleWorkflowTile(final Document doc) {
-        return createTile(doc, "img/workflow.svg", "Get started with this example", "intro://openworkflow/uri", "Open");
+        return createTile(doc, "img/workflow.svg", "Get started with this example",
+            "intro://openworkflow/" + EXAMPLE_WORKFLOW_URI, "Open");
     }
 
     private static Element createHubTile(final Document doc) {

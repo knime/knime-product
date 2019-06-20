@@ -1,5 +1,6 @@
 /*
  * ------------------------------------------------------------------------
+ *
  *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
@@ -43,18 +44,15 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   28.03.2014 (thor): created
+ *   21 Jun 2019 (albrecht): created
  */
 package org.knime.product.rcp.intro;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
@@ -62,21 +60,21 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.knime.core.eclipseUtil.UpdateChecker.UpdateInfo;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.xml.sax.SAXException;
+import org.w3c.dom.Node;
 
 /**
- * Runnable that injects a message about a new KNIME version into the intro page. This is run parallel to the startup
- * process. If the KNIME server is not reachable it will just not replace the already existing copy of the template and
- * nothing will be shown.
  *
- * @author Thorsten Meinl, KNIME AG, Zurich, Switzerland
+ * @author Christian Albrecht, KNIME GmbH, Konstanz, Germany
  */
-class BugfixMessageInjector extends AbstractInjector {
+class TileUpdateMessageInjector extends AbstractInjector {
+
+    private List<UpdateInfo> m_newReleases;
     private List<String> m_bugfixes;
 
-    protected BugfixMessageInjector(final File templateFile, final ReentrantLock introFileLock,
+    protected TileUpdateMessageInjector(final File templateFile, final ReentrantLock introFileLock,
         final IEclipsePreferences preferences, final boolean isFreshWorkspace,
         final DocumentBuilderFactory parserFactory, final XPathFactory xpathFactory,
         final TransformerFactory transformerFactory) {
@@ -89,50 +87,61 @@ class BugfixMessageInjector extends AbstractInjector {
      */
     @Override
     protected void prepareData() throws Exception {
+        m_newReleases = UpdateDetector.checkForNewRelease();
         m_bugfixes = UpdateDetector.checkForBugfixes();
     }
 
-    private void injectUpdateMessage(final Document doc) throws ParserConfigurationException, SAXException,
-        IOException, XPathExpressionException, TransformerException {
-        XPath xpath = m_xpathFactory.newXPath();
-        Element updateNode =
-            (Element)xpath.evaluate("//div[@id='update-inner']", doc.getDocumentElement(), XPathConstants.NODE);
-
-        Element minorUpdatesAvailableSpan =
-            (Element)xpath.evaluate("//span[@id='bugfixes-available']", updateNode, XPathConstants.NODE);
-        minorUpdatesAvailableSpan.removeAttribute("style"); // removes the "hidden" style and makes it visible
-
-        Element updateList = (Element)xpath.evaluate(".//ul[@id='bugfixes-list']", updateNode, XPathConstants.NODE);
-        updateList.removeAttribute("style"); // removes the "hidden" style and makes it visible
-
-        for (int i = 0; i < Math.min(5, m_bugfixes.size()); i++) {
-            Element li = doc.createElement("li");
-            li.setTextContent(m_bugfixes.get(i));
-            updateList.appendChild(li);
+    private void injectReleaseTile(final Document doc, final XPath xpath, final boolean bugfix)
+        throws XPathExpressionException {
+        String title = bugfix ? "Updates available" : "Update now";
+        boolean updatePossible = true;
+        if (!bugfix) {
+            for (UpdateInfo ui : m_newReleases) {
+                updatePossible &= ui.isUpdatePossible();
+            }
         }
-        if (m_bugfixes.size() > 5) {
-            Element li = doc.createElement("li");
-            li.setTextContent("... and " + (m_bugfixes.size() - 5) + " more");
-            updateList.appendChild(li);
+        String action = updatePossible ? "intro://invokeUpdate/" : "https://www.knime.com/downloads?src=knimeapp";
+        String buttonText = updatePossible ? "Update" : "Download";
+        Element updateTile =
+            TileInjector.createTile(doc, "img/update-icon.svg", title, action, buttonText);
+        Element button = (Element)xpath.evaluate("//a[@class='button-primary']", updateTile, XPathConstants.NODE);
+        Node contentDiv = button.getParentNode();
+        Element text = doc.createElement("p");
+        text.setAttribute("class", "tile-text");
+        String tileContent = "The new version makes KNIME faster and comes with even more nodes.";
+        if (bugfix) {
+            tileContent = "There are updates for " + m_bugfixes.size() + " extensions available.";
         }
+        text.setTextContent(tileContent);
+        contentDiv.removeChild(button);
+        contentDiv.appendChild(text);
+        contentDiv.appendChild(button);
 
-        Element updatePossibleNode =
-            (Element)xpath.evaluate(".//span[@id='install-bugfixes']", updateNode, XPathConstants.NODE);
-        updatePossibleNode.removeAttribute("style");
+        Element tileContainer =
+                (Element)xpath.evaluate("//div[@id='carousel-content']", doc.getDocumentElement(), XPathConstants.NODE);
+        Element firstTile = (Element)xpath.evaluate("//div[@class='carousel-tile']", tileContainer, XPathConstants.NODE);
+        tileContainer.removeChild(firstTile);
+        Element secondTile = (Element)xpath.evaluate("//div[@class='carousel-tile']", tileContainer, XPathConstants.NODE);
+        tileContainer.removeChild(secondTile);
+        Element thirdTile = (Element)xpath.evaluate("//div[@class='carousel-tile']", tileContainer, XPathConstants.NODE);
+        tileContainer.removeChild(thirdTile);
 
-        if (m_prefs.getBoolean("org.knime.product.intro.update", true)) {
-            updateNode.removeAttribute("style"); // removes the "hidden" style
-        }
+        tileContainer.appendChild(updateTile);
+        tileContainer.appendChild(firstTile);
+        tileContainer.appendChild(secondTile);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    protected void injectData(final Document doc, final XPath xpath) throws XPathExpressionException,
-        ParserConfigurationException, SAXException, IOException, TransformerException {
-        if (!m_bugfixes.isEmpty()) {
-            injectUpdateMessage(doc);
+    protected void injectData(final Document doc, final XPath xpath) throws Exception {
+        if (!m_newReleases.isEmpty()) {
+            injectReleaseTile(doc, xpath, false);
+        } else if (!m_bugfixes.isEmpty()) {
+            injectReleaseTile(doc, xpath, true);
         }
+
     }
+
 }

@@ -56,6 +56,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import org.eclipse.core.runtime.FileLocator;
@@ -64,6 +65,7 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
 /**
  *
@@ -115,7 +117,7 @@ class TileInjector extends AbstractInjector {
         if (m_isFreshWorkspace) {
             tileContainer.appendChild(createOpenExampleWorkflowTile(doc));
             tileContainer.appendChild(createHubTile(doc));
-            tileContainer.appendChild(createIntroMailTile(doc));
+            tileContainer.appendChild(createIntroMailTile(doc, xpath));
             Element header = (Element)xpath.evaluate("//div[@id='welcome-page-header']", doc.getDocumentElement(),
                 XPathConstants.NODE);
             Element hubSearch = (Element)xpath.evaluate("//form[@id='hub-search-bar']", doc.getDocumentElement(),
@@ -139,9 +141,23 @@ class TileInjector extends AbstractInjector {
             "https://hub.knime.com?src=knimeapp", "Visit");
     }
 
-    private static Element createIntroMailTile(final Document doc) {
+    private static Element createIntroMailTile(final Document doc, final XPath xpath) throws XPathExpressionException {
         Element tile = createTile(doc, "", "Sign up for introductory emails", "intro://sendMail", "Register");
-        // todo change tile
+        Element img = (Element)xpath.evaluate("//img", tile, XPathConstants.NODE);
+        img.getParentNode().removeChild(img);
+        Element button = (Element)xpath.evaluate("//a[@class='button-primary']", tile, XPathConstants.NODE);
+        Node contentDiv = button.getParentNode();
+        Element text = doc.createElement("p");
+        text.setAttribute("class", "tile-text");
+        text.setTextContent("These messages will get you up and running as quickly as possible.");
+        Element input = doc.createElement("input");
+        input.setAttribute("type", "email");
+        input.setAttribute("placeholder", "Email");
+
+        contentDiv.removeChild(button);
+        contentDiv.appendChild(text);
+        contentDiv.appendChild(input);
+        contentDiv.appendChild(button);
         return tile;
     }
 
@@ -160,7 +176,7 @@ class TileInjector extends AbstractInjector {
             "Visit");
     }
 
-    private static Element createTile(final Document doc, final String imageLocation, final String titleText,
+    static Element createTile(final Document doc, final String imageLocation, final String titleText,
         final String buttonAction, final String buttonText) {
         Element tile = doc.createElement("div");
         tile.setAttribute("class", "carousel-tile");

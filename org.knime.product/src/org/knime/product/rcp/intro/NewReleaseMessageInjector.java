@@ -49,10 +49,6 @@ package org.knime.product.rcp.intro;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -66,9 +62,6 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.equinox.p2.operations.RepositoryTracker;
-import org.eclipse.equinox.p2.ui.ProvisioningUI;
-import org.knime.core.eclipseUtil.UpdateChecker;
 import org.knime.core.eclipseUtil.UpdateChecker.UpdateInfo;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -97,28 +90,7 @@ class NewReleaseMessageInjector extends AbstractInjector {
      */
     @Override
     protected void prepareData() throws Exception {
-        m_newMinorVersions = checkNewMinorVersion();
-    }
-
-    private List<UpdateInfo> checkNewMinorVersion() throws IOException, URISyntaxException {
-        final ProvisioningUI provUI = ProvisioningUI.getDefaultUI();
-        RepositoryTracker tracker = provUI.getRepositoryTracker();
-        if (tracker == null) {
-            // if run from the IDE there will be no tracker
-            return Collections.emptyList();
-        }
-
-        List<UpdateInfo> updateList = new ArrayList<>();
-        for (URI uri : tracker.getKnownRepositories(provUI.getSession())) {
-            if (("http".equals(uri.getScheme()) || "https".equals(uri.getScheme()))
-                && (uri.getHost().endsWith(".knime.org") || uri.getHost().endsWith(".knime.com"))) {
-                UpdateInfo newRelease = UpdateChecker.checkForNewRelease(uri);
-                if (newRelease != null) {
-                    updateList.add(newRelease);
-                }
-            }
-        }
-        return updateList;
+        m_newMinorVersions = UpdateDetector.checkForNewRelease();
     }
 
     private void injectUpdateMessage(final Document doc) throws ParserConfigurationException, SAXException,

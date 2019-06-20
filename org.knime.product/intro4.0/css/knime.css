@@ -391,6 +391,18 @@ h2#welcome-sub {
     word-break: break-word;
 }
 
+.carousel-tile article p.tile-text {
+	font-weight: 300;
+}
+
+.carousel-tile article input {
+	display: block;
+    font-size: 16px;
+    margin: 0 auto 1em;
+    padding: 4px;
+    width: 100%;
+}
+
 .button-primary {
 	color: #3E3A39;
     background-color: #FFD800;

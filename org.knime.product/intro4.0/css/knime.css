@@ -180,8 +180,31 @@ a:hover {
     text-decoration: underline;
 }
 
+svg {
+	shape-rendering: geometricPrecision;
+}
+
+button, input, optgroup, select, textarea {
+    font-family: inherit;
+    font-size: 100%;
+    line-height: 1.15;
+    margin: 0;
+}
+
+button, select {
+    text-transform: none;
+}
+
+button, input {
+    overflow: visible;
+}
+
+[type=button], [type=reset], [type=submit], button {
+    -webkit-appearance: button;
+}
+
 #welcome-page-wrapper {
-	min-width: 280px;
+	min-width: 670px;
     margin: 0 auto;
     padding: 0;
     overflow: auto;
@@ -189,7 +212,8 @@ a:hover {
 }
 
 #welcome-page-header {
-	padding: 1em 2em 1.5em;
+	position: relative;
+	padding: 1em 2em 1em;
     box-sizing: border-box;
     background: #FFF;
     width: 100%;
@@ -204,6 +228,74 @@ a:hover {
     overflow: hidden;
     padding: 1em 2em 0;
 }
+
+#hub-search-bar {
+	height: 40px;
+    display: inline-flex;
+    width: calc(50% - 2em);
+    min-width: 385px;
+    max-width: 600px;
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 1em 2em;
+}
+
+#hub-search-bar:focus-within {
+    box-shadow: 1px 1px 4px 0 hsla(195,2%,52%,.5);
+}
+
+#hub-search-bar button {
+    border: 0;
+    background-color: #EFF1F2;
+    line-height: 0;
+}
+
+#hub-search-bar button[type=submit] {
+	padding: 0 0 0 18px;
+}
+
+#hub-search-bar button[type=submit] svg {
+	width: 30px;
+	height: 30px;
+	padding-top: 2px;
+	fill: #6E6E6E;
+}
+
+#hub-search-bar button[type=reset] {
+    padding: 0 16px 0 0;
+}
+
+#hub-search-bar button[type=reset] svg {
+	padding-top: 2px;
+	width: 16px;
+	height: 16px;
+	stroke: #6e6e6e;
+	stroke-width: 1.5px;
+}
+
+#hub-search-bar input {
+	width: 100%;
+    padding: 0 16px;
+    margin: 0;
+    border: 0;
+    background-color: #EFF1F2;
+    color: #3E3A39;
+    font-size: 17px;
+    font-weight: 500;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+#hub-search-bar [type=search] {
+    -webkit-appearance: textfield;
+    outline-offset: -2px;
+}
+
+#hub-search-bar input:focus {
+    outline: none;
+}
+
 
 h1#welcome-knime {
 	color: #3E3A39;
@@ -273,9 +365,22 @@ h2#welcome-sub {
 }
 
 .carousel-tile article > div > img {
-	width: 100%;
+	max-width: 100%;
+	max-height: 112px;
     display: block;
     margin: 0 auto;
+}
+
+@media only screen and (max-width: 782px) {
+	.carousel-tile article > div > img {
+	   max-height: 80px;
+	}
+}
+
+@media only screen and (max-width: 760px) {
+    .carousel-tile article > div > img {
+       max-height: 60px;
+    }
 }
 
 .carousel-tile article > div > div {

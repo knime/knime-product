@@ -174,6 +174,10 @@ class TipsAndNewsInjector extends AbstractInjector {
      */
     @Override
     protected void injectData(final Document doc, final XPath xpath) throws Exception {
+        if (IntroPage.USE_INTRO_PAGE_4_0) {
+            // only make request for instrumentation, no tips and tricks are shown on the 4.0 intro page anymore
+            return;
+        }
         Element newsNode = (Element)xpath.evaluate("//div[@id='news']", doc.getDocumentElement(), XPathConstants.NODE);
         if (m_news != null) {
             Node hr = (Node)xpath.evaluate("hr", m_news, XPathConstants.NODE);

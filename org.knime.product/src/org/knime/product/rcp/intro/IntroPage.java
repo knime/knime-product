@@ -184,17 +184,19 @@ public class IntroPage implements LocationListener {
             ReentrantLock introFileLock = new ReentrantLock();
             String introFile = USE_INTRO_PAGE_4_0 ? "intro4.0/intro.xhtml" : "intro/intro.xhtml";
             m_introFile = copyTemplate(introFile);
-            new MRUInjector(m_introFile, introFileLock, m_prefs, m_freshWorkspace, m_parserFactory, m_xpathFactory,
+            Map<String, String> customizationInfo = getBrandingInfo();
+
+            if(USE_INTRO_PAGE_4_0) {
+                new TileInjector(m_introFile, introFileLock, m_prefs, m_freshWorkspace, m_parserFactory, m_xpathFactory,
                 m_transformerFactory).run();
-            if (!USE_INTRO_PAGE_4_0) {
+            }
+            else {
+                new MRUInjector(m_introFile, introFileLock, m_prefs, m_freshWorkspace, m_parserFactory, m_xpathFactory,
+                m_transformerFactory).run();
                 KNIMEConstants.GLOBAL_THREAD_POOL.submit(new BugfixMessageInjector(m_introFile, introFileLock, m_prefs,
                     m_freshWorkspace, m_parserFactory, m_xpathFactory, m_transformerFactory));
                 KNIMEConstants.GLOBAL_THREAD_POOL.submit(new NewReleaseMessageInjector(m_introFile, introFileLock,
                     m_prefs, m_freshWorkspace, m_parserFactory, m_xpathFactory, m_transformerFactory));
-
-                Map<String, String> customizationInfo = getBrandingInfo();
-                KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TipsAndNewsInjector(m_introFile, introFileLock, m_prefs,
-                    m_freshWorkspace, m_parserFactory, m_xpathFactory, m_transformerFactory, customizationInfo));
 
                 if (!customizationInfo.isEmpty()) {
                     KNIMEConstants.GLOBAL_THREAD_POOL
@@ -202,6 +204,11 @@ public class IntroPage implements LocationListener {
                             m_parserFactory, m_xpathFactory, m_transformerFactory, customizationInfo));
                 }
             }
+
+            // query tips and tricks still until instrumentation is switched to a different url
+            KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TipsAndNewsInjector(m_introFile, introFileLock, m_prefs,
+                m_freshWorkspace, m_parserFactory, m_xpathFactory, m_transformerFactory, customizationInfo));
+
         } catch (IOException | ParserConfigurationException | SAXException | XPathExpressionException
                 | TransformerFactoryConfigurationError | TransformerException ex) {
             LOGGER.error("Could not copy intro pages: " + ex.getMessage(), ex);

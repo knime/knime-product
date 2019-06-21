@@ -68,7 +68,7 @@ import org.knime.core.eclipseUtil.UpdateChecker.UpdateInfo;
  *
  * @author Christian Albrecht, KNIME GmbH, Konstanz, Germany
  */
-class UpdateDetector {
+final class UpdateDetector {
 
     static final List<UpdateInfo> checkForNewRelease() throws IOException, URISyntaxException {
         final ProvisioningUI provUI = ProvisioningUI.getDefaultUI();

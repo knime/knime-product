@@ -134,7 +134,7 @@ import org.xml.sax.SAXException;
 @SuppressWarnings("restriction")
 public class IntroPage implements LocationListener {
 
-    static final boolean USE_INTRO_PAGE_4_0 = Boolean.getBoolean("knime.intro.4");
+    static final boolean USE_INTRO_PAGE_4_0 = !Boolean.getBoolean("knime.intro.legacy");
 
     private static final NodeLogger LOGGER = NodeLogger.getLogger(IntroPage.class);
 

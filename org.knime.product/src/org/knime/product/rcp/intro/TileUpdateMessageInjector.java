@@ -93,13 +93,15 @@ class TileUpdateMessageInjector extends AbstractInjector {
 
     private void injectReleaseTile(final Document doc, final XPath xpath, final boolean bugfix)
         throws XPathExpressionException {
-        String title = bugfix ? "Updates available" : "Update now";
         boolean updatePossible = true;
+        String shortName = "";
         if (!bugfix) {
             for (UpdateInfo ui : m_newReleases) {
                 updatePossible &= ui.isUpdatePossible();
             }
+            shortName = m_newReleases.get(0).getShortName();
         }
+        String title = bugfix ? "Updates available" : "Update now to " + shortName;
         String action = updatePossible ? "intro://invokeUpdate/" : "https://www.knime.com/downloads?src=knimeapp";
         String buttonText = updatePossible ? "Update" : "Download";
         Element updateTile =
@@ -108,7 +110,9 @@ class TileUpdateMessageInjector extends AbstractInjector {
         Node contentDiv = button.getParentNode();
         Element text = doc.createElement("p");
         text.setAttribute("class", "tile-text");
-        String tileContent = "The new version makes KNIME faster and comes with even more nodes.";
+
+        // This needs to be dynamically populated when tiles can be fetched from the website!
+        String tileContent = "Get the latest features and enhancements!";
         if (bugfix) {
             tileContent = "There are updates for " + m_bugfixes.size() + " extensions available.";
         }
@@ -117,6 +121,8 @@ class TileUpdateMessageInjector extends AbstractInjector {
         contentDiv.appendChild(text);
         contentDiv.appendChild(button);
 
+        // This removes all tiles and adds the first and second one after the update tile again.
+        // TODO: this makes the page flicker a bit and should probably be handled via visibility flags
         Element tileContainer =
                 (Element)xpath.evaluate("//div[@id='carousel-content']", doc.getDocumentElement(), XPathConstants.NODE);
         Element firstTile = (Element)xpath.evaluate("//div[@class='carousel-tile']", tileContainer, XPathConstants.NODE);
@@ -141,7 +147,6 @@ class TileUpdateMessageInjector extends AbstractInjector {
         } else if (!m_bugfixes.isEmpty()) {
             injectReleaseTile(doc, xpath, true);
         }
-
     }
 
 }

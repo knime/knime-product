@@ -160,11 +160,11 @@ class TileInjector extends AbstractInjector {
 
     private static Element createRegisterHubTile(final Document doc) {
         return createTile(doc, "img/hub-connect.png", "Share your workflows and components on KNIME Hub",
-            "https://hub.knime.com/site/about", "Learn more");
+            "https://hub.knime.com/site/about?src=knimeapp", "Learn more");
     }
 
     private static Element createCoursesTile(final Document doc) {
-        return createTile(doc, "img/courses.png", "KNIME Courses: Learn all about Big Data, Text Mining and more",
+        return createTile(doc, "img/courses.svg", "KNIME Courses: Learn all about Big Data, Text Mining and more",
             "https://www.knime.com/courses?src=knimeapp", "Explore KNIME courses");
     }
 

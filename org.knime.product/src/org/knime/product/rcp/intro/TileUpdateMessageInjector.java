@@ -63,7 +63,6 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.knime.core.eclipseUtil.UpdateChecker.UpdateInfo;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 
 /**
  *
@@ -102,39 +101,50 @@ class TileUpdateMessageInjector extends AbstractInjector {
             shortName = m_newReleases.get(0).getShortName();
         }
         String title = bugfix ? "Updates available" : "Update now to " + shortName;
+        String icon = updatePossible ? "img/update.svg" : "img/arrow-download.svg";
         String action = updatePossible ? "intro://invokeUpdate/" : "https://www.knime.com/downloads?src=knimeapp";
-        String buttonText = updatePossible ? "Update" : "Download";
+        String buttonText = updatePossible ? "Update now" : "Download now";
         Element updateTile =
-            TileInjector.createTile(doc, "img/update-icon.svg", title, action, buttonText);
+            TileInjector.createTile(doc, icon, title, action, buttonText);
+        updateTile.setAttribute("class", updateTile.getAttribute("class") + " update-tile");
+
+        // move icon into title tag
+        Element image = (Element)xpath.evaluate("//img", updateTile, XPathConstants.NODE);
+        image.getParentNode().removeChild(image);
+        Element titleTag = (Element)xpath.evaluate("//p[@class='tile-title']", updateTile, XPathConstants.NODE);
+        titleTag.insertBefore(image, titleTag.getFirstChild());
+
         Element button = (Element)xpath.evaluate("//a[@class='button-primary']", updateTile, XPathConstants.NODE);
-        Node contentDiv = button.getParentNode();
+        Element contentDiv = (Element)button.getParentNode();
+        Element light = (Element)xpath.evaluate("//div[@class='light']", updateTile, XPathConstants.NODE);
+        contentDiv.removeChild(titleTag);
+        light.insertBefore(titleTag, contentDiv);
+
+        // add tile text
         Element text = doc.createElement("p");
         text.setAttribute("class", "tile-text");
-
-        // This needs to be dynamically populated when tiles can be fetched from the website!
+        // This needs to be dynamically populated, possibly also a new field in the releases.txt
         String tileContent = "Get the latest features and enhancements!";
         if (bugfix) {
-            tileContent = "There are updates for " + m_bugfixes.size() + " extensions available.";
+            if (m_bugfixes.size() >= 2) {
+                tileContent = "There are updates for " + m_bugfixes.size() + " extensions available.";
+            } else {
+                tileContent = "There is an update for " + m_bugfixes.size() + " extension available.";
+            }
         }
         text.setTextContent(tileContent);
-        contentDiv.removeChild(button);
-        contentDiv.appendChild(text);
-        contentDiv.appendChild(button);
+        light.insertBefore(text, contentDiv);
 
-        // This removes all tiles and adds the first and second one after the update tile again.
-        // TODO: this makes the page flicker a bit and should probably be handled via visibility flags
+        // add update tile as new first tile, remove third tile
         Element tileContainer =
-                (Element)xpath.evaluate("//div[@id='carousel-content']", doc.getDocumentElement(), XPathConstants.NODE);
-        Element firstTile = (Element)xpath.evaluate("//div[@class='carousel-tile']", tileContainer, XPathConstants.NODE);
-        tileContainer.removeChild(firstTile);
-        Element secondTile = (Element)xpath.evaluate("//div[@class='carousel-tile']", tileContainer, XPathConstants.NODE);
-        tileContainer.removeChild(secondTile);
-        Element thirdTile = (Element)xpath.evaluate("//div[@class='carousel-tile']", tileContainer, XPathConstants.NODE);
+            (Element)xpath.evaluate("//div[@id='carousel-content']", doc.getDocumentElement(), XPathConstants.NODE);
+        Element firstTile =
+            (Element)xpath.evaluate("//div[@class='carousel-tile'][1]", tileContainer, XPathConstants.NODE);
+        Element thirdTile =
+            (Element)xpath.evaluate("//div[@class='carousel-tile'][3]", tileContainer, XPathConstants.NODE);
+        // TODO: this makes the page flicker a bit and should probably be handled via visibility flags
         tileContainer.removeChild(thirdTile);
-
-        tileContainer.appendChild(updateTile);
-        tileContainer.appendChild(firstTile);
-        tileContainer.appendChild(secondTile);
+        tileContainer.insertBefore(updateTile, firstTile);
     }
 
     /**

@@ -241,6 +241,10 @@ button, input {
     margin: 1em 2em;
 }
 
+.no-flexbox #hub-search-bar {
+	display: none;
+}
+
 #hub-search-bar:focus-within {
     box-shadow: 1px 1px 4px 0 hsla(195,2%,52%,.5);
 }
@@ -335,8 +339,7 @@ h2#welcome-sub {
     margin: 0 24px 0 0;
     width: calc(33% - 16px);
     background-color: #FFFFFF;
-    padding: 20px;
-    text-align: center;
+    text-align: left;
 }
 
 .carousel-tile:last-child {
@@ -366,35 +369,64 @@ h2#welcome-sub {
 
 .carousel-tile article > div > img {
 	max-width: 100%;
-	max-height: 112px;
     display: block;
     margin: 0 auto;
 }
 
-@media only screen and (max-width: 782px) {
+@media only screen and (max-width: 781px) {
 	.carousel-tile article > div > img {
-	   max-height: 80px;
+	   max-height: 140px;
 	}
 }
 
-@media only screen and (max-width: 760px) {
+@media only screen and (max-width: 740px) {
     .carousel-tile article > div > img {
-       max-height: 60px;
+       max-height: 110px;
     }
 }
 
 .carousel-tile article > div > div {
 	position: absolute;
     bottom: 0;
-    font-weight: 700;
+    padding: 20px;
+}
+
+.carousel-tile article p.tile-title {
+	font-weight: 700;
     font-size: 18px;
     word-break: break-word;
 }
 
+.carousel-tile.update-tile article p.tile-title {
+	width: 100%;
+	padding: 20px;
+	background: #FFD800;
+	margin: 0;
+}
+
+.carousel-tile article p.tile-title img {
+    height: 30px;
+    margin-right: 10px;
+    vertical-align: middle;
+    padding-bottom: 2px;
+}
+
+@media only screen and (max-width: 788px) {
+	.carousel-tile article p.tile-title img {
+	   display: none;
+	}
+}
+
 .carousel-tile article p.tile-text {
+	font-size: 18px;
 	font-weight: 300;
 }
 
+.carousel-tile.update-tile article p.tile-text {
+	padding: 20px;
+	margin: 0;
+}
+ 
 .carousel-tile article input {
 	display: block;
     font-size: 16px;
@@ -406,14 +438,14 @@ h2#welcome-sub {
 .button-primary {
 	color: #3E3A39;
     background-color: #FFD800;
-    display: block;
-    text-align: center;
+    display: inline-block;
+    text-align: left;
     font-weight: 500;
-    font-size: 16px;
-    line-height: 19px;
-    padding: 12px;
+    font-size: 13px;
+    line-height: 18px;
+    padding: 6px 15px;
     text-decoration: none;
-    margin-bottom: 10px;
+    margin-bottom: 0px;
     border: 0;
     text-decoration: none;
 }

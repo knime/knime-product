@@ -133,16 +133,17 @@ class TileInjector extends AbstractInjector {
 
     private static Element createOpenExampleWorkflowTile(final Document doc) {
         return createTile(doc, "img/workflow.svg", "Get started with this example",
-            "intro://openworkflow/" + EXAMPLE_WORKFLOW_URI, "Open");
+            "intro://openworkflow/" + EXAMPLE_WORKFLOW_URI, "Open workflow");
     }
 
     private static Element createHubTile(final Document doc) {
-        return createTile(doc, "img/hub-landing-page.png", "Looking for more examples? Visit the KNIME Hub",
-            "https://hub.knime.com?src=knimeapp", "Visit");
+        return createTile(doc, "img/screen-perspective-hub.jpg", "Looking for more examples? Visit the KNIME Hub",
+            "https://hub.knime.com?src=knimeapp", "KNIME Hub");
     }
 
     private static Element createIntroMailTile(final Document doc, final XPath xpath) throws XPathExpressionException {
-        Element tile = createTile(doc, "", "Sign up for introductory emails", "intro://sendMail", "Register");
+        Element tile = createTile(doc, "", "Sign up for introductory emails",
+            "https://www.knime.com/form/help-getting-started?src=knimeapp", "Sign up");
         Element img = (Element)xpath.evaluate("//img", tile, XPathConstants.NODE);
         img.getParentNode().removeChild(img);
         Element button = (Element)xpath.evaluate("//a[@class='button-primary']", tile, XPathConstants.NODE);
@@ -150,30 +151,26 @@ class TileInjector extends AbstractInjector {
         Element text = doc.createElement("p");
         text.setAttribute("class", "tile-text");
         text.setTextContent("These messages will get you up and running as quickly as possible.");
-        Element input = doc.createElement("input");
-        input.setAttribute("type", "email");
-        input.setAttribute("placeholder", "Email");
 
         contentDiv.removeChild(button);
         contentDiv.appendChild(text);
-        contentDiv.appendChild(input);
         contentDiv.appendChild(button);
         return tile;
     }
 
     private static Element createRegisterHubTile(final Document doc) {
         return createTile(doc, "img/hub-connect.png", "Share your workflows and components on KNIME Hub",
-            "intro://register", "Register");
+            "https://hub.knime.com/site/about", "Learn more");
     }
 
     private static Element createCoursesTile(final Document doc) {
-        return createTile(doc, "img/courses-icon.svg", "KNIME Courses: Learn all about Big Data, Text Mining and more",
-            "https://www.knime.com/courses?src=knimeapp", "Visit");
+        return createTile(doc, "img/courses.png", "KNIME Courses: Learn all about Big Data, Text Mining and more",
+            "https://www.knime.com/courses?src=knimeapp", "Explore KNIME courses");
     }
 
     private static Element createForumTile(final Document doc) {
-        return createTile(doc, "img/forum.png", "Questions? Ask the forum.", "https://forum.knime.com?src=knimeapp",
-            "Visit");
+        return createTile(doc, "img/pic-community.jpg", "Questions? Ask the community.", "https://forum.knime.com?src=knimeapp",
+            "Visit Forum");
     }
 
     static Element createTile(final Document doc, final String imageLocation, final String titleText,

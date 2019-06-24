@@ -230,6 +230,7 @@ button, input {
 }
 
 #hub-search-bar {
+	display: none;
 	height: 40px;
     display: inline-flex;
     width: calc(50% - 2em);
@@ -241,8 +242,8 @@ button, input {
     margin: 1em 2em;
 }
 
-.no-flexbox #hub-search-bar {
-	display: none;
+.flexbox #hub-search-bar {
+	display: flex;
 }
 
 #hub-search-bar:focus-within {
@@ -256,45 +257,65 @@ button, input {
 }
 
 #hub-search-bar button[type=submit] {
-	padding: 0 0 0 18px;
+	padding: 0 0 0 14px;
 }
 
 #hub-search-bar button[type=submit] svg {
-	width: 30px;
-	height: 30px;
-	padding-top: 2px;
+	width: 24px;
+	height: 24px;
+	padding-top: 1px;
 	fill: #6E6E6E;
 }
 
+#hub-search-bar button[type=submit]:focus svg,
+#hub-search-bar button[type=submit]:hover svg {
+	fill: #3e3a39;
+    outline: none;
+}
+
 #hub-search-bar button[type=reset] {
-    padding: 0 16px 0 0;
+    padding: 0 12px 0 0;
 }
 
 #hub-search-bar button[type=reset] svg {
-	padding-top: 2px;
-	width: 16px;
-	height: 16px;
+	padding-top: 1px;
+	width: 14px;
+	height: 14px;
 	stroke: #6e6e6e;
 	stroke-width: 1.5px;
 }
 
+#hub-search-bar [type=search] {
+    outline-offset: -2px;
+}
+
 #hub-search-bar input {
 	width: 100%;
-    padding: 0 16px;
+    padding: 0 12px;
     margin: 0;
     border: 0;
     background-color: #EFF1F2;
     color: #3E3A39;
-    font-size: 17px;
+    font-size: 14px;
     font-weight: 500;
     -webkit-appearance: none;
     -moz-appearance: none;
 }
 
-#hub-search-bar [type=search] {
-    -webkit-appearance: textfield;
-    outline-offset: -2px;
+#hub-search-bar input::placeholder {
+    font-weight: 300;
+    color: #6e6e6e;
 }
+
+/* Hide native IE reset */
+#hub-search-bar input::-ms-clear {
+    display: none;
+  }
+
+/* Hide native webkit reset */
+#hub-search-bar input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+  }
 
 #hub-search-bar input:focus {
     outline: none;

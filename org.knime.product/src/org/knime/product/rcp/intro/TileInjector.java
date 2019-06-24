@@ -79,7 +79,7 @@ class TileInjector extends AbstractInjector {
     private static final String TITLE_FIRST = "Welcome";
     private static final String TITLE = "Welcome back";
     private static final String SUBTITLE_FIRST = "Looks like you're using KNIME for the first time...";
-    private static final String SUBTITLE = "Become part of a global community of KNIME users";
+    private static final String SUBTITLE = "Be part of a global community of KNIME users";
 
     protected TileInjector(final File templateFile, final ReentrantLock introFileLock,
         final IEclipsePreferences preferences, final boolean isFreshWorkspace,
@@ -164,12 +164,12 @@ class TileInjector extends AbstractInjector {
     }
 
     private static Element createCoursesTile(final Document doc) {
-        return createTile(doc, "img/courses.svg", "KNIME Courses: Learn all about Big Data, Text Mining and more",
-            "https://www.knime.com/courses?src=knimeapp", "Explore KNIME courses");
+        return createTile(doc, "img/courses.svg", "KNIME Courses: learn all about Big Data, Text Mining and more",
+            "https://www.knime.com/courses?src=knimeapp", "Explore KNIME Courses");
     }
 
     private static Element createForumTile(final Document doc) {
-        return createTile(doc, "img/pic-community.jpg", "Questions? Ask the community.", "https://forum.knime.com?src=knimeapp",
+        return createTile(doc, "img/pic-community.jpg", "Questions? Ask the community", "https://forum.knime.com?src=knimeapp",
             "Visit Forum");
     }
 

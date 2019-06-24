@@ -88,6 +88,7 @@ import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.LocationEvent;
 import org.eclipse.swt.browser.LocationListener;
+import org.eclipse.swt.program.Program;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IEditorReference;
@@ -97,7 +98,6 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.browser.IWebBrowser;
-import org.eclipse.ui.browser.IWorkbenchBrowserSupport;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.internal.browser.SystemBrowserInstance;
 import org.knime.core.node.KNIMEConstants;
@@ -220,7 +220,7 @@ public class IntroPage implements LocationListener {
         }
     }
 
-    private Map<String, String> getBrandingInfo() {
+    private static Map<String, String> getBrandingInfo() {
         //retrieve the customization information from the service
         BundleContext context = FrameworkUtil.getBundle(IntroPage.class).getBundleContext();
         ServiceReference<?> serviceReference = context.getServiceReference(ICustomizationService.class.getName());
@@ -281,7 +281,7 @@ public class IntroPage implements LocationListener {
         attachLocationListener();
     }
 
-    private void showMissingBrowserWarning(final IWebBrowser browser) {
+    private static void showMissingBrowserWarning(final IWebBrowser browser) {
         IPersistentPreferenceStore prefStore =
             (IPersistentPreferenceStore)KNIMEUIPlugin.getDefault().getPreferenceStore();
         boolean omitWarnings = prefStore.getBoolean(PreferenceConstants.P_OMIT_MISSING_BROWSER_WARNING);
@@ -346,17 +346,13 @@ public class IntroPage implements LocationListener {
         }
     }
 
-    private void handleLink(final URI link) {
+    private static void handleLink(final URI link) {
         try {
             URL url = link.toURL();
-            IWorkbenchBrowserSupport support = PlatformUI.getWorkbench().getBrowserSupport();
-            support.getExternalBrowser().openURL(url);
+            Program.launch(url.toString());
         } catch (MalformedURLException ex) {
             LOGGER.error("Malformed URL '" + link.toString() + "': " + ex.getMessage(), ex);
-        } catch (PartInitException ex) {
-            LOGGER.error("Could not open external browser for '" + link.toString() + "': " + ex.getMessage(), ex);
         }
-
     }
 
     private void handleIntroCommand(final URI command) {
@@ -408,7 +404,8 @@ public class IntroPage implements LocationListener {
         }
     }
 
-    private void browseExamples() {
+    @SuppressWarnings("unchecked")
+    private static void browseExamples() {
         Bundle serverBundle = Platform.getBundle("com.knime.explorer.server");
         if (serverBundle != null) {
             Class<Action> clazz;
@@ -423,7 +420,7 @@ public class IntroPage implements LocationListener {
         }
     }
 
-    private void newWorkflow() {
+    private static void newWorkflow() {
         ExplorerView explorerView = null;
         for (IWorkbenchWindow window : PlatformUI.getWorkbench().getWorkbenchWindows()) {
             for (IWorkbenchPage page : window.getPages()) {
@@ -472,7 +469,7 @@ public class IntroPage implements LocationListener {
         }
     }
 
-    private void mountServer() {
+    private static void mountServer() {
         // AP-8989 switching to IEclipsePreferences
         List<MountSettings> mountSettingsList = new ArrayList<>();
 

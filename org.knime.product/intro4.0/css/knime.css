@@ -289,6 +289,13 @@ button, input {
     outline-offset: -2px;
 }
 
+#hub-search-bar [type="search"]::-webkit-search-decoration,
+#hub-search-bar [type="search"]::-webkit-search-cancel-button,
+#hub-search-bar [type="search"]::-webkit-search-results-button,
+#hub-search-bar [type="search"]::-webkit-search-results-decoration {
+  display: none;
+}
+
 #hub-search-bar input {
 	width: 100%;
     padding: 0 12px;
@@ -310,12 +317,16 @@ button, input {
 /* Hide native IE reset */
 #hub-search-bar input::-ms-clear {
     display: none;
-  }
+}
 
-/* Hide native webkit reset */
-#hub-search-bar input::-webkit-search-cancel-button {
-    -webkit-appearance: none;
-  }
+/* Hide native webkit decorations */
+#hub-search-bar input::-webkit-search-decoration,
+#hub-search-bar input::-webkit-search-cancel-button,
+#hub-search-bar input::-webkit-search-results-button,
+#hub-search-bar input::-webkit-search-results-decoration
+{
+	-webkit-appearance: none;
+}
 
 #hub-search-bar input:focus {
     outline: none;

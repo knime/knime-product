@@ -133,7 +133,6 @@ class TileUpdateMessageInjector extends AbstractInjector {
      */
     @Override
     protected void injectData(final Document doc, final XPath xpath) throws Exception {
-        m_bugfixes.add("dummy");
         if (!m_newReleases.isEmpty()) {
             injectReleaseTile(doc, xpath, false);
         } else if (!m_bugfixes.isEmpty()) {

@@ -101,28 +101,6 @@ class TileUpdateMessageInjector extends AbstractInjector {
             shortName = m_newReleases.get(0).getShortName();
         }
         String title = bugfix ? "Updates available" : "Update now to " + shortName;
-        String icon = updatePossible ? "img/update.svg" : "img/arrow-download.svg";
-        String action = updatePossible ? "intro://invokeUpdate/" : "https://www.knime.com/downloads?src=knimeapp";
-        String buttonText = updatePossible ? "Update now" : "Download now";
-        Element updateTile =
-            TileInjector.createTile(doc, icon, title, action, buttonText);
-        updateTile.setAttribute("class", updateTile.getAttribute("class") + " update-tile");
-
-        // move icon into title tag
-        Element image = (Element)xpath.evaluate("//img", updateTile, XPathConstants.NODE);
-        image.getParentNode().removeChild(image);
-        Element titleTag = (Element)xpath.evaluate("//p[@class='tile-title']", updateTile, XPathConstants.NODE);
-        titleTag.insertBefore(image, titleTag.getFirstChild());
-
-        Element button = (Element)xpath.evaluate("//a[@class='button-primary']", updateTile, XPathConstants.NODE);
-        Element contentDiv = (Element)button.getParentNode();
-        Element light = (Element)xpath.evaluate("//div[@class='light']", updateTile, XPathConstants.NODE);
-        contentDiv.removeChild(titleTag);
-        light.insertBefore(titleTag, contentDiv);
-
-        // add tile text
-        Element text = doc.createElement("p");
-        text.setAttribute("class", "tile-text");
         // This needs to be dynamically populated, possibly also a new field in the releases.txt
         String tileContent = "Get the latest features and enhancements!";
         if (bugfix) {
@@ -132,8 +110,11 @@ class TileUpdateMessageInjector extends AbstractInjector {
                 tileContent = "There is an update for " + m_bugfixes.size() + " extension available.";
             }
         }
-        text.setTextContent(tileContent);
-        light.insertBefore(text, contentDiv);
+        String icon = updatePossible ? "img/update.svg" : "img/arrow-download.svg";
+        String action = updatePossible ? "intro://invokeUpdate/" : "https://www.knime.com/downloads?src=knimeapp";
+        String buttonText = updatePossible ? "Update now" : "Download now";
+        Element updateTile = TileInjector.createTitleTile(doc, xpath, icon, title, tileContent, action, buttonText);
+        updateTile.setAttribute("class", updateTile.getAttribute("class") + " update-tile");
 
         // add update tile as new first tile, remove third tile
         Element tileContainer =
@@ -152,6 +133,7 @@ class TileUpdateMessageInjector extends AbstractInjector {
      */
     @Override
     protected void injectData(final Document doc, final XPath xpath) throws Exception {
+        m_bugfixes.add("dummy");
         if (!m_newReleases.isEmpty()) {
             injectReleaseTile(doc, xpath, false);
         } else if (!m_bugfixes.isEmpty()) {

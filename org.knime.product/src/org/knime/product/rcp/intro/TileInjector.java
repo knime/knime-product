@@ -65,7 +65,6 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 
 /**
  *
@@ -142,20 +141,9 @@ class TileInjector extends AbstractInjector {
     }
 
     private static Element createIntroMailTile(final Document doc, final XPath xpath) throws XPathExpressionException {
-        Element tile = createTile(doc, "", "Sign up for introductory emails",
+        return createTitleTile(doc, xpath, "img/mail.svg", "Sign up for introductory emails",
+            "These messages will get you up and running as quickly as possible.",
             "https://www.knime.com/form/help-getting-started?src=knimeapp", "Sign up");
-        Element img = (Element)xpath.evaluate("//img", tile, XPathConstants.NODE);
-        img.getParentNode().removeChild(img);
-        Element button = (Element)xpath.evaluate("//a[@class='button-primary']", tile, XPathConstants.NODE);
-        Node contentDiv = button.getParentNode();
-        Element text = doc.createElement("p");
-        text.setAttribute("class", "tile-text");
-        text.setTextContent("These messages will get you up and running as quickly as possible.");
-
-        contentDiv.removeChild(button);
-        contentDiv.appendChild(text);
-        contentDiv.appendChild(button);
-        return tile;
     }
 
     private static Element createRegisterHubTile(final Document doc) {
@@ -169,8 +157,35 @@ class TileInjector extends AbstractInjector {
     }
 
     private static Element createForumTile(final Document doc) {
-        return createTile(doc, "img/pic-community.jpg", "Questions? Ask the community", "https://forum.knime.com?src=knimeapp",
-            "Visit Forum");
+        return createTile(doc, "img/pic-community.jpg", "Questions? Ask the community",
+            "https://forum.knime.com?src=knimeapp", "Visit Forum");
+    }
+
+    static Element createTitleTile(final Document doc, final XPath xpath, final String imageLocation,
+        final String titleText, final String contentText, final String buttonAction, final String buttonText)
+        throws XPathExpressionException {
+
+        Element tile = TileInjector.createTile(doc, imageLocation, titleText, buttonAction, buttonText);
+        tile.setAttribute("class", tile.getAttribute("class") + " title-tile");
+
+        // move icon into title tag
+        Element image = (Element)xpath.evaluate("//img", tile, XPathConstants.NODE);
+        image.getParentNode().removeChild(image);
+        Element titleTag = (Element)xpath.evaluate("//p[@class='tile-title']", tile, XPathConstants.NODE);
+        titleTag.insertBefore(image, titleTag.getFirstChild());
+
+        Element button = (Element)xpath.evaluate("//a[@class='button-primary']", tile, XPathConstants.NODE);
+        Element contentDiv = (Element)button.getParentNode();
+        Element light = (Element)xpath.evaluate("//div[@class='light']", tile, XPathConstants.NODE);
+        contentDiv.removeChild(titleTag);
+        light.insertBefore(titleTag, contentDiv);
+
+        // add tile text
+        Element text = doc.createElement("p");
+        text.setAttribute("class", "tile-text");
+        text.setTextContent(contentText);
+        light.insertBefore(text, contentDiv);
+        return tile;
     }
 
     static Element createTile(final Document doc, final String imageLocation, final String titleText,

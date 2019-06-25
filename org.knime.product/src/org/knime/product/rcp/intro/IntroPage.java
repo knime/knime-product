@@ -165,7 +165,7 @@ public class IntroPage implements LocationListener {
     }
 
     private IntroPage() {
-        // in fresh workspaces, workbench.xml does not exist yet
+        // in fresh workspaces, workbench.xmi does not exist yet
         m_freshWorkspace = !Files.exists(getWorkbenchStateFile());
 
         try {
@@ -331,7 +331,8 @@ public class IntroPage implements LocationListener {
     public void changing(final LocationEvent event) {
         try {
             URI uri = new URI(event.location);
-            if (uri.toString().endsWith(m_introFile.getAbsolutePath().replace("\\", "/"))) {
+            URL welcomeURL = m_introFile.toURI().toURL();
+            if (uri.toURL().getPath().equals(welcomeURL.getPath())) {
                 return;
             }
 
@@ -341,7 +342,7 @@ public class IntroPage implements LocationListener {
                 handleLink(uri);
             }
             event.doit = false;
-        } catch (URISyntaxException ex) {
+        } catch (URISyntaxException | MalformedURLException ex) {
             LOGGER.error("Invalid URI '" + event.location + "': " + ex.getMessage(), ex);
         }
     }

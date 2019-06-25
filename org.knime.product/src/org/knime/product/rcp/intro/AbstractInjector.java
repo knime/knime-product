@@ -53,6 +53,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.concurrent.locks.ReentrantLock;
@@ -289,10 +291,11 @@ abstract class AbstractInjector implements Runnable {
         }
 
         try {
+            URL expectedURL = introPageFile.toURI().toURL();
             IEditorInput input = ref.getEditorInput();
             return (input instanceof WebBrowserEditorInput)
                 && ((WebBrowserEditorInput)input).getURL().getPath()
-                    .endsWith(introPageFile.getAbsolutePath().replace("\\", "/"));
+                    .equals(expectedURL.getPath());
         } catch (AssertionFailedException ex) {
             // may happen if the editor "ref" points to a resource that doesn't exist any more
             NodeLogger
@@ -300,6 +303,9 @@ abstract class AbstractInjector implements Runnable {
                 .error(
                     "Could not get editor input, probably the resource was removed outside Eclipse: " + ex.getMessage(),
                     ex);
+            return false;
+        } catch (MalformedURLException e) {
+            NodeLogger.getLogger(AbstractInjector.class).error("Invalid welcome page URL " + e.getMessage());
             return false;
         }
     }

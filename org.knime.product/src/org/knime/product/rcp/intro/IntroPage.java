@@ -332,9 +332,12 @@ public class IntroPage implements LocationListener {
         try {
             URI uri = new URI(event.location);
             URL welcomeURL = m_introFile.toURI().toURL();
-            // don't convert uri to url here (yet) as it's trying to make sense out of 'intro'
-            if (uri.getPath().equals(welcomeURL.getPath())) {
-                return;
+            try {
+                if (uri.toURL().getPath().equals(welcomeURL.getPath())) {
+                    return;
+                }
+            } catch (MalformedURLException e) {
+                // this will be thrown by intro:// links, handled further down
             }
 
             if ("intro".equals(uri.getScheme())) {

@@ -62,6 +62,7 @@ import org.eclipse.ui.internal.ide.IDEWorkbenchMessages;
 import org.knime.core.node.KNIMEConstants;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.util.ViewUtils;
+import org.knime.core.node.workflow.NodeContextDomestique;
 import org.knime.core.util.GUIDeadlockDetector;
 import org.knime.core.util.MutableBoolean;
 import org.knime.product.ProductPlugin;
@@ -160,6 +161,8 @@ public class KNIMEApplication implements IApplication {
             return EXIT_RELAUNCH.equals(Integer.getInteger(PROP_EXIT_CODE)) ? EXIT_RELAUNCH
                     : EXIT_RESTART;
         } finally {
+            NodeContextDomestique.applicationStartupIsAbleToUseNodeLogger();
+
             if (display != null) {
                 try {
                     display.dispose();
@@ -225,6 +228,9 @@ public class KNIMEApplication implements IApplication {
         }
 
         // -data "/valid/path", workspace already set
+        // if it is already set accidentally because of a situation involving NodeLogger as described in
+        //      https://knime-com.atlassian.net/browse/AP-12159 we are out of luck anyway, because
+        //      an instance of BasicLocation can not have its location re-set.
         if (instanceLoc.isSet()) {
             // make sure the meta data version is compatible (or the user has
             // chosen to overwrite it).

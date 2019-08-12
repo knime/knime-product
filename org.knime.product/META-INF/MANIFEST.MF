@@ -50,6 +50,6 @@ Require-Bundle: org.apache.xerces;bundle-version="[2.9.0,2.10.0)",
   org.apache.commons.compress;bundle-version="[1.5.0,2.0.0)",
   org.apache.commons.lang3;bundle-version="[3.2.1,4.0.0)",
   org.apache.commons.collections;bundle-version="[3.2.2,4.0.0)"
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
 Eclipse-BundleShape: dir

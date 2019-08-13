@@ -2,7 +2,7 @@
 <feature
       id="org.knime.product.desktop"
       label="KNIME Analytics Platform"
-      version="4.0.0.qualifier"
+      version="4.0.1.qualifier"
       provider-name="KNIME AG, Zurich, Switzerland">
 
    <description>
@@ -738,7 +738,7 @@ propagated with or for interoperation with KNIME.
    <includes
          id="org.knime.features.ensembles"
          version="0.0.0"/>
-         
+
    <includes
          id="org.knime.features.database"
          version="0.0.0"/>

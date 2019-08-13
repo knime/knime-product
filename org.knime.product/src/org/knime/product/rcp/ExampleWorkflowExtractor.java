@@ -122,7 +122,6 @@ class ExampleWorkflowExtractor implements Runnable {
                                     @Override
                                     public void run() {
                                         viewer.refresh();
-                                        viewer.expandAll();
                                     }
                                 });
                             }

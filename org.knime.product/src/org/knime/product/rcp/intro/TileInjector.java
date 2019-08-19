@@ -78,7 +78,7 @@ class TileInjector extends AbstractInjector {
     private static final String TITLE_FIRST = "Welcome";
     private static final String TITLE = "Welcome back";
     private static final String SUBTITLE_FIRST = "Looks like you're using KNIME for the first time...";
-    private static final String SUBTITLE = "Be part of a global community of KNIME users";
+    private static final String SUBTITLE = "Pick up where you left off";
 
     protected TileInjector(final File templateFile, final ReentrantLock introFileLock,
         final IEclipsePreferences preferences, final boolean isFreshWorkspace,

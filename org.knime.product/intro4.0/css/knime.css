@@ -404,7 +404,27 @@ h2#welcome-sub {
     color: #3E3A39;
 }
 
-.carousel-tile article > div > img {
+.placeholder {
+	background-color: #EFF1F2;
+}
+
+.placeholder {
+	background-size: 100% 500px;
+	background-repeat: no-repeat;
+	background-image: linear-gradient(to right, rgba(239, 241, 242, 1) 0%,
+		rgba(239, 241, 242, 1) 6px, rgba(247, 249, 250, 1) 46px,
+		rgba(239, 241, 242, 1) 86px, rgba(239, 241, 242, 1) 100%);
+    background-position: -60px 0px;
+	animation: loading 2s linear 1s infinite;
+}
+
+@keyframes loading {
+	0% {background-position: -90px 0px;}
+	100% {background-position: 500px 0px;}
+}
+
+.carousel-tile article > div > img,
+.carousel-tile article > div > div.image-placeholder {
 	max-width: 100%;
     display: block;
     margin: 0 auto;
@@ -422,10 +442,29 @@ h2#welcome-sub {
     }
 }
 
-.carousel-tile article > div > div {
+.carousel-tile article > div > div.image-placeholder {
+	width: calc(100% - 10px);
+	height: 160px;
+	margin: 5px auto;
+}
+
+.carousel-tile article > div > div.content {
 	position: absolute;
     bottom: 0;
     padding: 20px;
+}
+
+.carousel-tile article .title-placeholder {
+	height: 18px;
+	margin-bottom: 0.5em;
+}
+
+.carousel-tile article .title-placeholder.line1 {
+	width: 165px;
+}
+
+.carousel-tile article .title-placeholder.line2 {
+    width: 150px;
 }
 
 .carousel-tile article p.tile-title {
@@ -478,10 +517,9 @@ h2#welcome-sub {
     width: 100%;
 }
 
-.button-primary {
-	color: #3E3A39;
-    background-color: #FFD800;
-    display: inline-block;
+.carousel-tile .button-placeholder,
+.carousel-tile .button-primary {
+	display: inline-block;
     text-align: left;
     font-weight: 500;
     font-size: 13px;
@@ -491,6 +529,21 @@ h2#welcome-sub {
     margin-bottom: 0px;
     border: 0;
     text-decoration: none;
+}
+
+.carousel-tile .button-placeholder {
+	border: thin solid #EFF1F2;
+	cursor: pointer;
+}
+
+.carousel-tile .button-placeholder .button-text-placeholder {
+	width: 90px;
+	height: 13px;
+}
+
+.button-primary {
+	color: #3E3A39;
+    background-color: #FFD800;
 }
 
 .button-primary:hover,

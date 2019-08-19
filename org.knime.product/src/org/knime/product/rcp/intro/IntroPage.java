@@ -134,7 +134,7 @@ import org.xml.sax.SAXException;
 @SuppressWarnings("restriction")
 public class IntroPage implements LocationListener {
 
-    static final boolean USE_INTRO_PAGE_4_0 = !Boolean.getBoolean("knime.intro.legacy");
+    static final boolean MOCK_INTRO_PAGE = !Boolean.getBoolean("knime.intro.mock");
 
     private static final NodeLogger LOGGER = NodeLogger.getLogger(IntroPage.class);
 
@@ -182,16 +182,16 @@ public class IntroPage implements LocationListener {
             }
 
             ReentrantLock introFileLock = new ReentrantLock();
-            String introFile = USE_INTRO_PAGE_4_0 ? "intro4.0/intro.xhtml" : "intro/intro.xhtml";
+            String introFile = "intro4.0/intro.xhtml";
             m_introFile = copyTemplate(introFile);
             Map<String, String> customizationInfo = getBrandingInfo();
 
-            if (USE_INTRO_PAGE_4_0) {
+            /*if (USE_INTRO_PAGE_4_0) {*/
                 new TileInjector(m_introFile, introFileLock, m_prefs, m_freshWorkspace, m_parserFactory, m_xpathFactory,
                 m_transformerFactory).run();
                 KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TileUpdateMessageInjector(m_introFile, introFileLock,
                     m_prefs, m_freshWorkspace, m_parserFactory, m_xpathFactory, m_transformerFactory));
-            }
+            /*}
             else {
                 new MRUInjector(m_introFile, introFileLock, m_prefs, m_freshWorkspace, m_parserFactory, m_xpathFactory,
                 m_transformerFactory).run();
@@ -205,7 +205,7 @@ public class IntroPage implements LocationListener {
                         .submit(new CustomizationInjector(m_introFile, introFileLock, m_prefs, m_freshWorkspace,
                             m_parserFactory, m_xpathFactory, m_transformerFactory, customizationInfo));
                 }
-            }
+            }*/
 
             // query tips and tricks still until instrumentation is switched to a different url
             KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TipsAndNewsInjector(m_introFile, introFileLock, m_prefs,

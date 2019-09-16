@@ -1,0 +1,6 @@
+{
+    "tile-title": "Two columns from the same source",
+    "tile-image": "tiles/tipsAndTricks/same-source.svg",
+    "tile-text": "Use the Column Merger node to combine two columns into one by replacing missing values.",
+    "tile-tag": "Tips & Tricks"
+}

@@ -1,0 +1,6 @@
+{
+    "tile-title": "Hidden Variable Ports",
+    "tile-image": "tiles/tipsAndTricks/hidden-variable-ports.svg",
+    "tile-text": "Each node has an input and an output port for flow variables. Right-click the node and select \"Show Flow Variable Ports\" to display them.",
+    "tile-tag": "Tips & Tricks"
+}

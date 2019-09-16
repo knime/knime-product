@@ -1,0 +1,6 @@
+{
+    "tile-title": "Filtering by Date and Time",
+    "tile-image": "tiles/tipsAndTricks/datetime.svg",
+    "tile-text": "Use the Date and Time Based Row Filter node to filter between dates or times.",
+    "tile-tag": "Tips & Tricks"
+}

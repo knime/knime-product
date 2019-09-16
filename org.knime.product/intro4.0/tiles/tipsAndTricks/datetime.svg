@@ -1,0 +1,18 @@
+<svg width="223" height="146" viewBox="0 0 223 146" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="2" y="15" width="141" height="103" fill="white"/>
+<rect x="14.9219" y="50" width="23.8675" height="24" fill="#3E3A39"/>
+<rect x="44.7568" y="50" width="23.8675" height="24" fill="#3E3A39"/>
+<rect x="74.5908" y="50" width="23.8675" height="24" fill="#3E3A39"/>
+<rect x="104.426" y="50" width="23.8675" height="24" fill="#3E3A39"/>
+<rect x="14.9219" y="80" width="23.8675" height="24" fill="#3E3A39"/>
+<rect x="44.7568" y="80" width="23.8675" height="24" fill="#3E3A39"/>
+<rect x="74.5908" y="80" width="23.8675" height="24" fill="#FFEB74"/>
+<rect x="104.426" y="80" width="23.8675" height="24" fill="#FFD800"/>
+<rect x="42" y="1" width="2" height="27" stroke="#AAAAAA" stroke-width="2"/>
+<rect x="102" y="1" width="2" height="27" stroke="#AAAAAA" stroke-width="2"/>
+<line x1="14.9219" y1="39" x2="128.292" y2="39" stroke="#AAAAAA" stroke-width="4"/>
+<path d="M170 144C198.167 144 221 121.167 221 93C221 64.8335 198.167 42 170 42C141.833 42 119 64.8335 119 93C119 121.167 141.833 144 170 144Z" fill="white" stroke="#AAAAAA" stroke-width="4" stroke-linejoin="round"/>
+<path d="M196.162 112.259L170 93V60.4008" fill="white"/>
+<path d="M196.162 112.259L170 93V60.4008" stroke="#AAAAAA" stroke-width="4" stroke-linejoin="round"/>
+<path d="M143 39V15H2V118H116" stroke="#AAAAAA" stroke-width="4"/>
+</svg>

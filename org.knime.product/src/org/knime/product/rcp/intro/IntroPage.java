@@ -102,6 +102,7 @@ import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.internal.browser.SystemBrowserInstance;
 import org.knime.core.node.KNIMEConstants;
 import org.knime.core.node.NodeLogger;
+import org.knime.core.util.EclipseUtil;
 import org.knime.core.util.FileUtil;
 import org.knime.product.customizations.ICustomizationService;
 import org.knime.workbench.editor2.WorkflowEditor;
@@ -134,11 +135,12 @@ import org.xml.sax.SAXException;
 @SuppressWarnings("restriction")
 public class IntroPage implements LocationListener {
 
-    static final boolean MOCK_INTRO_PAGE = !Boolean.getBoolean("knime.intro.mock");
+    static final boolean MOCK_INTRO_PAGE = Boolean.getBoolean("knime.intro.mock");
+    static final boolean DEBUG = EclipseUtil.isRunInDebug();
 
     private static final NodeLogger LOGGER = NodeLogger.getLogger(IntroPage.class);
-
     private static final String BROWSER_ID = "org.knime.intro.page";
+
 
     /**
      * Singleton instance.
@@ -146,14 +148,11 @@ public class IntroPage implements LocationListener {
     public static final IntroPage INSTANCE = new IntroPage();
 
     private boolean m_freshWorkspace;
-
     private XPathFactory m_xpathFactory;
-
     private DocumentBuilderFactory m_parserFactory;
-
     private TransformerFactory m_transformerFactory;
-
     private File m_introFile;
+    private final ReentrantLock m_lock;
 
     private final IEclipsePreferences m_prefs =
         InstanceScope.INSTANCE.getNode(FrameworkUtil.getBundle(getClass()).getSymbolicName());
@@ -168,49 +167,38 @@ public class IntroPage implements LocationListener {
         // in fresh workspaces, workbench.xmi does not exist yet
         m_freshWorkspace = !Files.exists(getWorkbenchStateFile());
 
+        // workaround for a bug in XPathFinderFactory on MacOS X
+        final ClassLoader previousClassLoader = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
         try {
-            // workaround for a bug in XPathFinderFactory on MacOS X
-            final ClassLoader previousClassLoader = Thread.currentThread().getContextClassLoader();
-            Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
-            try {
-                m_xpathFactory = XPathFactory.newInstance();
-                m_parserFactory = DocumentBuilderFactory.newInstance();
-                m_parserFactory.setValidating(false);
-                m_transformerFactory = TransformerFactory.newInstance();
-            } finally {
-                Thread.currentThread().setContextClassLoader(previousClassLoader);
-            }
+            m_xpathFactory = XPathFactory.newInstance();
+            m_parserFactory = DocumentBuilderFactory.newInstance();
+            m_parserFactory.setValidating(false);
+            m_transformerFactory = TransformerFactory.newInstance();
+        } finally {
+            Thread.currentThread().setContextClassLoader(previousClassLoader);
+        }
+        m_lock = new ReentrantLock();
+        injectTiles(false);
+    }
 
-            ReentrantLock introFileLock = new ReentrantLock();
+    private void injectTiles(final boolean refresh) {
+        try {
             String introFile = "intro4.0/intro.xhtml";
-            m_introFile = copyTemplate(introFile);
+            m_introFile = copyTemplate(introFile, refresh);
             Map<String, String> customizationInfo = getBrandingInfo();
 
-            /*if (USE_INTRO_PAGE_4_0) {*/
-                new TileInjector(m_introFile, introFileLock, m_prefs, m_freshWorkspace, m_parserFactory, m_xpathFactory,
+            new BaseInjector(m_introFile, m_lock, m_prefs, m_freshWorkspace, m_parserFactory, m_xpathFactory,
                 m_transformerFactory).run();
-                KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TileUpdateMessageInjector(m_introFile, introFileLock,
-                    m_prefs, m_freshWorkspace, m_parserFactory, m_xpathFactory, m_transformerFactory));
-            /*}
-            else {
-                new MRUInjector(m_introFile, introFileLock, m_prefs, m_freshWorkspace, m_parserFactory, m_xpathFactory,
-                m_transformerFactory).run();
-                KNIMEConstants.GLOBAL_THREAD_POOL.submit(new BugfixMessageInjector(m_introFile, introFileLock, m_prefs,
-                    m_freshWorkspace, m_parserFactory, m_xpathFactory, m_transformerFactory));
-                KNIMEConstants.GLOBAL_THREAD_POOL.submit(new NewReleaseMessageInjector(m_introFile, introFileLock,
-                    m_prefs, m_freshWorkspace, m_parserFactory, m_xpathFactory, m_transformerFactory));
 
-                if (!customizationInfo.isEmpty()) {
-                    KNIMEConstants.GLOBAL_THREAD_POOL
-                        .submit(new CustomizationInjector(m_introFile, introFileLock, m_prefs, m_freshWorkspace,
-                            m_parserFactory, m_xpathFactory, m_transformerFactory, customizationInfo));
-                }
-            }*/
+            KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TileInjector(m_introFile, m_lock,
+                m_prefs, m_freshWorkspace, m_parserFactory, m_xpathFactory, m_transformerFactory));
+            KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TileUpdateMessageInjector(m_introFile, m_lock,
+                m_prefs, m_freshWorkspace, m_parserFactory, m_xpathFactory, m_transformerFactory));
 
             // query tips and tricks still until instrumentation is switched to a different url
-            KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TipsAndNewsInjector(m_introFile, introFileLock, m_prefs,
+            KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TipsAndNewsInjector(m_introFile, m_lock, m_prefs,
                 m_freshWorkspace, m_parserFactory, m_xpathFactory, m_transformerFactory, customizationInfo));
-
         } catch (IOException | ParserConfigurationException | SAXException | XPathExpressionException
                 | TransformerFactoryConfigurationError | TransformerException ex) {
             LOGGER.error("Could not copy intro pages: " + ex.getMessage(), ex);
@@ -248,9 +236,13 @@ public class IntroPage implements LocationListener {
      * @param templateFile the template file that should be copied
      * @return the modified temporary file
      */
-    private File copyTemplate(final String templateFile) throws IOException, ParserConfigurationException, SAXException,
-        XPathExpressionException, TransformerFactoryConfigurationError, TransformerException {
-        File tempTemplate = FileUtil.createTempFile("intro", ".html", true);
+    private File copyTemplate(final String templateFile, final boolean replaceExisting)
+        throws IOException, ParserConfigurationException, SAXException, XPathExpressionException,
+        TransformerFactoryConfigurationError, TransformerException {
+        File tempTemplate = m_introFile;
+        if (!replaceExisting) {
+            tempTemplate = FileUtil.createTempFile("intro", ".html", true);
+        }
         Bundle myBundle = FrameworkUtil.getBundle(getClass());
         URL introUrl = myBundle.getEntry(templateFile);
         try (InputStream is = introUrl.openStream()) {
@@ -270,6 +262,9 @@ public class IntroPage implements LocationListener {
                     showMissingBrowserWarning(browser);
                 } else {
                     browser.openURL(m_introFile.toURI().toURL());
+                    if (DEBUG) {
+                        injectTiles(true);
+                    }
                 }
             } catch (PartInitException ex) {
                 LOGGER.error("Could not open web browser with first intro page: " + ex.getMessage(), ex);

@@ -49,7 +49,6 @@
 package org.knime.product.rcp.intro;
 
 import java.io.File;
-import java.net.URL;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -59,26 +58,19 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
-import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 /**
  *
  * @author Christian Albrecht, KNIME GmbH, Konstanz, Germany
+ * @since 4.0
  */
 class TileInjector extends AbstractInjector {
 
     private static final String EXAMPLE_WORKFLOW_URI =
             "knime://LOCAL/Example%20Workflows/Basic%20Examples/Visual%20Analysis%20of%20Sales%20Data/workflow.knime";
-
-    private static final String TITLE_FIRST = "Welcome";
-    private static final String TITLE = "Welcome back";
-    private static final String SUBTITLE_FIRST = "Looks like you're using KNIME for the first time...";
-    private static final String SUBTITLE = "Pick up where you left off";
 
     protected TileInjector(final File templateFile, final ReentrantLock introFileLock,
         final IEclipsePreferences preferences, final boolean isFreshWorkspace,
@@ -93,19 +85,10 @@ class TileInjector extends AbstractInjector {
      */
     @Override
     protected void injectData(final Document doc, final XPath xpath) throws Exception {
-        Bundle myBundle = FrameworkUtil.getBundle(getClass());
-        URL baseUrl = FileLocator.toFileURL(myBundle.getEntry("/intro4.0"));
 
-        Element base = (Element)xpath.evaluate("/html/head/base", doc.getDocumentElement(), XPathConstants.NODE);
-        base.setAttribute("href", baseUrl.toExternalForm());
-
-        Element title =
-            (Element)xpath.evaluate("//h1[@id='welcome-knime']", doc.getDocumentElement(), XPathConstants.NODE);
-        Element subtitle =
-            (Element)xpath.evaluate("//h2[@id='welcome-sub']", doc.getDocumentElement(), XPathConstants.NODE);
-
-        title.setTextContent(m_isFreshWorkspace ? TITLE_FIRST : TITLE);
-        subtitle.setTextContent(m_isFreshWorkspace ? SUBTITLE_FIRST : SUBTITLE);
+        if (IntroPage.MOCK_INTRO_PAGE) {
+            Thread.sleep(3000);
+        }
 
         Element tileContainer =
             (Element)xpath.evaluate("//div[@id='carousel-content']", doc.getDocumentElement(), XPathConstants.NODE);

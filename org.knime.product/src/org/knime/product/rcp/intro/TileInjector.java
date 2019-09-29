@@ -87,7 +87,7 @@ class TileInjector extends AbstractInjector {
     protected void injectData(final Document doc, final XPath xpath) throws Exception {
 
         if (IntroPage.MOCK_INTRO_PAGE) {
-            Thread.sleep(3000);
+            Thread.sleep(5000);
         }
 
         Element tileContainer =
@@ -114,41 +114,41 @@ class TileInjector extends AbstractInjector {
     }
 
     private static Element createOpenExampleWorkflowTile(final Document doc) {
-        return createTile(doc, "img/workflow.svg", "Get started with this example",
+        return createTile(doc, "img/workflow.svg", "Example", "Get started with this example", "",
             "intro://openworkflow/" + EXAMPLE_WORKFLOW_URI, "Open workflow");
     }
 
     private static Element createHubTile(final Document doc) {
-        return createTile(doc, "img/screen-perspective-hub.jpg", "Looking for more examples? Visit the KNIME Hub",
+        return createTile(doc, "img/screen-perspective-hub.jpg", "Hub", "Looking for more examples? Visit the KNIME Hub", "",
             "https://hub.knime.com?src=knimeapp", "KNIME Hub");
     }
 
     private static Element createIntroMailTile(final Document doc, final XPath xpath) throws XPathExpressionException {
-        return createTitleTile(doc, xpath, "img/mail.svg", "Sign up for introductory emails",
+        return createTitleTile(doc, xpath, "img/mail.svg", "Getting started", "Sign up for introductory emails", "",
             "These messages will get you up and running as quickly as possible.",
             "https://www.knime.com/form/help-getting-started?src=knimeapp", "Sign up");
     }
 
     private static Element createRegisterHubTile(final Document doc) {
-        return createTile(doc, "img/hub-connect.png", "Share your workflows and components on KNIME Hub",
+        return createTile(doc, "img/hub-connect.png", "Hub", "Share your workflows and components on KNIME Hub", "You are now able to share your workflow on our newly integrated hub platform",
             "https://hub.knime.com/site/about?src=knimeapp", "Learn more");
     }
 
     private static Element createCoursesTile(final Document doc) {
-        return createTile(doc, "img/courses.svg", "KNIME Courses: learn all about Big Data, Text Mining and more",
+        return createTile(doc, "img/courses.svg", "Courses","KNIME Courses: learn all about Big Data, Text Mining and more", "",
             "https://www.knime.com/courses?src=knimeapp", "Explore KNIME Courses");
     }
 
     private static Element createForumTile(final Document doc) {
-        return createTile(doc, "img/pic-community.jpg", "Questions? Ask the community",
+        return createTile(doc, "img/pic-community.jpg","Community" ,"Questions? Ask the community", "",
             "https://forum.knime.com?src=knimeapp", "Visit Forum");
     }
 
-    static Element createTitleTile(final Document doc, final XPath xpath, final String imageLocation,
+    static Element createTitleTile(final Document doc, final XPath xpath, final String imageLocation, final String tileText, final String tileSubText,
         final String titleText, final String contentText, final String buttonAction, final String buttonText)
         throws XPathExpressionException {
 
-        Element tile = TileInjector.createTile(doc, imageLocation, titleText, buttonAction, buttonText);
+        Element tile = TileInjector.createTile(doc, imageLocation, tileText, titleText, tileSubText, buttonAction, buttonText);
         tile.setAttribute("class", tile.getAttribute("class") + " title-tile");
 
         // move icon into title tag
@@ -171,7 +171,52 @@ class TileInjector extends AbstractInjector {
         return tile;
     }
 
-    static Element createTile(final Document doc, final String imageLocation, final String titleText,
+    static Element createUpdateBanner(final Document doc, final String imageLocation,
+        final String titleText, final String buttonAction, final String buttonText)
+        throws XPathExpressionException {
+
+        Element updateContainer = doc.createElement("div");
+        updateContainer.setAttribute("id", "update-container");
+
+        Element updateContent = doc.createElement("div");
+        updateContent.setAttribute("id", "update-content");
+        updateContent.setAttribute("class", "inner-content");
+        updateContainer.appendChild(updateContent);
+
+        Element carouselLength = doc.createElement("div");
+        carouselLength.setAttribute("id", "carousel-length");
+        carouselLength.setAttribute("class", "carousel-length");
+        updateContent.appendChild(carouselLength);
+
+        Element updateBannerDiv = doc.createElement("div");
+        updateBannerDiv.setAttribute("id", "updateBanner");
+        updateBannerDiv.setAttribute("class", "update-tile");
+        carouselLength.appendChild(updateBannerDiv);
+
+        Element tileImage = doc.createElement("img");
+        tileImage.setAttribute("src", imageLocation);
+        updateBannerDiv.appendChild(tileImage);
+
+        // add tile text
+        Element text = doc.createElement("p");
+        text.setAttribute("class", "tile-text");
+        text.setTextContent(titleText);
+        updateBannerDiv.appendChild(text);
+
+        Element buttonDiv = doc.createElement("div");
+        buttonDiv.setAttribute("class", "button-div");
+        updateBannerDiv.appendChild(buttonDiv);
+
+        Element tileButton = doc.createElement("a");
+        tileButton.setAttribute("class", "button-primary");
+        tileButton.setAttribute("href", buttonAction);
+        tileButton.setTextContent(buttonText);
+        buttonDiv.appendChild(tileButton);
+
+        return updateContainer;
+    }
+
+    static Element createTile(final Document doc, final String imageLocation, final String tagText, final String titleText, final String subTitleText,
         final String buttonAction, final String buttonText) {
         Element tile = doc.createElement("div");
         tile.setAttribute("class", "carousel-tile");
@@ -186,18 +231,37 @@ class TileInjector extends AbstractInjector {
         tileImage.setAttribute("src", imageLocation);
         lightDiv.appendChild(tileImage);
         Element contentDiv = doc.createElement("div");
+        contentDiv.setAttribute("class", "content-div");
         lightDiv.appendChild(contentDiv);
+
+        Element tileTagContainer = doc.createElement("div");
+        tileTagContainer.setAttribute("class", "tile-tag-container");
+        contentDiv.appendChild(tileTagContainer);
+
+        Element tileTag = doc.createElement("p");
+        tileTag.setAttribute("class", "tile-tag");
+        tileTag.setTextContent(tagText);
+        tileTagContainer.appendChild(tileTag);
 
         Element tileTitle = doc.createElement("p");
         tileTitle.setAttribute("class", "tile-title");
         tileTitle.setTextContent(titleText);
         contentDiv.appendChild(tileTitle);
 
+        Element tileSubTitle = doc.createElement("p");
+        tileSubTitle.setAttribute("class", "tile-sub-title");
+        tileSubTitle.setTextContent(subTitleText);
+        contentDiv.appendChild(tileSubTitle);
+
+        Element buttonDiv = doc.createElement("div");
+        buttonDiv.setAttribute("class", "button-div");
+        lightDiv.appendChild(buttonDiv);
+
         Element tileButton = doc.createElement("a");
         tileButton.setAttribute("class", "button-primary");
         tileButton.setAttribute("href", buttonAction);
         tileButton.setTextContent(buttonText);
-        contentDiv.appendChild(tileButton);
+        buttonDiv.appendChild(tileButton);
 
         return tile;
     }

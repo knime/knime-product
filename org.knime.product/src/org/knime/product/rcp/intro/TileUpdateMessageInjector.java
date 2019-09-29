@@ -113,19 +113,17 @@ class TileUpdateMessageInjector extends AbstractInjector {
         String icon = updatePossible ? "img/update.svg" : "img/arrow-download.svg";
         String action = updatePossible ? "intro://invokeUpdate/" : "https://www.knime.com/downloads?src=knimeapp";
         String buttonText = updatePossible ? "Update now" : "Download now";
-        Element updateTile = TileInjector.createTitleTile(doc, xpath, icon, title, tileContent, action, buttonText);
-        updateTile.setAttribute("class", updateTile.getAttribute("class") + " update-tile");
+        Element updateTile = TileInjector.createUpdateBanner(doc, icon, title, action, buttonText);
 
         // add update tile as new first tile, remove third tile
-        Element tileContainer =
-            (Element)xpath.evaluate("//div[@id='carousel-content']", doc.getDocumentElement(), XPathConstants.NODE);
-        Element firstTile =
-            (Element)xpath.evaluate("//div[@class='carousel-tile'][1]", tileContainer, XPathConstants.NODE);
-        Element thirdTile =
-            (Element)xpath.evaluate("//div[@class='carousel-tile'][3]", tileContainer, XPathConstants.NODE);
-        // TODO: this makes the page flicker a bit and should probably be handled via visibility flags
-        tileContainer.removeChild(thirdTile);
-        tileContainer.insertBefore(updateTile, firstTile);
+        Element contentContainer =
+                (Element)xpath.evaluate("//div[@id='content-container']", doc.getDocumentElement(), XPathConstants.NODE);
+        Element welcomePageWrapper =
+                (Element)xpath.evaluate("//div[@id='welcome-page-wrapper']", doc.getDocumentElement(), XPathConstants.NODE);
+        Element titleWrapper =
+                (Element)xpath.evaluate("//div[@id='title-wrapper']", doc.getDocumentElement(), XPathConstants.NODE);
+        titleWrapper.setAttribute("style", "background: #FFF");
+        welcomePageWrapper.insertBefore(updateTile, contentContainer);
     }
 
     /**

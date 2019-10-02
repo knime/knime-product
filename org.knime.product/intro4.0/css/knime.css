@@ -634,12 +634,31 @@ h2#welcome-sub {
 	#hub-search-bar input {
 		text-overflow: ellipsis;
 	}
+	.carousel-tile > article > div > div > p.tile-sub-title {
+		-webkit-line-clamp: 3;
+	    display: -webkit-box;
+	    overflow: hidden;
+	    -webkit-box-orient: vertical;
+	}
+}
+
+@media only screen and (min-width: 820px) and (max-width: 930px) {
+	.carousel-tile > article > div > div > p.tile-sub-title {
+	    -webkit-line-clamp: 2 !important;
+	    display: -webkit-box;
+	    overflow: hidden;
+	    -webkit-box-orient: vertical;
+	}
 }
 
 @media only screen and (max-width: 930px) {
 	#welcome-page-wrapper > div {
 		padding-left: 1em;
 	}
+	.carousel-tile {
+		margin: 0 16px 0 0;
+	    width: calc(33% - 12px);
+    }
 
 	.carousel-tile article > div > img {
 	   max-height: 115px;
@@ -678,11 +697,10 @@ h2#welcome-sub {
 	}
 
 	.carousel-tile > article > div > div > p.tile-sub-title {
-		visibility: hidden;
-	}
-
-	.carousel-tile article .title-placeholder.line2 {
-		visibility: hidden;
+	    -webkit-line-clamp: 1;
+	    display: -webkit-box;
+	    overflow: hidden;
+	    -webkit-box-orient: vertical;
 	}
 
 	.carousel-tile > article > div > div > div > p.tile-tag {
@@ -717,6 +735,9 @@ h2#welcome-sub {
 
 	#update-container > div > div > div {
 		height: 100%;
+	}
+	.carousel-tile article > div > div.image-placeholder {
+		height: 180px;
 	}
 }
 
@@ -793,11 +814,10 @@ h2#welcome-sub {
 	}
 
 	.carousel-tile > article > div > div > p.tile-sub-title {
-		visibility: hidden;
-	}
-
-	.carousel-tile article .title-placeholder.line2 {
-		visibility: hidden;
+		-webkit-line-clamp: 2;
+	    display: -webkit-box;
+	    overflow: hidden;
+	    -webkit-box-orient: vertical;
 	}
 
 	#update-container > div > div > div > div > a.button-primary {
@@ -834,8 +854,27 @@ h2#welcome-sub {
 	#update-container > div > div > div {
 		height: 100%;
 	}
+	.carousel-tile article > div > div.image-placeholder {
+		max-height: 120px;
+	}
 }
 
+@media only screen and (min-width: 610px) and (max-width: 710px) {
+	.carousel-tile > article > div > div > p.tile-sub-title {
+		-webkit-line-clamp: 1;
+	    display: -webkit-box;
+	    overflow: hidden;
+	    -webkit-box-orient: vertical;
+	}
+	.carousel-tile > article > div > div > div > p.tile-tag {
+		margin-block-end: 0px;
+    	margin-block-start: 0px;
+	}
+	.carousel-tile {
+	    width: calc(33% - 8px);
+	    margin: 0 8px 0 0;
+	}
+}
 @media only screen and (max-width: 610px) {
 	.carousel-tile article > div > img {
 	   max-height: 180px;
@@ -920,11 +959,10 @@ h2#welcome-sub {
 	   max-height: 140px;
 	}
 	.carousel-tile > article > div > div > p.tile-sub-title {
-		visibility: hidden;
-	}
-
-	.carousel-tile article .title-placeholder.line2 {
-		visibility: hidden;
+		-webkit-line-clamp: 2;
+	    display: -webkit-box;
+	    overflow: hidden;
+	    -webkit-box-orient: vertical;
 	}
 }
 

@@ -84,12 +84,17 @@ class TileInjector extends AbstractInjector {
      * {@inheritDoc}
      */
     @Override
-    protected void injectData(final Document doc, final XPath xpath) throws Exception {
-
+    protected void prepareData() throws Exception {
         if (IntroPage.MOCK_INTRO_PAGE) {
             Thread.sleep(5000);
         }
+    }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void injectData(final Document doc, final XPath xpath) throws Exception {
         Element tileContainer =
             (Element)xpath.evaluate("//div[@id='carousel-content']", doc.getDocumentElement(), XPathConstants.NODE);
         while (tileContainer.hasChildNodes()) {

@@ -88,10 +88,13 @@ class TileUpdateMessageInjector extends AbstractInjector {
     protected void prepareData() throws Exception {
         m_newReleases = UpdateDetector.checkForNewRelease();
         m_bugfixes = UpdateDetector.checkForBugfixes();
+        if (IntroPage.MOCK_INTRO_PAGE) {
+            Thread.sleep(2000);
+        }
     }
 
     private void injectReleaseTile(final Document doc, final XPath xpath, final boolean bugfix)
-        throws XPathExpressionException {
+        throws Exception {
         boolean updatePossible = true;
         String shortName = "";
         if (!bugfix) {

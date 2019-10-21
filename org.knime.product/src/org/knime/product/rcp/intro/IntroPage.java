@@ -191,10 +191,10 @@ public class IntroPage implements LocationListener {
             new BaseInjector(m_introFile, m_lock, m_prefs, m_freshWorkspace, m_parserFactory, m_xpathFactory,
                 m_transformerFactory).run();
 
-            KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TileInjector(m_introFile, m_lock,
-                m_prefs, m_freshWorkspace, m_parserFactory, m_xpathFactory, m_transformerFactory));
-            KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TileUpdateMessageInjector(m_introFile, m_lock,
-                m_prefs, m_freshWorkspace, m_parserFactory, m_xpathFactory, m_transformerFactory));
+            KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TileUpdater(m_introFile, m_lock,
+                m_prefs, m_freshWorkspace, m_transformerFactory));
+            KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TileUpdateMessageUpdater(m_introFile, m_lock,
+                m_prefs, m_freshWorkspace, m_transformerFactory));
 
             // query tips and tricks still until instrumentation is switched to a different url
             KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TipsAndNewsInjector(m_introFile, m_lock, m_prefs,

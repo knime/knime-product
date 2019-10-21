@@ -55,3 +55,4 @@ Require-Bundle: org.apache.xerces;bundle-version="[2.9.0,2.10.0)",
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
 Eclipse-BundleShape: dir
+Import-Package: org.json

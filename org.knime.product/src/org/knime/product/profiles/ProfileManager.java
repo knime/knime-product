@@ -58,6 +58,7 @@ import java.net.ProxySelector;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -297,8 +298,9 @@ public class ProfileManager {
             // compute list of profiles that are requested but not present locally yet
             List<String> newRequestedProfiles = new ArrayList<>(m_provider.getRequestedProfiles());
             if (Files.isDirectory(profileDir)) {
-                Files.newDirectoryStream(profileDir, p -> Files.isDirectory(p))
-                    .forEach(p -> newRequestedProfiles.remove(p.getFileName().toString()));
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(profileDir, p -> Files.isDirectory(p))) {
+                    stream.forEach(p -> newRequestedProfiles.remove(p.getFileName().toString()));
+                }
             }
 
             Files.createDirectories(stateDir);

@@ -55,11 +55,13 @@ import org.eclipse.equinox.internal.p2.ui.sdk.scheduler.AutomaticUpdateMessages;
 import org.eclipse.equinox.internal.p2.ui.sdk.scheduler.AutomaticUpdatePlugin;
 import org.eclipse.equinox.internal.p2.ui.sdk.scheduler.AutomaticUpdateScheduler;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.application.IWorkbenchConfigurer;
 import org.eclipse.ui.application.IWorkbenchWindowConfigurer;
 import org.eclipse.ui.application.WorkbenchAdvisor;
 import org.eclipse.ui.application.WorkbenchWindowAdvisor;
 import org.knime.core.node.KNIMEConstants;
+import org.knime.core.ui.util.SWTUtilities;
 import org.knime.core.util.EclipseUtil;
 import org.knime.product.rcp.intro.IntroPage;
 import org.osgi.framework.Bundle;
@@ -71,6 +73,7 @@ import org.osgi.service.prefs.Preferences;
  * @author Florian Georg, University of Konstanz
  * @author Thorsten Meinl, KNIME AG, Zurich, Switzerland
  */
+@SuppressWarnings("restriction") // internal SDK scheduler class usage.
 public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
 
     private KNIMEOpenDocumentEventProcessor m_openDocProcessor;
@@ -132,10 +135,9 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
         }
     }
 
-    @SuppressWarnings("restriction")
     private void changeDefaultPreferences() {
         // enable automatic check for updates every day at 11:00
-        Preferences node = DefaultScope.INSTANCE.getNode(AutomaticUpdatePlugin.PLUGIN_ID);
+        final Preferences node = DefaultScope.INSTANCE.getNode(AutomaticUpdatePlugin.PLUGIN_ID);
         node.putBoolean(org.eclipse.equinox.internal.p2.ui.sdk.scheduler.PreferenceConstants.PREF_AUTO_UPDATE_ENABLED,
             true);
         node.put(org.eclipse.equinox.internal.p2.ui.sdk.scheduler.PreferenceConstants.PREF_AUTO_UPDATE_SCHEDULE,
@@ -163,6 +165,8 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
         // if the Update Site is password protected
         IProxyService.class.getName();
         // showIntroPage();
+
+        SWTUtilities.markKNIMEShell();
     }
 
 

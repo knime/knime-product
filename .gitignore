@@ -1,6 +1,10 @@
 */bin/
 */target/
 */build/
+workspace/
 org.knime.core.pmml/src/.gitignore
 org.knime.core/src/.gitignore
 org.knime.workbench.repository/src/.gitignore
+*/**.flattened-pom.xml
+.flattened-pom.xml
+org.knime.product/knime-product.jar

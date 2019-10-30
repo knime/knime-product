@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.knime</groupId>
+    <artifactId>knime-product</artifactId>
+    <version>${revision}${changelist}</version>
+  </parent>
+  <artifactId>org.knime.desktop.product</artifactId>
+  <!-- <version>4.1.0-SNAPSHOT</version> -->
+  <packaging>eclipse-repository</packaging>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.eclipse.tycho</groupId>
+        <artifactId>tycho-p2-director-plugin</artifactId>
+        <configuration>
+          <formats>
+            <win32>zip</win32>
+            <linux>tar.gz</linux>
+            <macosx>tar.gz</macosx>
+          </formats>
+          <products>
+            <product>
+              <id>org.knime.desktop.product</id>
+              <rootFolders>
+                <macosx>KNIME.app</macosx>
+              </rootFolders>
+            </product>
+          </products>
+          <includeAllDependencies>true</includeAllDependencies>
+          <profileProperties>
+            <macosx-bundled>true</macosx-bundled>
+          </profileProperties>
+        </configuration>
+        <executions>
+          <execution>
+            <id>materialize-prodcuts</id>
+            <goals>
+              <goal>materialize-products</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>archive-prodcuts</id>
+            <goals>
+              <goal>archive-products</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
+

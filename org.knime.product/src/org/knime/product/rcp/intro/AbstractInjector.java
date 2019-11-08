@@ -52,9 +52,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.reflect.Field;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.concurrent.locks.ReentrantLock;
@@ -68,38 +65,21 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
-import org.eclipse.core.runtime.AssertionFailedException;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.IEditorInput;
-import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.IEditorReference;
-import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.internal.browser.BrowserViewer;
-import org.eclipse.ui.internal.browser.WebBrowserEditor;
-import org.eclipse.ui.internal.browser.WebBrowserEditorInput;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.util.FileUtil;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
 /**
  * Abstract base class for all injectors that modify the intro page.
  *
  * @author Thorsten Meinl, KNIME AG, Zurich, Switzerland
  */
-abstract class AbstractInjector implements Runnable {
-    private final File m_templateFile;
-
+abstract class AbstractInjector extends AbstractIntroPageModifier implements Runnable {
     private final DocumentBuilderFactory m_parserFactory;
 
     protected final XPathFactory m_xpathFactory;
@@ -127,7 +107,7 @@ abstract class AbstractInjector implements Runnable {
         final IEclipsePreferences preferences, final boolean isFreshWorkspace,
         final DocumentBuilderFactory parserFactory, final XPathFactory xpathFactory,
         final TransformerFactory transformerFactory) {
-        m_templateFile = templateFile;
+        super(templateFile);
         m_introFileLock = introFileLock;
         m_prefs = preferences;
         m_isFreshWorkspace = isFreshWorkspace;
@@ -147,10 +127,9 @@ abstract class AbstractInjector implements Runnable {
             try {
                 DocumentBuilder parser = m_parserFactory.newDocumentBuilder();
                 parser.setEntityResolver(EmptyDoctypeResolver.INSTANCE);
-                Document doc = parser.parse(m_templateFile);
+                Document doc = parser.parse(getIntroPageFile());
                 XPath xpath = m_xpathFactory.newXPath();
                 injectData(doc, xpath);
-                processIntroProperties(doc, xpath);
                 writeFile(doc);
                 refreshIntroEditor();
             } finally {
@@ -162,7 +141,7 @@ abstract class AbstractInjector implements Runnable {
     }
 
     private void refreshIntroEditor() {
-        final Browser browser = findIntroPageBrowser(m_templateFile);
+        final Browser browser = findIntroPageBrowser();
         if (browser != null) {
             Display.getDefault().asyncExec(new Runnable() {
                 @Override
@@ -193,34 +172,6 @@ abstract class AbstractInjector implements Runnable {
      */
     protected abstract void injectData(Document doc, XPath xpath) throws Exception;
 
-    /**
-     * Iterates over all checkbox elements in the intro page and looks up the corresponding preference keys. The div
-     * corresponding to the checkboxes/preference keys are then either show or hidden.
-     *
-     * @param xpath an XPath object for reuse
-     * @param doc the document
-     */
-    private void processIntroProperties(final Document doc, final XPath xpath) throws XPathExpressionException {
-        NodeList checkBoxes =
-            (NodeList)xpath.evaluate("//div[@id='properties']//input[@type='checkbox']", doc.getDocumentElement(),
-                XPathConstants.NODESET);
-        for (int i = 0; i < checkBoxes.getLength(); i++) {
-            Element cb = (Element)checkBoxes.item(i);
-            String name = cb.getAttribute("name");
-            String key = "org.knime.product.intro." + name;
-
-            Element div =
-                (Element)xpath.evaluate("//div[@id='" + name + "']", doc.getDocumentElement(), XPathConstants.NODE);
-            if (m_prefs.getBoolean(key, true)) {
-                cb.setAttribute("checked", "checked");
-                div.removeAttribute("style");
-            } else {
-                cb.removeAttribute("checked");
-                div.setAttribute("style", "display: none");
-            }
-        }
-    }
-
     private void writeFile(final Document doc) throws IOException, TransformerException {
         File temp = FileUtil.createTempFile("intro", ".html", true);
 
@@ -231,82 +182,6 @@ abstract class AbstractInjector implements Runnable {
             serializer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
             serializer.transform(new DOMSource(doc), new StreamResult(out));
         }
-        Files.move(temp.toPath(), m_templateFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-    }
-
-    /**
-     * Looks for the open intro page editor (and HTML editor) and returns the Browser instance. This (unfortunately)
-     * involves some heavy reflection stuff as there is no other way to attach a listener otherwise. If the intro page
-     * editor cannot be found then <code>null</code> is returned.
-     *
-     * @param introPageFile the temporary intro page file
-     * @return the browser instance showing the intro page or <code>null</code>
-     */
-    @SuppressWarnings("restriction")
-    static Browser findIntroPageBrowser(final File introPageFile) {
-        for (IWorkbenchWindow window : PlatformUI.getWorkbench().getWorkbenchWindows()) {
-            for (IWorkbenchPage page : window.getPages()) {
-                for (IEditorReference ref : page.getEditorReferences()) {
-                    try {
-                        if (isIntroPageEditor(ref, introPageFile)) {
-                            IEditorPart part = ref.getEditor(false);
-                            if (part instanceof WebBrowserEditor) {
-                                WebBrowserEditor editor = (WebBrowserEditor)part;
-
-                                Field webBrowser = editor.getClass().getDeclaredField("webBrowser");
-                                webBrowser.setAccessible(true);
-                                BrowserViewer viewer = (BrowserViewer)webBrowser.get(editor);
-
-                                Field browserField = viewer.getClass().getDeclaredField("browser");
-                                browserField.setAccessible(true);
-                                return (Browser)browserField.get(viewer);
-                            }
-                        }
-                    } catch (PartInitException ex) {
-                        NodeLogger.getLogger(AbstractInjector.class).error(
-                            "Could not open web browser with intro page: " + ex.getMessage(), ex);
-                    } catch (SecurityException | NoSuchFieldException | IllegalArgumentException
-                            | IllegalAccessException ex) {
-                        NodeLogger.getLogger(AbstractInjector.class).error(
-                            "Could not attach location listener to web browser: " + ex.getMessage(), ex);
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Returns whether the given editor is an intro editor. This is checked by looking the URL the editor displays.
-     *
-     * @param ref an editor reference
-     * @param introPageFile the temporary intro page file
-     * @return <code>true</code> if it is an intro page editor, <code>false</code> otherwise
-     * @throws PartInitException if there was an error restoring the editor input
-     */
-    @SuppressWarnings("restriction")
-    static boolean isIntroPageEditor(final IEditorReference ref, final File introPageFile) throws PartInitException {
-        if (introPageFile == null) {
-            return false;
-        }
-
-        try {
-            URL expectedURL = introPageFile.toURI().toURL();
-            IEditorInput input = ref.getEditorInput();
-            return (input instanceof WebBrowserEditorInput)
-                && ((WebBrowserEditorInput)input).getURL().getPath()
-                    .equals(expectedURL.getPath());
-        } catch (AssertionFailedException ex) {
-            // may happen if the editor "ref" points to a resource that doesn't exist any more
-            NodeLogger
-                .getLogger(AbstractInjector.class)
-                .error(
-                    "Could not get editor input, probably the resource was removed outside Eclipse: " + ex.getMessage(),
-                    ex);
-            return false;
-        } catch (MalformedURLException e) {
-            NodeLogger.getLogger(AbstractInjector.class).error("Invalid welcome page URL " + e.getMessage());
-            return false;
-        }
+        Files.move(temp.toPath(), getIntroPageFile().toPath(), StandardCopyOption.REPLACE_EXISTING);
     }
 }

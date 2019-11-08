@@ -141,7 +141,6 @@ public class IntroPage implements LocationListener {
     private static final NodeLogger LOGGER = NodeLogger.getLogger(IntroPage.class);
     private static final String BROWSER_ID = "org.knime.intro.page";
 
-
     /**
      * Singleton instance.
      */
@@ -188,17 +187,16 @@ public class IntroPage implements LocationListener {
             m_introFile = copyTemplate(introFile, refresh);
             Map<String, String> customizationInfo = getBrandingInfo();
 
-            new BaseInjector(m_introFile, m_lock, m_prefs, m_freshWorkspace, m_parserFactory, m_xpathFactory,
-                m_transformerFactory).run();
+            BaseInjector baseInjector = new BaseInjector(m_introFile, m_lock, m_prefs, m_freshWorkspace,
+                m_parserFactory, m_xpathFactory, m_transformerFactory);
+            baseInjector.run();
 
-            KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TileUpdater(m_introFile, m_lock,
-                m_prefs, m_freshWorkspace, m_transformerFactory));
-            KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TileUpdateMessageUpdater(m_introFile, m_lock,
-                m_prefs, m_freshWorkspace, m_transformerFactory));
+            KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TileUpdater(m_introFile, m_lock, m_freshWorkspace));
+            KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TileUpdateMessageUpdater(m_introFile, m_lock));
 
             // query tips and tricks still until instrumentation is switched to a different url
-            KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TipsAndNewsInjector(m_introFile, m_lock, m_prefs,
-                m_freshWorkspace, m_parserFactory, m_xpathFactory, m_transformerFactory, customizationInfo));
+            /* KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TipsAndNewsInjector(m_introFile, m_lock, m_prefs,
+                m_freshWorkspace, m_parserFactory, m_xpathFactory, m_transformerFactory, customizationInfo)); */
         } catch (IOException | ParserConfigurationException | SAXException | XPathExpressionException
                 | TransformerFactoryConfigurationError | TransformerException ex) {
             LOGGER.error("Could not copy intro pages: " + ex.getMessage(), ex);
@@ -259,7 +257,7 @@ public class IntroPage implements LocationListener {
             try {
                 IWebBrowser browser = PlatformUI.getWorkbench().getBrowserSupport().createBrowser(BROWSER_ID);
                 if (browser instanceof SystemBrowserInstance) {
-                    showMissingBrowserWarning(browser);
+                    showMissingBrowserWarning();
                 } else {
                     browser.openURL(m_introFile.toURI().toURL());
                     if (DEBUG) {
@@ -276,7 +274,7 @@ public class IntroPage implements LocationListener {
         attachLocationListener();
     }
 
-    private static void showMissingBrowserWarning(final IWebBrowser browser) {
+    private static void showMissingBrowserWarning() {
         IPersistentPreferenceStore prefStore =
             (IPersistentPreferenceStore)KNIMEUIPlugin.getDefault().getPreferenceStore();
         boolean omitWarnings = prefStore.getBoolean(PreferenceConstants.P_OMIT_MISSING_BROWSER_WARNING);
@@ -303,7 +301,7 @@ public class IntroPage implements LocationListener {
      * (unfortunately) involves some heavy reflection stuff as there is no other way to attach a listener otherwise.
      */
     private void attachLocationListener() {
-        Browser browser = AbstractInjector.findIntroPageBrowser(m_introFile);
+        Browser browser = AbstractIntroPageModifier.findIntroPageBrowser(m_introFile);
         if (browser != null) {
             browser.removeLocationListener(this);
             browser.addLocationListener(this);
@@ -459,7 +457,7 @@ public class IntroPage implements LocationListener {
         for (IEditorReference ref : PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
             .getEditorReferences()) {
             try {
-                if (AbstractInjector.isIntroPageEditor(ref, m_introFile)) {
+                if (AbstractIntroPageModifier.isIntroPageEditor(ref, m_introFile)) {
                     PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
                         .closeEditor(ref.getEditor(false), false);
                 }

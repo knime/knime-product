@@ -1,112 +1,121 @@
-var updateTile = function(data) {
-	var carousel = document.getElementById("carousel-content");
-	var tiles = carousel.childNodes;
-	
-	var imagePlaceholder = carousel.getElementsByClassName("image-placeholder");
-	for (var i = imagePlaceholder.length-1; i >= 0; i--) {
-		var contentDiv = document.getElementsByClassName("content");
-		var img = document.createElement("img");
-		img.src = data[i].imageLocation;
-		imagePlaceholder[i].parentElement.insertBefore(img, contentDiv[i]);
-		imagePlaceholder[i].remove();
-	}
-	
-	var carouselTags = carousel.getElementsByClassName("line0");
-	for (var i = carouselTags.length-1; i >= 0; i--) {
-		var tag = document.createElement("p");
-		tag.className = "tile-tag";
-		tag.innerHTML = data[i].tagText;
-		carouselTags[i].appendChild(tag);
-		carouselTags[i].className = "tile-tag-container";
-	}
-	
-	var carouselTitles = carousel.getElementsByClassName("line1");
-	for (var i = carouselTitles.length-1; i >= 0; i--) {
-		var title = document.createElement("p");
-		title.className = "tile-title";
-		title.innerHTML = data[i].titleText;
-		carouselTitles[i].parentElement.appendChild(title);
-		carouselTitles[i].remove();
-	}
-	
-	var carouselSubTitles = carousel.getElementsByClassName("line2");
-	for (var i = carouselSubTitles.length-1; i >= 0; i--) {
-		var subtitle = document.createElement("p");
-		subtitle.className = "tile-sub-title";
-		subtitle.innerHTML = data[i].subTitleText;
-		
-		var subtitleTooltip = document.createElement('span');
-		subtitleTooltip.className = 'tile-sub-title-tooltip';
-		subtitleTooltip.innerHTML = data[i].subTitleText;
-		subtitle.appendChild(subtitleTooltip);
-		
-		carouselSubTitles[i].parentElement.appendChild(subtitle);
-		carouselSubTitles[i].remove();
-	}
-	
-	var carouselButtons = carousel.getElementsByClassName("button-placeholder");
-	for (var i = carouselButtons.length-1; i >= 0; i--) {
-		var tag = document.createElement("a");
-		tag.className = "button-primary";
-		tag.href = data[i].buttonAction
-		tag.innerHTML = data[i].buttonText;
-		carouselButtons[i].appendChild(tag);
-		carouselButtons[i].className = "button-div";
-	}
-}
-var hideElement = function (id) {
-	document.getElementById(id).style.display = "none";
-}
+window.updateTile = function (data) {
+    var carousel = document.getElementById('carousel-content');
 
-var displayUpadteTile = function (data) {
-	var updateContainer = document.createElement("div");
-	updateContainer.id = 'update-container';
-	
-	var updateContent = document.createElement('div');
-	updateContent.id = 'update-content';
-	updateContent.className = 'inner-content';
-	updateContainer.appendChild(updateContent);
-	
-	var carouselLength = document.createElement('div');
-	carouselLength.id = 'carousel-length';
-	carouselLength.className = 'carousel-length';
-	updateContent.appendChild(carouselLength);
-	
-	var updateBannerDiv = document.createElement('div');
-	updateBannerDiv.id = 'updateBanner';
-	updateBannerDiv.className = 'update-tile';
-	carouselLength.appendChild(updateBannerDiv);
-	
-	var tileImage = document.createElement('img');
-	tileImage.src = data.icon;
-	updateBannerDiv.appendChild(tileImage);
-	
-	var tileText = document.createElement('p');
-	tileText.className = 'tile-text';
-	tileText.innerHTML = data.tileContent;
-	updateBannerDiv.appendChild(tileText);
-	
-	var updateText = document.createElement('p');
-	updateText.className = 'tile-text';
-	updateText.innerHTML = data.title;
-	updateBannerDiv.appendChild(updateText);
-	
-	var buttonDiv = document.createElement('div')
-	buttonDiv.className = 'button-div';
-	updateBannerDiv.appendChild(buttonDiv);
-	
-	var updateButton = document.createElement('a');
-	updateButton.className = 'button-primary';
-	updateButton.href = data.buttonAction;
-	updateButton.innerHTML = data.buttonText;
-	buttonDiv.appendChild(updateButton);
-	
-	var welcomePageWrapper = document.getElementById('welcome-page-wrapper');
-	var titleWrapper = document.getElementById('title-wrapper');
-	titleWrapper.setAttribute("style", "background: #FFF");
-	var contentContainer = document.getElementById('content-container');
-	welcomePageWrapper.insertBefore(updateContainer, contentContainer);
-}
+    var imagePlaceholder = carousel.getElementsByClassName('image-placeholder');
+    for (var placeholderIndex = imagePlaceholder.length - 1; placeholderIndex >= 0; placeholderIndex--) {
+        var contentDiv = document.getElementsByClassName('content');
+        var imageSrc = data[placeholderIndex]['tile-image'];
+        if (imageSrc) {
+            var img = document.createElement('img');
+            img.src = data[placeholderIndex]['tile-image'];
+            imagePlaceholder[placeholderIndex].parentElement.insertBefore(img, contentDiv[placeholderIndex]);
+        }
+        imagePlaceholder[placeholderIndex].remove();
+    }
+    
+    var carouselTags = carousel.getElementsByClassName('line0');
+    for (var tagIndex = carouselTags.length - 1; tagIndex >= 0; tagIndex--) {
+        var tileTag = document.createElement('p');
+        tileTag.className = 'tile-tag';
+        tileTag.innerHTML = data[tagIndex]['tile-tag'];
+        carouselTags[tagIndex].appendChild(tileTag);
+        carouselTags[tagIndex].className = 'tile-tag-container';
+    }
+
+    var carouselTitles = carousel.getElementsByClassName('line1');
+    for (var titleIndex = carouselTitles.length - 1; titleIndex >= 0; titleIndex--) {
+        var title = document.createElement('p');
+        title.className = 'tile-title';
+        title.innerHTML = data[titleIndex]['tile-title'];
+        carouselTitles[titleIndex].parentElement.appendChild(title);
+        carouselTitles[titleIndex].remove();
+    }
+
+    var carouselSubTitles = carousel.getElementsByClassName('line2');
+    for (var subTitleIndex = carouselSubTitles.length - 1; subTitleIndex >= 0; subTitleIndex--) {
+        var subtitle = document.createElement('p');
+        subtitle.className = 'tile-sub-title';
+        subtitle.innerHTML = data[subTitleIndex]['tile-text'];
+
+        var subtitleTooltip = document.createElement('span');
+        subtitleTooltip.className = 'tile-sub-title-tooltip';
+        subtitleTooltip.innerHTML = data[subTitleIndex]['tile-text'];
+        subtitle.appendChild(subtitleTooltip);
+
+        carouselSubTitles[subTitleIndex].parentElement.appendChild(subtitle);
+        carouselSubTitles[subTitleIndex].remove();
+    }
+
+    var carouselButtons = carousel.getElementsByClassName('button-placeholder');
+    for (var buttonIndex = carouselButtons.length - 1; buttonIndex >= 0; buttonIndex--) {
+        var buttonTag = document.createElement('a');
+        buttonTag.className = 'button-primary';
+        buttonTag.href = data[buttonIndex]['tile-link'];
+        buttonTag.innerHTML = data[buttonIndex]['tile-button-text'];
+        carouselButtons[buttonIndex].appendChild(buttonTag);
+        carouselButtons[buttonIndex].className = 'button-div';
+    }
+};
+window.hideElement = function (id) {
+    document.getElementById(id).style.display = 'none';
+};
+
+window.displayUpdateTile = function (data) {
+    var updateContainer = document.getElementById('update-container');
+    if (updateContainer) {
+        while (updateContainer.firstChild) {
+            updateContainer.removeChild(updateContainer.firstChild);
+        }
+    } else {
+        updateContainer = document.createElement('div');
+        updateContainer.id = 'update-container';
+    }
+
+    var updateContent = document.createElement('div');
+    updateContent.id = 'update-content';
+    updateContent.className = 'inner-content';
+    updateContainer.appendChild(updateContent);
+
+    var carouselLength = document.createElement('div');
+    carouselLength.id = 'carousel-length';
+    carouselLength.className = 'carousel-length';
+    updateContent.appendChild(carouselLength);
+
+    var updateBannerDiv = document.createElement('div');
+    updateBannerDiv.id = 'updateBanner';
+    updateBannerDiv.className = 'update-tile';
+    carouselLength.appendChild(updateBannerDiv);
+
+    var tileImage = document.createElement('img');
+    tileImage.src = data.icon;
+    updateBannerDiv.appendChild(tileImage);
+
+    var tileText = document.createElement('p');
+    tileText.className = 'tile-text';
+    tileText.innerHTML = data.tileContent;
+    updateBannerDiv.appendChild(tileText);
+
+    var updateText = document.createElement('p');
+    updateText.className = 'tile-text';
+    updateText.innerHTML = data.title;
+    updateBannerDiv.appendChild(updateText);
+
+    var buttonDiv = document.createElement('div');
+    buttonDiv.className = 'button-div';
+    updateBannerDiv.appendChild(buttonDiv);
+
+    var updateButton = document.createElement('a');
+    updateButton.className = 'button-primary';
+    updateButton.href = data.buttonAction;
+    updateButton.innerHTML = data.buttonText;
+    buttonDiv.appendChild(updateButton);
+
+    var welcomePageWrapper = document.getElementById('welcome-page-wrapper');
+    var titleWrapper = document.getElementById('title-wrapper');
+    titleWrapper.setAttribute('style', 'background: #FFF');
+    var contentContainer = document.getElementById('content-container');
+    welcomePageWrapper.insertBefore(updateContainer, contentContainer);
+};
 
 // prevent right click on the welcome page
-document.addEventListener('contextmenu', event => event.preventDefault());
+document.addEventListener('contextmenu', function (event) { event.preventDefault(); });

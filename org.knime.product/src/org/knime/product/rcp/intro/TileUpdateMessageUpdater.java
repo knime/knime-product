@@ -52,9 +52,9 @@ import java.io.File;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
-import javax.xml.transform.TransformerFactory;
-
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.widgets.Display;
+import org.json.JSONObject;
 import org.knime.core.eclipseUtil.UpdateChecker.UpdateInfo;
 
 /**
@@ -66,10 +66,8 @@ class TileUpdateMessageUpdater extends AbstractUpdater {
     private List<UpdateInfo> m_newReleases;
     private List<String> m_bugfixes;
 
-    protected TileUpdateMessageUpdater(final File templateFile, final ReentrantLock introFileLock,
-        final IEclipsePreferences preferences, final boolean isFreshWorkspace,
-        final TransformerFactory transformerFactory) {
-        super(templateFile, introFileLock, preferences, isFreshWorkspace, transformerFactory);
+    protected TileUpdateMessageUpdater(final File introPageFile, final ReentrantLock introFileLock) {
+        super(introPageFile, introFileLock);
     }
 
     /**
@@ -77,7 +75,7 @@ class TileUpdateMessageUpdater extends AbstractUpdater {
      */
     @Override
     protected void updateData() throws Exception{
-        if (m_newReleases.isEmpty()) {
+        if (!m_newReleases.isEmpty()) {
             injectReleaseTile(false);
         } else if (!m_bugfixes.isEmpty()) {
             injectReleaseTile(true);
@@ -93,19 +91,27 @@ class TileUpdateMessageUpdater extends AbstractUpdater {
         m_bugfixes = UpdateDetector.checkForBugfixes();
         if (IntroPage.MOCK_INTRO_PAGE) {
             Thread.sleep(2000);
+            /*if (m_bugfixes.isEmpty()) {
+                m_bugfixes.add("Important bugfix");
+                m_bugfixes.add("Second bugfix");
+            }*/
+            /*if (m_newReleases.isEmpty()) {
+                m_newReleases
+                    .add(new UpdateInfo(new URI("https://kni.me"), "KNIME Analytics Platform 5.6", "5.6", true));
+            }*/
         }
     }
 
     private void injectReleaseTile(final boolean bugfix) {
             boolean updatePossible = true;
             String shortName = "";
-            if (bugfix) {
+            if (!bugfix) {
                 for (UpdateInfo ui : m_newReleases) {
                     updatePossible &= ui.isUpdatePossible();
                 }
                 shortName = m_newReleases.get(0).getShortName();
             }
-            String title = bugfix ? "Updates available" : "Update now to " + shortName;
+            String title = bugfix ? "" : "Update now to " + shortName;
             // This needs to be dynamically populated, possibly also a new field in the releases.txt
             String tileContent = "Get the latest features and enhancements!";
             if (bugfix) {
@@ -118,7 +124,27 @@ class TileUpdateMessageUpdater extends AbstractUpdater {
             String icon = updatePossible ? "img/update.svg" : "img/arrow-download.svg";
             String action = updatePossible ? "intro://invokeUpdate/" : "https://www.knime.com/downloads?src=knimeapp";
             String buttonText = updatePossible ? "Update now" : "Download now";
-            TileUpdater.createUpdateBanner(icon, title, tileContent, action, buttonText);
+            createUpdateBanner(icon, title, tileContent, action, buttonText);
         }
+
+    private void createUpdateBanner(final String icon, final String title, final String tileContent, final String action,
+        final String buttonText) {
+        JSONObject updateTile = new JSONObject();
+        updateTile.put("icon", icon);
+        updateTile.put("title", title);
+        updateTile.put("tileContent", tileContent);
+        updateTile.put("buttonAction", action);
+        updateTile.put("buttonText", buttonText);
+        Browser browser = findIntroPageBrowser();
+        if (browser != null) {
+            Display.getDefault().asyncExec(new Runnable() {
+                @Override
+                public void run() {
+                    browser.execute("displayUpdateTile(" + updateTile + ");");
+                }
+            });
+        }
+
+    }
 
 }

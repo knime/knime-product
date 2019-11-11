@@ -1,6 +1,7 @@
 {
     "tile-title": "Share your workflows and components on KNIME Hub",
     "tile-image": "img/hub-connect.png",
+    "tile-tag": "Hub",
     "tile-button-text": "Learn more",
     "tile-link": "https://hub.knime.com/site/about?src=knimeapp"
 }

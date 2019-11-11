@@ -49,11 +49,10 @@
 package org.knime.product.rcp.intro;
 
 import java.io.File;
+import java.net.URI;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.eclipse.swt.browser.Browser;
-import org.eclipse.swt.widgets.Display;
 import org.json.JSONObject;
 import org.knime.core.eclipseUtil.UpdateChecker.UpdateInfo;
 
@@ -91,14 +90,14 @@ class TileUpdateMessageUpdater extends AbstractUpdater {
         m_bugfixes = UpdateDetector.checkForBugfixes();
         if (IntroPage.MOCK_INTRO_PAGE) {
             Thread.sleep(2000);
-            /*if (m_bugfixes.isEmpty()) {
+            if (m_bugfixes.isEmpty()) {
                 m_bugfixes.add("Important bugfix");
                 m_bugfixes.add("Second bugfix");
-            }*/
-            /*if (m_newReleases.isEmpty()) {
+            }
+            if (m_newReleases.isEmpty()) {
                 m_newReleases
                     .add(new UpdateInfo(new URI("https://kni.me"), "KNIME Analytics Platform 5.6", "5.6", true));
-            }*/
+            }
         }
     }
 
@@ -135,16 +134,7 @@ class TileUpdateMessageUpdater extends AbstractUpdater {
         updateTile.put("tileContent", tileContent);
         updateTile.put("buttonAction", action);
         updateTile.put("buttonText", buttonText);
-        Browser browser = findIntroPageBrowser();
-        if (browser != null) {
-            Display.getDefault().asyncExec(new Runnable() {
-                @Override
-                public void run() {
-                    browser.execute("displayUpdateTile(" + updateTile + ");");
-                }
-            });
-        }
-
+        executeUpdateInBrowser("displayUpdateTile(" + updateTile + ");");
     }
 
 }

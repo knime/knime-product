@@ -44,70 +44,40 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Oct 7, 2019 (Daniel Bogenrieder): created
+ *   17 Sep 2019 (albrecht): created
  */
-package org.knime.product.rcp.intro;
+package org.knime.product.rcp.intro.json;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.List;
 
-import org.knime.core.node.NodeLogger;
-import org.knime.product.rcp.intro.json.OfflineJsonCollector;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
+ * POJO holding the dynamic content of the welcome page
  *
- * @author Daniel Bogenrieder, KNIME GmbH, Konstanz, Germany
+ * @author Christian Albrecht, KNIME GmbH, Konstanz, Germany
+ * @since 4.1
  */
-public class TileUpdater extends AbstractUpdater {
+@JsonAutoDetect
+public class JSONWelcomePageContent {
 
-    private final boolean m_isFreshWorkspace;
-
-    /**
-     * @param introPageFile the intro page file in the temporary directory
-     * @param introFileLock lock for the intro file
-     * @param isFreshWorkspace
-     */
-    protected TileUpdater(final File introPageFile, final ReentrantLock introFileLock, final boolean isFreshWorkspace) {
-        super(introPageFile, introFileLock);
-        m_isFreshWorkspace = isFreshWorkspace;
-    }
+    private List<JSONCategory> m_categories;
 
     /**
-     * {@inheritDoc}
+     * @return the categories
      */
-    @Override
-    protected void prepareData() throws Exception {
-        if (IntroPage.MOCK_INTRO_PAGE) {
-            Thread.sleep(1500);
-        }
+    @JsonProperty("categories")
+    public List<JSONCategory> getCategories() {
+        return m_categories;
     }
 
     /**
-     * {@inheritDoc}
+     * @param categories the categories to set
      */
-    @Override
-    protected void updateData() {
-        OfflineJsonCollector collector = new OfflineJsonCollector();
-        String tiles = "";
-        try {
-            if (m_isFreshWorkspace) {
-                hideElement("hub-search-bar");
-                tiles = collector.fetchFirstUse();
-            } else {
-                tiles = collector.fetchAllOffline();
-            }
-            updateTiles(tiles);
-        } catch (IOException e) {
-            NodeLogger.getLogger(TileUpdater.class).error("Could not display tiles: " + e.getMessage(), e);
-        }
+    @JsonProperty("categories")
+    public void setCategories(final List<JSONCategory> categories) {
+        m_categories = categories;
     }
 
-    private void hideElement(final String id) {
-        executeUpdateInBrowser("hideElement('" + id + "');");
-    }
-
-    private void updateTiles(final String tiles) {
-        executeUpdateInBrowser("updateTile(" + tiles + ");");
-    }
 }

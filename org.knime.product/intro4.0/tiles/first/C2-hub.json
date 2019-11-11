@@ -1,6 +1,7 @@
 {
     "tile-title": "Looking for more examples? Visit the KNIME Hub",
     "tile-image": "img/screen-perspective-hub.jpg",
+    "tile-tag": "Hub",
     "tile-button-text": "KNIME Hub",
     "tile-link": "https://hub.knime.com?src=knimeapp"
 }

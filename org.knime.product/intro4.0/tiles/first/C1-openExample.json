@@ -1,6 +1,7 @@
 {
     "tile-title": "Get started with this example",
     "tile-image": "img/workflow.svg",
+    "tile-tag": "Example",
     "tile-button-text": "Open workflow",
     "tile-link": "intro://openworkflow/knime://LOCAL/Example%20Workflows/Basic%20Examples/Visual%20Analysis%20of%20Sales%20Data/workflow.knime"
 }

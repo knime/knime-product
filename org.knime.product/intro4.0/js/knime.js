@@ -15,11 +15,13 @@ window.updateTile = function (data) {
     
     var carouselTags = carousel.getElementsByClassName('line0');
     for (var tagIndex = carouselTags.length - 1; tagIndex >= 0; tagIndex--) {
-        var tileTag = document.createElement('p');
-        tileTag.className = 'tile-tag';
-        tileTag.innerHTML = data[tagIndex]['tile-tag'];
-        carouselTags[tagIndex].appendChild(tileTag);
-        carouselTags[tagIndex].className = 'tile-tag-container';
+        if (data[tagIndex]['tile-tag']) {
+            var tileTag = document.createElement('p');
+            tileTag.className = 'tile-tag';
+            tileTag.innerHTML = data[tagIndex]['tile-tag'];
+            carouselTags[tagIndex].appendChild(tileTag);
+            carouselTags[tagIndex].className = 'tile-tag-container';
+        }
     }
 
     var carouselTitles = carousel.getElementsByClassName('line1');
@@ -33,27 +35,33 @@ window.updateTile = function (data) {
 
     var carouselSubTitles = carousel.getElementsByClassName('line2');
     for (var subTitleIndex = carouselSubTitles.length - 1; subTitleIndex >= 0; subTitleIndex--) {
-        var subtitle = document.createElement('p');
-        subtitle.className = 'tile-sub-title';
-        subtitle.innerHTML = data[subTitleIndex]['tile-text'];
+        if (data[subTitleIndex]['tile-text']) {
+            var subtitle = document.createElement('p');
+            subtitle.className = 'tile-sub-title';
+            subtitle.innerHTML = data[subTitleIndex]['tile-text'];
 
-        var subtitleTooltip = document.createElement('span');
-        subtitleTooltip.className = 'tile-sub-title-tooltip';
-        subtitleTooltip.innerHTML = data[subTitleIndex]['tile-text'];
-        subtitle.appendChild(subtitleTooltip);
+            var subtitleTooltip = document.createElement('span');
+            subtitleTooltip.className = 'tile-sub-title-tooltip';
+            subtitleTooltip.innerHTML = data[subTitleIndex]['tile-text'];
+            subtitle.appendChild(subtitleTooltip);
 
-        carouselSubTitles[subTitleIndex].parentElement.appendChild(subtitle);
+            carouselSubTitles[subTitleIndex].parentElement.appendChild(subtitle);
+        }
         carouselSubTitles[subTitleIndex].remove();
     }
 
     var carouselButtons = carousel.getElementsByClassName('button-placeholder');
     for (var buttonIndex = carouselButtons.length - 1; buttonIndex >= 0; buttonIndex--) {
-        var buttonTag = document.createElement('a');
-        buttonTag.className = 'button-primary';
-        buttonTag.href = data[buttonIndex]['tile-link'];
-        buttonTag.innerHTML = data[buttonIndex]['tile-button-text'];
-        carouselButtons[buttonIndex].appendChild(buttonTag);
-        carouselButtons[buttonIndex].className = 'button-div';
+        if (data[buttonIndex]['tile-link'] && data[buttonIndex]['tile-button-text']) {
+            var buttonTag = document.createElement('a');
+            buttonTag.className = 'button-primary';
+            buttonTag.href = data[buttonIndex]['tile-link'];
+            buttonTag.innerHTML = data[buttonIndex]['tile-button-text'];
+            carouselButtons[buttonIndex].appendChild(buttonTag);
+            carouselButtons[buttonIndex].className = 'button-div';
+        } else {
+            carouselButtons[buttonIndex].remove();
+        }
     }
 };
 window.hideElement = function (id) {

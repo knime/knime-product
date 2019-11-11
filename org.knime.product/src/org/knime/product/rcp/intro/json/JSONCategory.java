@@ -44,70 +44,95 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Oct 7, 2019 (Daniel Bogenrieder): created
+ *   17 Sep 2019 (albrecht): created
  */
-package org.knime.product.rcp.intro;
+package org.knime.product.rcp.intro.json;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.List;
 
-import org.knime.core.node.NodeLogger;
-import org.knime.product.rcp.intro.json.OfflineJsonCollector;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
+ * A POJO representing a category (one column) of tiles from the welcome page. A category can contain one or more tiles
+ * but only one tile is displayed.
  *
- * @author Daniel Bogenrieder, KNIME GmbH, Konstanz, Germany
+ * @author Christian Albrecht, KNIME GmbH, Konstanz, Germany
+ * @since 4.1
  */
-public class TileUpdater extends AbstractUpdater {
+@JsonAutoDetect
+@JsonInclude(Include.NON_NULL)
+public class JSONCategory {
 
-    private final boolean m_isFreshWorkspace;
-
-    /**
-     * @param introPageFile the intro page file in the temporary directory
-     * @param introFileLock lock for the intro file
-     * @param isFreshWorkspace
-     */
-    protected TileUpdater(final File introPageFile, final ReentrantLock introFileLock, final boolean isFreshWorkspace) {
-        super(introPageFile, introFileLock);
-        m_isFreshWorkspace = isFreshWorkspace;
-    }
+    private String m_id;
+    private String m_title;
+    private String m_text;
+    private List<JSONTile> m_tiles;
 
     /**
-     * {@inheritDoc}
+     * @return the id
      */
-    @Override
-    protected void prepareData() throws Exception {
-        if (IntroPage.MOCK_INTRO_PAGE) {
-            Thread.sleep(1500);
-        }
+    @JsonProperty("category-id")
+    public String getId() {
+        return m_id;
     }
 
     /**
-     * {@inheritDoc}
+     * @param id the id to set
      */
-    @Override
-    protected void updateData() {
-        OfflineJsonCollector collector = new OfflineJsonCollector();
-        String tiles = "";
-        try {
-            if (m_isFreshWorkspace) {
-                hideElement("hub-search-bar");
-                tiles = collector.fetchFirstUse();
-            } else {
-                tiles = collector.fetchAllOffline();
-            }
-            updateTiles(tiles);
-        } catch (IOException e) {
-            NodeLogger.getLogger(TileUpdater.class).error("Could not display tiles: " + e.getMessage(), e);
-        }
+    @JsonProperty("category-id")
+    public void setId(final String id) {
+        m_id = id;
     }
 
-    private void hideElement(final String id) {
-        executeUpdateInBrowser("hideElement('" + id + "');");
+    /**
+     * @return the title
+     */
+    @JsonProperty("category-title")
+    public String getTitle() {
+        return m_title;
     }
 
-    private void updateTiles(final String tiles) {
-        executeUpdateInBrowser("updateTile(" + tiles + ");");
+    /**
+     * @param title the title to set
+     */
+    @JsonProperty("category-title")
+    public void setTitle(final String title) {
+        m_title = title;
     }
+
+    /**
+     * @return the text
+     */
+    @JsonProperty("category-text")
+    public String getText() {
+        return m_text;
+    }
+
+    /**
+     * @param text the text to set
+     */
+    @JsonProperty("category-text")
+    public void setText(final String text) {
+        m_text = text;
+    }
+
+    /**
+     * @return the tiles
+     */
+    @JsonProperty("tiles")
+    public List<JSONTile> getTiles() {
+        return m_tiles;
+    }
+
+    /**
+     * @param tiles the tiles to set
+     */
+    @JsonProperty("tiles")
+    public void setTiles(final List<JSONTile> tiles) {
+        m_tiles = tiles;
+    }
+
 }

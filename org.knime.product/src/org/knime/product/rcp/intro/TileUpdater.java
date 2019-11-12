@@ -58,7 +58,6 @@ import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.lang3.StringUtils;
@@ -112,7 +111,7 @@ public class TileUpdater extends AbstractUpdater {
         if (IntroPage.MOCK_INTRO_PAGE) {
             Thread.sleep(1500);
         }
-        if (TILE_CATEGORIES == null) {
+        if (TILE_CATEGORIES == null || IntroPage.MOCK_INTRO_PAGE) {
             try {
                 HttpURLConnection conn = (HttpURLConnection)m_tileURL.openConnection();
                 conn.setReadTimeout(5000);
@@ -172,9 +171,9 @@ public class TileUpdater extends AbstractUpdater {
                 if (jsonCategory.getId().startsWith("c" + cat)) {
                     List<JSONTile> tiles = jsonCategory.getTiles();
                     if (tiles.size() > 0) {
-                        // naive approach, pick a random tile per a category, could use smarter method in the future
-                        int chosenIndex = ThreadLocalRandom.current().nextInt(tiles.size());
-                        chosenCategoryTile = tiles.get(chosenIndex);
+                        // naive approach, pick first tile per category, could use smarter method in the future
+                        // int chosenIndex = ThreadLocalRandom.current().nextInt(tiles.size());
+                        chosenCategoryTile = tiles.get(0);
                     }
                 }
             }

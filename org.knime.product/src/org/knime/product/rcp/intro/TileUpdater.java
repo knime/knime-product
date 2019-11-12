@@ -124,6 +124,14 @@ public class TileUpdater extends AbstractUpdater {
                 try {
                     TILE_CATEGORIES = m_mapper.readValue(conn.getInputStream(), JSONCategory[].class);
                     Arrays.sort(TILE_CATEGORIES, (c1, c2) -> c1.getId().compareTo(c2.getId()));
+                    // FIXME: temporary workaround for bug https://wunderkraut.atlassian.net/browse/KNIME-305
+                    Arrays.stream(TILE_CATEGORIES).forEach(category -> {
+                        category.getTiles().forEach(tile -> {
+                            String buttonText = tile.getLink();
+                            tile.setLink(tile.getButtonText());
+                            tile.setButtonText(buttonText);
+                        });
+                    });
                 } finally {
                     Thread.currentThread().setContextClassLoader(cl);
                     conn.disconnect();
@@ -167,10 +175,6 @@ public class TileUpdater extends AbstractUpdater {
                         // naive approach, pick a random tile per a category, could use smarter method in the future
                         int chosenIndex = ThreadLocalRandom.current().nextInt(tiles.size());
                         chosenCategoryTile = tiles.get(chosenIndex);
-                        // FIXME: temporary workaround for bug https://wunderkraut.atlassian.net/browse/KNIME-305
-                        String buttonText = chosenCategoryTile.getLink();
-                        chosenCategoryTile.setLink(chosenCategoryTile.getButtonText());
-                        chosenCategoryTile.setButtonText(buttonText);
                     }
                 }
             }

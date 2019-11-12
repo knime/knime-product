@@ -55,6 +55,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.io.IOUtils;
 import org.knime.core.node.NodeLogger;
@@ -121,12 +122,23 @@ public class OfflineJsonCollector {
         return m_mapper.writeValueAsString(allFirstUses);
     }
 
-    /* private String fetchTipsAndTricks() throws IOException {
-        List<URL> ttFiles = listFilesInDir(TILES + "/tipsAndTricks");
-        Random r = new Random();
-        URL chosenOne = ttFiles.get(r.nextInt(ttFiles.size()));
-        return readFile(chosenOne);
-    } */
+    public JSONTile fetchSingleOfflineTile(final String prefix) throws IOException {
+        List<URL> ttFiles = listFilesInDir(TILES + "/offline");
+        Optional<URL> categoryFile = ttFiles.stream().filter(url -> {
+            String fileName = url.getFile().substring(url.getFile().lastIndexOf("/") + 1);
+            return fileName.startsWith(prefix);
+        }).findFirst();
+        JSONTile tile = new JSONTile();
+        if (categoryFile.isPresent()) {
+            String tileJson = readFile(categoryFile.get());
+            try {
+                m_mapper.readerForUpdating(tile).readValue(tileJson);
+            } catch (IOException e) {
+                LOGGER.error("Could not parse welcome page tile: " + e.getMessage(), e);
+            }
+         }
+        return tile;
+    }
 
     private List<URL> listFilesInDir(final String dir) {
         Enumeration<URL> entries = m_bundle.findEntries(dir, "*.json", false);

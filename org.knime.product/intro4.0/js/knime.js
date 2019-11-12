@@ -21,6 +21,8 @@ window.updateTile = function (data) {
             tileTag.innerHTML = data[tagIndex]['tile-tag'];
             carouselTags[tagIndex].appendChild(tileTag);
             carouselTags[tagIndex].className = 'tile-tag-container';
+        } else {
+            carouselTags[tagIndex].remove();
         }
     }
 

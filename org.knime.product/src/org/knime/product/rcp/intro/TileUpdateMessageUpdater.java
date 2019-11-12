@@ -50,11 +50,13 @@ package org.knime.product.rcp.intro;
 
 import java.io.File;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.json.JSONObject;
 import org.knime.core.eclipseUtil.UpdateChecker.UpdateInfo;
+import org.knime.core.node.NodeLogger;
 
 /**
  *
@@ -62,8 +64,8 @@ import org.knime.core.eclipseUtil.UpdateChecker.UpdateInfo;
  */
 class TileUpdateMessageUpdater extends AbstractUpdater {
 
-    private List<UpdateInfo> m_newReleases;
-    private List<String> m_bugfixes;
+    private List<UpdateInfo> m_newReleases = new ArrayList<UpdateInfo>(0);
+    private List<String> m_bugfixes = new ArrayList<String>(0);
 
     protected TileUpdateMessageUpdater(final File introPageFile, final ReentrantLock introFileLock) {
         super(introPageFile, introFileLock);
@@ -86,8 +88,14 @@ class TileUpdateMessageUpdater extends AbstractUpdater {
      */
     @Override
     protected void prepareData() throws Exception {
-        m_newReleases = UpdateDetector.checkForNewRelease();
-        m_bugfixes = UpdateDetector.checkForBugfixes();
+        try {
+            m_newReleases = UpdateDetector.checkForNewRelease();
+            m_bugfixes = UpdateDetector.checkForBugfixes();
+        } catch (Exception e) {
+            // offline or server not reachable
+            NodeLogger.getLogger(TileUpdateMessageUpdater.class)
+                .info("Could not check for updates or new releases, possibly offline.");
+        }
         if (IntroPage.MOCK_INTRO_PAGE) {
             Thread.sleep(2000);
             if (m_bugfixes.isEmpty()) {

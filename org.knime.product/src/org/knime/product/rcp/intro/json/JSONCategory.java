@@ -51,6 +51,7 @@ package org.knime.product.rcp.intro.json;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -133,6 +134,15 @@ public class JSONCategory {
     @JsonProperty("tiles")
     public void setTiles(final List<JSONTile> tiles) {
         m_tiles = tiles;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @JsonIgnore
+    public String toString() {
+        return m_title;
     }
 
 }

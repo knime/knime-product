@@ -50,10 +50,27 @@ package org.knime.product.rcp.intro;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.commons.lang3.StringUtils;
+import org.eclipse.core.runtime.Platform;
+import org.knime.core.node.KNIMEConstants;
 import org.knime.core.node.NodeLogger;
+import org.knime.product.rcp.intro.json.JSONCategory;
+import org.knime.product.rcp.intro.json.JSONTile;
 import org.knime.product.rcp.intro.json.OfflineJsonCollector;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  *
@@ -61,16 +78,30 @@ import org.knime.product.rcp.intro.json.OfflineJsonCollector;
  */
 public class TileUpdater extends AbstractUpdater {
 
+    private static final NodeLogger LOGGER = NodeLogger.getLogger(TileUpdater.class);
+    private static final String WELCOME_PAGE_ENDPOINT = "https://www.knime.com/welcome-ap";
+
+    private static JSONCategory[] TILE_CATEGORIES;
+
     private final boolean m_isFreshWorkspace;
+    private final URL m_tileURL;
+    private final ObjectMapper m_mapper;
+    private final OfflineJsonCollector m_offlineCollector;
+
 
     /**
      * @param introPageFile the intro page file in the temporary directory
      * @param introFileLock lock for the intro file
      * @param isFreshWorkspace
+     * @param customizationInfo
      */
-    protected TileUpdater(final File introPageFile, final ReentrantLock introFileLock, final boolean isFreshWorkspace) {
+    protected TileUpdater(final File introPageFile, final ReentrantLock introFileLock, final boolean isFreshWorkspace,
+        final Map<String, String> customizationInfo) {
         super(introPageFile, introFileLock);
         m_isFreshWorkspace = isFreshWorkspace;
+        m_mapper = new ObjectMapper();
+        m_offlineCollector = new OfflineJsonCollector();
+        m_tileURL = buildTileURL(customizationInfo);
     }
 
     /**
@@ -81,6 +112,27 @@ public class TileUpdater extends AbstractUpdater {
         if (IntroPage.MOCK_INTRO_PAGE) {
             Thread.sleep(1500);
         }
+        if (TILE_CATEGORIES == null) {
+            try {
+                HttpURLConnection conn = (HttpURLConnection)m_tileURL.openConnection();
+                conn.setReadTimeout(5000);
+                conn.setConnectTimeout(2000);
+                conn.connect();
+
+                final ClassLoader cl = Thread.currentThread().getContextClassLoader();
+                Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
+                try {
+                    TILE_CATEGORIES = m_mapper.readValue(conn.getInputStream(), JSONCategory[].class);
+                    Arrays.sort(TILE_CATEGORIES, (c1, c2) -> c1.getId().compareTo(c2.getId()));
+                } finally {
+                    Thread.currentThread().setContextClassLoader(cl);
+                    conn.disconnect();
+                }
+            } catch (Exception e) {
+                // offline or server not reachable
+                LOGGER.info("Failed to load welcome page content, using offline tiles.");
+            }
+        }
     }
 
     /**
@@ -88,18 +140,80 @@ public class TileUpdater extends AbstractUpdater {
      */
     @Override
     protected void updateData() {
-        OfflineJsonCollector collector = new OfflineJsonCollector();
-        String tiles = "";
+        String tiles;
         try {
             if (m_isFreshWorkspace) {
                 hideElement("hub-search-bar");
-                tiles = collector.fetchFirstUse();
+                tiles = m_offlineCollector.fetchFirstUse();
+            } else if (TILE_CATEGORIES != null) {
+                tiles = buildTilesFromCategories();
             } else {
-                tiles = collector.fetchAllOffline();
+                tiles = m_offlineCollector.fetchAllOffline();
             }
             updateTiles(tiles);
         } catch (IOException e) {
-            NodeLogger.getLogger(TileUpdater.class).error("Could not display tiles: " + e.getMessage(), e);
+            LOGGER.error("Could not display tiles: " + e.getMessage(), e);
+        }
+    }
+
+    private String buildTilesFromCategories() throws JsonProcessingException {
+        JSONTile[] tileArray = new JSONTile[3];
+        for (int cat = 1; cat <= 3; cat++) {
+            JSONTile chosenCategoryTile = null;
+            for (JSONCategory jsonCategory : TILE_CATEGORIES) {
+                if (jsonCategory.getId().startsWith("c" + cat)) {
+                    List<JSONTile> tiles = jsonCategory.getTiles();
+                    if (tiles.size() > 0) {
+                        // naive approach, pick a random tile per a category, could use smarter method in the future
+                        int chosenIndex = ThreadLocalRandom.current().nextInt(tiles.size());
+                        chosenCategoryTile = tiles.get(chosenIndex);
+                        // FIXME: temporary workaround for bug https://wunderkraut.atlassian.net/browse/KNIME-305
+                        String buttonText = chosenCategoryTile.getLink();
+                        chosenCategoryTile.setLink(chosenCategoryTile.getButtonText());
+                        chosenCategoryTile.setButtonText(buttonText);
+                    }
+                }
+            }
+            if (chosenCategoryTile == null) {
+                try {
+                    chosenCategoryTile = m_offlineCollector.fetchSingleOfflineTile("C" + cat);
+                } catch (IOException e) {
+                    LOGGER.error("Could not retrieve offline tile: " + e.getMessage(), e);
+                    chosenCategoryTile = new JSONTile();
+                }
+            }
+            tileArray[cat - 1] = chosenCategoryTile;
+        }
+        return m_mapper.writeValueAsString(tileArray);
+    }
+
+    private static URL buildTileURL(final Map<String, String> customizationInfo) {
+        StringBuilder builder = new StringBuilder(WELCOME_PAGE_ENDPOINT);
+        builder.append("?knid=" + KNIMEConstants.getKNIMEInstanceID());
+        builder.append("&version=" + KNIMEConstants.VERSION);
+        // FIXME: needs to be omitted, until https://wunderkraut.atlassian.net/browse/KNIME-304 is fixed
+        // builder.append("&os=" + Platform.getOS());
+        // builder.append("&osname=" + KNIMEConstants.getOSVariant());
+        builder.append("&arch=" + Platform.getOSArch());
+
+        //If there is no custom URL set use the standard one
+        if (customizationInfo.containsKey("companyName")) {
+            //Add the customizers name to the URL
+            String companyName = customizationInfo.get("companyName");
+            if (StringUtils.isNoneEmpty(companyName)) {
+                try {
+                    builder.append("&brand=" + URLEncoder.encode(companyName, "UTF-8"));
+                } catch (UnsupportedEncodingException e) {
+                    /* don't append customizer info */
+                    LOGGER.warn("Could not add brand information to welcome page URL: " + e.getMessage(), e);
+                }
+            }
+        }
+        try {
+            return new URL(builder.toString().replace(" ", "%20"));
+        } catch (MalformedURLException e) {
+            LOGGER.error("Could not construct welcome page URL: " + e.getMessage(), e);
+            return null;
         }
     }
 

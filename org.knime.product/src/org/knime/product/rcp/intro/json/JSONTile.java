@@ -49,6 +49,7 @@
 package org.knime.product.rcp.intro.json;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -198,6 +199,15 @@ public class JSONTile {
     @JsonProperty("tile-link")
     public void setLink(final String link) {
         m_link = link;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @JsonIgnore
+    public String toString() {
+        return m_title;
     }
 
 }

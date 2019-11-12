@@ -185,14 +185,12 @@ public class IntroPage implements LocationListener {
         try {
             String introFile = "intro4.0/intro.xhtml";
             m_introFile = copyTemplate(introFile, refresh);
-            Map<String, String> customizationInfo = getBrandingInfo();
 
             BaseInjector baseInjector = new BaseInjector(m_introFile, m_lock, m_prefs, m_freshWorkspace,
                 m_parserFactory, m_xpathFactory, m_transformerFactory);
             baseInjector.run();
 
-            KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TileUpdater(m_introFile, m_lock, m_freshWorkspace));
-            KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TileUpdateMessageUpdater(m_introFile, m_lock));
+            updateTiles();
 
             // query tips and tricks still until instrumentation is switched to a different url
             /* KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TipsAndNewsInjector(m_introFile, m_lock, m_prefs,
@@ -200,6 +198,15 @@ public class IntroPage implements LocationListener {
         } catch (IOException | ParserConfigurationException | SAXException | XPathExpressionException
                 | TransformerFactoryConfigurationError | TransformerException ex) {
             LOGGER.error("Could not copy intro pages: " + ex.getMessage(), ex);
+        }
+    }
+
+    private void updateTiles() {
+        try {
+            Map<String, String> customizationInfo = getBrandingInfo();
+            KNIMEConstants.GLOBAL_THREAD_POOL
+                .submit(new TileUpdater(m_introFile, m_lock, m_freshWorkspace, customizationInfo));
+            KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TileUpdateMessageUpdater(m_introFile, m_lock));
         } catch (InterruptedException ex) {
             // should not happen
             LOGGER.info("Got interrupted while submitting injector: " + ex.getMessage(), ex);
@@ -260,9 +267,7 @@ public class IntroPage implements LocationListener {
                     showMissingBrowserWarning();
                 } else {
                     browser.openURL(m_introFile.toURI().toURL());
-                    if (DEBUG) {
-                        injectTiles(true);
-                    }
+                    updateTiles();
                 }
             } catch (PartInitException ex) {
                 LOGGER.error("Could not open web browser with first intro page: " + ex.getMessage(), ex);

@@ -258,6 +258,7 @@ button, input {
     max-width: calc(360px * 3);
     margin: 0px auto;
     overflow: hidden;
+    height: 100%;
 }
 
 #content-container {
@@ -417,11 +418,13 @@ h2#welcome-sub {
 	width: 100%;
     align-items: center;
     min-width: 300px;
+    height: 100%;
 }
 
 .carousel-length {
 	width: 100%;
 	max-width: calc(360px * 3 + 48px);
+	height: 100%;
 }
 
 .update-tile > img {
@@ -565,20 +568,6 @@ h2#welcome-sub {
     margin: 0 auto;
 }
 
-.carousel-tile > article > div > div > p > span.tile-sub-title-tooltip {
-	display: none;
-	position: absolute;
-	top: 5;
-	left: 0;
-	background-color: #fff;
-	padding: 10px;
-	-moz-box-shadow: 0 0 50px 0 rgba(0, 0, 0, 0.3);
-    -webkit-box-shadow: 0 0 50px 0 rgba(0, 0, 0, 0.3);
-    box-shadow: 0 0 50px 0 rgba(0, 0, 0, 0.3);
-	opacity: 0;
-	transition: opacity 0.5s ease;
-}
-
 @media only screen and (min-width: 1640px) {
 	.carousel-tile article > div > img {
 	   max-height: 180px;
@@ -710,12 +699,6 @@ h2#welcome-sub {
 	    overflow: hidden;
 	    -webkit-box-orient: vertical;
 	}
-
-	.carousel-tile > article > div > div > p.tile-sub-title:hover .tile-sub-title-tooltip {
-		display: initial;
-		transition: opacity 0.5s ease;
-		opacity: 1;
-	}
 }
 
 @media only screen and (min-width: 820px) and (max-width: 930px) {
@@ -724,12 +707,6 @@ h2#welcome-sub {
 	    display: -webkit-box;
 	    overflow: hidden;
 	    -webkit-box-orient: vertical;
-	}
-
-	.carousel-tile > article > div > div > p.tile-sub-title:hover .tile-sub-title-tooltip {
-		display: initial;
-		transition: opacity 0.5s ease;
-		opacity: 1;
 	}
 }
 
@@ -792,12 +769,6 @@ h2#welcome-sub {
 	    -webkit-box-orient: vertical;
 	}
 
-	.carousel-tile > article > div > div > p.tile-sub-title:hover .tile-sub-title-tooltip {
-		display: initial;
-		transition: opacity 0.5s ease;
-		opacity: 1;
-	}
-
 	.carousel-tile > article > div > div > div > p.tile-tag {
 		color: #6E6E6E;
 		font-family: Roboto;
@@ -806,6 +777,18 @@ h2#welcome-sub {
 		letter-spacing: 0.07px;
 		line-height: 18px;
 	}
+
+    .carousel-tile > article > div > div > div.button-div {
+        margin-bottom: 9px;
+    }
+
+    .carousel-tile > article > div > div.content {
+        margin: 9px;
+    }
+
+    .carousel-tile > article > div > div .button-placeholder {
+        margin-bottom: 9px;
+    }
 
 	#hub-search-bar input {
 		text-overflow: ellipsis;
@@ -880,7 +863,7 @@ h2#welcome-sub {
 	}
 
 	.carousel-tile > article > div > div.content-div {
-		padding: 5px;
+		margin: 9px;
 	}
 
 	.carousel-tile > article > div > div > p.tile-title {
@@ -922,12 +905,6 @@ h2#welcome-sub {
 	    -webkit-box-orient: vertical;
 	}
 
-	.carousel-tile > article > div > div > p.tile-sub-title:hover .tile-sub-title-tooltip {
-		display: initial;
-		transition: opacity 0.5s ease;
-		opacity: 1;
-	}
-
 	#update-container > div > div > div > div > a.button-primary {
 		color: #3E3A39;
 		font-family: Roboto;
@@ -939,7 +916,7 @@ h2#welcome-sub {
 	}
 
 	.carousel-tile > article > div > div.button-div {
-		padding-left: 5px;
+		margin-left: 20px;
 	}
 
 	.carousel-tile > article > div > div > a.button-primary {
@@ -975,12 +952,6 @@ h2#welcome-sub {
 	    display: -webkit-box;
 	    overflow: hidden;
 	    -webkit-box-orient: vertical;
-	}
-
-	.carousel-tile > article > div > div > p.tile-sub-title:hover .tile-sub-title-tooltip {
-		display: initial;
-		transition: opacity 0.5s ease;
-		opacity: 1;
 	}
 
 	.carousel-tile > article > div > div > div > p.tile-tag {
@@ -1098,12 +1069,6 @@ h2#welcome-sub {
 	   max-height: 140px;
 	}
 
-	.carousel-tile > article > div > div > p.tile-sub-title:hover .tile-sub-title-tooltip {
-		display: initial;
-		transition: opacity 0.5s ease;
-		opacity: 1;
-	}
-
 	#content-container {
 		margin-top: 0px;
 	}
@@ -1115,9 +1080,9 @@ h2#welcome-sub {
 	margin-top: 1px;
 }
 
-.carousel-tile article > div > div {
-    padding: 20px;
-    padding-top: 0px;
+.carousel-tile article > div .content {
+    margin: 20px;
+    margin-top: 0px;
 }
 
 .carousel-tile article > div > div > p {
@@ -1189,7 +1154,7 @@ h2#welcome-sub {
 
 .carousel-tile article .button-div {
 	bottom: 0px;
-	padding-bottom: 10px;
+	margin-bottom: 20px;
 	position: absolute;
 	overflow-wrap: break-word;
 	max-width: calc(100% - 40px);
@@ -1217,7 +1182,7 @@ h2#welcome-sub {
 	cursor: pointer;
 	position: absolute;
     bottom: 0px;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
 }
 
 .carousel-tile .button-placeholder .button-text-placeholder {

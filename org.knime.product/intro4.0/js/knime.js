@@ -41,11 +41,7 @@ window.updateTile = function (data) {
             var subtitle = document.createElement('p');
             subtitle.className = 'tile-sub-title';
             subtitle.innerHTML = data[subTitleIndex]['tile-text'];
-
-            var subtitleTooltip = document.createElement('span');
-            subtitleTooltip.className = 'tile-sub-title-tooltip';
-            subtitleTooltip.innerHTML = data[subTitleIndex]['tile-text'];
-            subtitle.appendChild(subtitleTooltip);
+            subtitle.title = data[subTitleIndex]['tile-text'];
 
             carouselSubTitles[subTitleIndex].parentNode.appendChild(subtitle);
         }

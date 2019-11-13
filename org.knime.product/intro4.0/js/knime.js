@@ -120,9 +120,10 @@ window.displayUpdateTile = function (data) {
     updateButton.innerHTML = data.buttonText;
     buttonDiv.appendChild(updateButton);
 
-    var welcomePageWrapper = document.getElementById('welcome-page-wrapper');
+    var welcomePageWrapper = document.getElementById('inner-welcome-page');
     var titleWrapper = document.getElementById('title-wrapper');
     titleWrapper.setAttribute('style', 'background: #FFF');
+    titleWrapper.setAttribute('style', 'margin-bottom: 1em');
     var contentContainer = document.getElementById('content-container');
     welcomePageWrapper.insertBefore(updateContainer, contentContainer);
 };

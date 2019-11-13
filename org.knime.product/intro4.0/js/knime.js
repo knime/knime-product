@@ -8,9 +8,9 @@ window.updateTile = function (data) {
         if (imageSrc) {
             var img = document.createElement('img');
             img.src = data[placeholderIndex]['tile-image'];
-            imagePlaceholder[placeholderIndex].parentElement.insertBefore(img, contentDiv[placeholderIndex]);
+            imagePlaceholder[placeholderIndex].parentNode.insertBefore(img, contentDiv[placeholderIndex]);
         }
-        imagePlaceholder[placeholderIndex].remove();
+        imagePlaceholder[placeholderIndex].parentNode.removeChild(imagePlaceholder[placeholderIndex]);
     }
     
     var carouselTags = carousel.getElementsByClassName('line0');
@@ -22,7 +22,7 @@ window.updateTile = function (data) {
             carouselTags[tagIndex].appendChild(tileTag);
             carouselTags[tagIndex].className = 'tile-tag-container';
         } else {
-            carouselTags[tagIndex].remove();
+            carouselTags[tagIndex].parentNode.removeChild(carouselTags[tagIndex]);
         }
     }
 
@@ -31,8 +31,8 @@ window.updateTile = function (data) {
         var title = document.createElement('p');
         title.className = 'tile-title';
         title.innerHTML = data[titleIndex]['tile-title'];
-        carouselTitles[titleIndex].parentElement.appendChild(title);
-        carouselTitles[titleIndex].remove();
+        carouselTitles[titleIndex].parentNode.appendChild(title);
+        carouselTitles[titleIndex].parentNode.removeChild(carouselTitles[titleIndex]);
     }
 
     var carouselSubTitles = carousel.getElementsByClassName('line2');
@@ -47,9 +47,9 @@ window.updateTile = function (data) {
             subtitleTooltip.innerHTML = data[subTitleIndex]['tile-text'];
             subtitle.appendChild(subtitleTooltip);
 
-            carouselSubTitles[subTitleIndex].parentElement.appendChild(subtitle);
+            carouselSubTitles[subTitleIndex].parentNode.appendChild(subtitle);
         }
-        carouselSubTitles[subTitleIndex].remove();
+        carouselSubTitles[subTitleIndex].parentNode.removeChild(carouselSubTitles[subTitleIndex]);
     }
 
     var carouselButtons = carousel.getElementsByClassName('button-placeholder');
@@ -62,7 +62,7 @@ window.updateTile = function (data) {
             carouselButtons[buttonIndex].appendChild(buttonTag);
             carouselButtons[buttonIndex].className = 'button-div';
         } else {
-            carouselButtons[buttonIndex].remove();
+            carouselButtons[buttonIndex].parentNode.removeChild(carouselButtons[buttonIndex]);
         }
     }
 };

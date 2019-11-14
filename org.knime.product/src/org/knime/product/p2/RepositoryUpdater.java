@@ -89,6 +89,10 @@ public class RepositoryUpdater implements ProvisioningListener {
      */
     public static final RepositoryUpdater INSTANCE = new RepositoryUpdater();
 
+    private final Set<URI> m_defaultRepositories = new HashSet<>();
+
+    private final Set<URI> m_addedDefaultRepositories = new HashSet<>();
+
     private RepositoryUpdater() {
         BundleContext context = FrameworkUtil.getBundle(getClass()).getBundleContext();
         ServiceReference<IProvisioningAgent> ref = context.getServiceReference(IProvisioningAgent.class);
@@ -154,8 +158,7 @@ public class RepositoryUpdater implements ProvisioningListener {
 
     private void processDefaultRepositories(final IMetadataRepositoryManager repoManager, final URL usFileUrl) {
         Set<URI> knownRepositories =
-            new HashSet<>(Arrays.asList(repoManager.getKnownRepositories(IRepositoryManager.REPOSITORIES_NON_LOCAL
-                | IRepositoryManager.REPOSITORIES_DISABLED)));
+            new HashSet<>(Arrays.asList(repoManager.getKnownRepositories(IRepositoryManager.REPOSITORIES_NON_LOCAL)));
 
         IEclipsePreferences preferences =
             InstanceScope.INSTANCE.getNode(FrameworkUtil.getBundle(getClass()).getSymbolicName());
@@ -179,17 +182,22 @@ public class RepositoryUpdater implements ProvisioningListener {
                     && !preferences.getBoolean(newPrefName + "-removed", false)) {
                     repoManager.removeRepository(uri);
                     preferences.putBoolean(newPrefName + "-removed", true);
-                } else if ("add".equals(parts[1])
-                    && (knownRepositories.isEmpty() || (!knownRepositories.contains(uri)
-                        && !preferences.getBoolean(oldPrefName + "-added", false) && !preferences.getBoolean(
-                        newPrefName + "-added", false)))) {
-                    repoManager.addRepository(uri);
-                    repoManager.setEnabled(uri, (parts.length > 2) && "enabled".equals(parts[2]));
-                    if (parts.length > 3) {
-                        repoManager.setRepositoryProperty(uri, IRepository.PROP_NAME, parts[3]);
-                    }
+                } else if ("add".equals(parts[1])) {
+                    m_defaultRepositories.add(uri);
 
-                    preferences.putBoolean(newPrefName + "-added", true);
+                    if (knownRepositories.isEmpty()
+                        || (!knownRepositories.contains(uri) && !preferences.getBoolean(oldPrefName + "-added", false)
+                            && !preferences.getBoolean(newPrefName + "-added", false))) {
+                        m_addedDefaultRepositories.add(uri);
+
+                        repoManager.addRepository(uri);
+                        repoManager.setEnabled(uri, (parts.length > 2) && "enabled".equals(parts[2]));
+                        if (parts.length > 3) {
+                            repoManager.setRepositoryProperty(uri, IRepository.PROP_NAME, parts[3]);
+                        }
+
+                        preferences.putBoolean(newPrefName + "-added", true);
+                    }
                 }
             }
         } catch (IOException | URISyntaxException ex) {
@@ -310,6 +318,24 @@ public class RepositoryUpdater implements ProvisioningListener {
                 context.ungetService(ref);
             }
         }
+    }
+
+    /**
+     * Gets the default repositories.
+     *
+     * @return The default repositories.
+     */
+    public Set<URI> getDefaultRepositories() {
+        return m_defaultRepositories;
+    }
+
+    /**
+     * Gets the default repositories that have been added during startup.
+     *
+     * @return The default repositories.
+     */
+    public Set<URI> getAddedDefaultRepositories() {
+        return m_addedDefaultRepositories;
     }
 
     private static final Pattern KNID_PATTERN = Pattern

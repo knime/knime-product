@@ -60,14 +60,15 @@ import org.knime.core.node.NodeLogger;
 
 /**
  *
- * @author Daniel Bogenrieder, KNIME GmbH, Konstanz, Germany
+ * @author Christian Albrecht, KNIME GmbH, Konstanz, Germany
+ * @since 4.1
  */
-class TileUpdateMessageUpdater extends AbstractUpdater {
+class ReleaseMessageUpdater extends AbstractUpdater {
 
     private List<UpdateInfo> m_newReleases = new ArrayList<UpdateInfo>(0);
     private List<String> m_bugfixes = new ArrayList<String>(0);
 
-    protected TileUpdateMessageUpdater(final File introPageFile, final ReentrantLock introFileLock) {
+    protected ReleaseMessageUpdater(final File introPageFile, final ReentrantLock introFileLock) {
         super(introPageFile, introFileLock);
     }
 
@@ -93,7 +94,7 @@ class TileUpdateMessageUpdater extends AbstractUpdater {
             m_bugfixes = UpdateDetector.checkForBugfixes();
         } catch (Exception e) {
             // offline or server not reachable
-            NodeLogger.getLogger(TileUpdateMessageUpdater.class)
+            NodeLogger.getLogger(ReleaseMessageUpdater.class)
                 .info("Could not check for updates or new releases, possibly offline.");
         }
         if (IntroPage.MOCK_INTRO_PAGE) {

@@ -73,7 +73,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  *
- * @author Daniel Bogenrieder, KNIME GmbH, Konstanz, Germany
+ * @author Christian Albrecht, KNIME GmbH, Konstanz, Germany
+ * @since 4.1
  */
 public class TileUpdater extends AbstractUpdater {
 

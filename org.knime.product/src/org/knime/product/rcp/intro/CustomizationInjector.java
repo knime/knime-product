@@ -69,6 +69,10 @@ import org.w3c.dom.Node;
 import org.w3c.dom.Text;
 import org.xml.sax.SAXException;
 
+/**
+ * @deprecated no functionality on tile based welcome page soon to be replaced with customization updater
+ */
+@Deprecated
 class CustomizationInjector extends AbstractInjector {
 
     private final Map<String, String> m_customizationInfo;

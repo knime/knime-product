@@ -84,7 +84,10 @@ import org.xml.sax.XMLReader;
  * copy of the template and nothing will be shown.
  *
  * @author Thorsten Meinl, KNIME AG, Zurich, Switzerland
+ * @deprecated legacy tips&tricks endpoint, new content is fetched via the {@link TileUpdater}, this class is just used
+ * for legacy instrumentation
  */
+@Deprecated
 class TipsAndNewsInjector extends AbstractInjector {
     private final URL m_tipsAndNewsUrl;
 

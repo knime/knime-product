@@ -59,6 +59,7 @@ import org.knime.core.node.NodeLogger;
  * Abstract base class for all updaters (JS) that modify the intro page.
  *
  * @author Daniel Bogenrieder, KNIME AG, Zurich, Switzerland
+ * @since 4.1
  */
 abstract class AbstractUpdater extends AbstractIntroPageModifier implements Runnable {
 

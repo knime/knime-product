@@ -70,7 +70,9 @@ import org.knime.core.node.NodeLogger;
 /**
  *
  * @author Christian Albrecht, KNIME GmbH, Konstanz, Germany
+ * @since 4.1
  */
+@SuppressWarnings("restriction")
 public class AbstractIntroPageModifier {
 
     private final File m_introPageFile;
@@ -110,7 +112,6 @@ public class AbstractIntroPageModifier {
      * @param introPageFile the temporary intro page file
      * @return the browser instance showing the intro page or <code>null</code>
      */
-    @SuppressWarnings("restriction")
     static Browser findIntroPageBrowser(final File introPageFile) {
         for (IWorkbenchWindow window : PlatformUI.getWorkbench().getWorkbenchWindows()) {
             for (IWorkbenchPage page : window.getPages()) {
@@ -152,7 +153,6 @@ public class AbstractIntroPageModifier {
      * @return <code>true</code> if it is an intro page editor, <code>false</code> otherwise
      * @throws PartInitException if there was an error restoring the editor input
      */
-    @SuppressWarnings("restriction")
     static boolean isIntroPageEditor(final IEditorReference ref, final File introPageFile) throws PartInitException {
         if (introPageFile == null) {
             return false;

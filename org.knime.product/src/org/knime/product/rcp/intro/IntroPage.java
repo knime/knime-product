@@ -54,6 +54,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -206,7 +207,7 @@ public class IntroPage implements LocationListener {
             Map<String, String> customizationInfo = getBrandingInfo();
             KNIMEConstants.GLOBAL_THREAD_POOL
                 .submit(new TileUpdater(m_introFile, m_lock, m_freshWorkspace, customizationInfo));
-            KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TileUpdateMessageUpdater(m_introFile, m_lock));
+            KNIMEConstants.GLOBAL_THREAD_POOL.submit(new ReleaseMessageUpdater(m_introFile, m_lock));
         } catch (InterruptedException ex) {
             // should not happen
             LOGGER.info("Got interrupted while submitting injector: " + ex.getMessage(), ex);
@@ -402,7 +403,7 @@ public class IntroPage implements LocationListener {
     }
 
     private void setIntroProperty(final URI command) {
-        for (NameValuePair param : URLEncodedUtils.parse(command, "UTF-8")) {
+        for (NameValuePair param : URLEncodedUtils.parse(command, Charset.forName("UTF-8"))) {
             m_prefs.putBoolean("org.knime.product.intro." + param.getName(), Boolean.parseBoolean(param.getValue()));
         }
     }

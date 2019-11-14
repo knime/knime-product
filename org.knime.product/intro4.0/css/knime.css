@@ -558,10 +558,6 @@ h2#welcome-sub {
 }
 
 @media only screen and (min-width: 1640px) {
-	.carousel-tile article > div > img {
-	   max-height: 180px;
-	}
-
 	.carousel-tile article > div {
 		max-height: 396px;
 	}
@@ -594,10 +590,6 @@ h2#welcome-sub {
 
 
 @media only screen and (max-width: 1640px) {
-	.carousel-tile article > div > img {
-	   max-height: 180px;
-	}
-
 	.carousel-tile article > div {
 		max-height: 396px;
 	}
@@ -627,10 +619,6 @@ h2#welcome-sub {
 }
 
 @media only screen and (max-width: 1220px) {
-	.carousel-tile article > div > img {
-	   max-height: 140px;
-	}
-
 	h1#welcome-knime {
 		color: #3E3A39;
 		font-family: Roboto;
@@ -714,10 +702,6 @@ h2#welcome-sub {
 		margin: 0px 12px 0px 0px;
 	    width: calc(33%);
     }
-
-	.carousel-tile article > div > img {
-	   max-height: 115px;
-	}
 
 	h1#welcome-knime {
 		color: #3E3A39;
@@ -826,10 +810,6 @@ h2#welcome-sub {
 
 	#welcome-page-header {
 		padding-left: 1em;
-	}
-
-	.carousel-tile article > div > img {
-		max-height: 93px;
 	}
 
 	h1#welcome-knime {
@@ -955,10 +935,6 @@ h2#welcome-sub {
 }
 
 @media only screen and (max-width: 610px) {
-	.carousel-tile article > div > img {
-	   max-height: 180px;
-	}
-
 	html, body {
 		height: 100%;
 	}
@@ -1054,10 +1030,6 @@ h2#welcome-sub {
 }
 
 @media only screen and (max-width: 300px) {
-	.carousel-tile article > div > img {
-	   max-height: 140px;
-	}
-
 	#content-container {
 		margin-top: 0px;
 	}

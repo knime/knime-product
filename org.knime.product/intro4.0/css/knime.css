@@ -428,20 +428,11 @@ h2#welcome-sub {
 }
 
 .update-tile > img {
-	margin-left: 25%;
 	width: 24px;
-	display: block;
-	float: left;
-	margin: 0px;
-	-webkit-transform: translateY(-15%);
-    -ms-transform: translateY(-15%);
-    transform: translateY(-15%);
-    margin-top: 5px;
+	min-widt: 24px;
 }
 
 .update-tile > p {
-	display: block;
-	float: left;
 	color: #3E3A39;
 	font-family: Roboto;
 	font-size: 18px;
@@ -452,8 +443,6 @@ h2#welcome-sub {
 }
 
 .update-tile > div {
-	display: block;
-	float: right;
 	margin-left: auto;
 	margin-top: 0px;
 }

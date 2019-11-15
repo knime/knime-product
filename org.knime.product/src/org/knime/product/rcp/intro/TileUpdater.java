@@ -112,6 +112,9 @@ public class TileUpdater extends AbstractUpdater {
         if (IntroPage.MOCK_INTRO_PAGE) {
             Thread.sleep(1500);
         }
+        if (m_tileURL == null) {
+            return;
+        }
         if (TILE_CATEGORIES == null || IntroPage.MOCK_INTRO_PAGE) {
             try {
                 HttpURLConnection conn = (HttpURLConnection)m_tileURL.openConnection();

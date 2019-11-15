@@ -429,7 +429,7 @@ h2#welcome-sub {
 
 .update-tile > img {
 	width: 24px;
-	min-widt: 24px;
+	min-width: 24px;
 }
 
 .update-tile > p {
@@ -552,6 +552,7 @@ h2#welcome-sub {
 
 .carousel-tile article > div > img,
 .carousel-tile article > div > div.image-placeholder {
+	width: 720px;
 	max-width: 100%;
     display: block;
     margin: 0 auto;

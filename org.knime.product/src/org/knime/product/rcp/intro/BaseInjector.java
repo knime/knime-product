@@ -104,6 +104,6 @@ class BaseInjector extends AbstractInjector {
             (Element)xpath.evaluate("//h2[@id='welcome-sub']", doc.getDocumentElement(), XPathConstants.NODE);
 
         title.setTextContent(m_isFreshWorkspace ? TITLE_FIRST : TITLE);
-        subtitle.setTextContent(m_isFreshWorkspace ? SUBTITLE_FIRST : SUBTITLE);
+        // subtitle.setTextContent(m_isFreshWorkspace ? SUBTITLE_FIRST : SUBTITLE);
     }
 }

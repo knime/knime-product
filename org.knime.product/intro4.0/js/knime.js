@@ -37,29 +37,28 @@ window.updateTile = function (data) {
 
     var carouselSubTitles = carousel.getElementsByClassName('line2');
     for (var subTitleIndex = carouselSubTitles.length - 1; subTitleIndex >= 0; subTitleIndex--) {
+        var subtitle = document.createElement('p');
+        subtitle.className = 'tile-text';
         if (data[subTitleIndex]['tile-text']) {
-            var subtitle = document.createElement('p');
-            subtitle.className = 'tile-sub-title';
             subtitle.innerHTML = data[subTitleIndex]['tile-text'];
-            subtitle.title = data[subTitleIndex]['tile-text'];
-
-            carouselSubTitles[subTitleIndex].parentNode.appendChild(subtitle);
         }
+        carouselSubTitles[subTitleIndex].parentNode.appendChild(subtitle);
         carouselSubTitles[subTitleIndex].parentNode.removeChild(carouselSubTitles[subTitleIndex]);
     }
 
     var carouselButtons = carousel.getElementsByClassName('button-placeholder');
     for (var buttonIndex = carouselButtons.length - 1; buttonIndex >= 0; buttonIndex--) {
         if (data[buttonIndex]['tile-link'] && data[buttonIndex]['tile-button-text']) {
+            var button = document.createElement('div');
+            button.className = 'button-div';
             var buttonTag = document.createElement('a');
             buttonTag.className = 'button-primary';
             buttonTag.href = data[buttonIndex]['tile-link'];
             buttonTag.innerHTML = data[buttonIndex]['tile-button-text'];
-            carouselButtons[buttonIndex].appendChild(buttonTag);
-            carouselButtons[buttonIndex].className = 'button-div';
-        } else {
-            carouselButtons[buttonIndex].parentNode.removeChild(carouselButtons[buttonIndex]);
+            carouselButtons[buttonIndex].parentNode.appendChild(button);
+            button.appendChild(buttonTag);
         }
+        carouselButtons[buttonIndex].parentNode.removeChild(carouselButtons[buttonIndex]);
     }
 };
 window.hideElement = function (id) {
@@ -82,15 +81,9 @@ window.displayUpdateTile = function (data) {
     updateContent.className = 'inner-content';
     updateContainer.appendChild(updateContent);
 
-    var carouselLength = document.createElement('div');
-    carouselLength.id = 'carousel-length';
-    carouselLength.className = 'carousel-length';
-    updateContent.appendChild(carouselLength);
-
     var updateBannerDiv = document.createElement('div');
-    updateBannerDiv.id = 'updateBanner';
-    updateBannerDiv.className = 'update-tile';
-    carouselLength.appendChild(updateBannerDiv);
+    updateBannerDiv.id = 'update-banner';
+    updateContent.appendChild(updateBannerDiv);
 
     var tileImage = document.createElement('img');
     tileImage.src = data.icon;
@@ -107,7 +100,7 @@ window.displayUpdateTile = function (data) {
     updateBannerDiv.appendChild(updateText);
 
     var buttonDiv = document.createElement('div');
-    buttonDiv.className = 'button-div';
+    buttonDiv.className = 'update-button';
     updateBannerDiv.appendChild(buttonDiv);
 
     var updateButton = document.createElement('a');
@@ -117,11 +110,13 @@ window.displayUpdateTile = function (data) {
     buttonDiv.appendChild(updateButton);
 
     var welcomePageWrapper = document.getElementById('inner-welcome-page');
-    var titleWrapper = document.getElementById('title-wrapper');
-    titleWrapper.setAttribute('style', 'background: #FFF');
-    titleWrapper.setAttribute('style', 'margin-bottom: 1em');
     var contentContainer = document.getElementById('content-container');
     welcomePageWrapper.insertBefore(updateContainer, contentContainer);
+
+    var titleWrapper = document.getElementById('title-wrapper');
+    titleWrapper.setAttribute('class', 'update-shown');
+    var contentContainer = document.getElementById('content-container');
+    contentContainer.setAttribute('class', 'update-shown');
 };
 
 // prevent right click on the welcome page

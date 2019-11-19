@@ -204,6 +204,7 @@ a.button-primary:focus {
     overflow: hidden;
     width: 100%;
     height: 100%;
+    min-width: 400px;
 }
 
 #welcome-page-header {
@@ -358,10 +359,6 @@ a.button-primary:focus {
     background-color: #FFD800;
 }
 
-#update-container .update-button {
-    min-width: 100px;
-}
-
 #update-container #update-banner {
     display: -ms-flexbox;
     display: -webkit-flex;
@@ -380,7 +377,6 @@ a.button-primary:focus {
 
 #update-container #update-banner > p {
     color: #3E3A39;
-    font-family: Roboto;
     font-size: 18px;
     font-weight: bold;
     letter-spacing: 0.1px;
@@ -410,9 +406,9 @@ a.button-primary:focus {
 }
 
 .carousel-tile {
-    margin: 0;
     /* full width minus 2 * margin (24px) between for 3 tiles */
     width: calc((100% - 48px) / 3);
+    margin: 0;
     text-align: left;
     overflow: hidden;
     display: -ms-flexbox;
@@ -449,7 +445,7 @@ a.button-primary:focus {
 
 .carousel-tile img,
 .carousel-tile div.image-placeholder {
-    width: 360px;
+    width: 720px;
     max-width: 100%;
     display: block;
     margin: 0 auto;
@@ -554,4 +550,161 @@ a.button-primary:focus {
 .carousel-tile .button-placeholder .button-text-placeholder {
     width: 90px;
     height: 13px;
+}
+
+@media only screen and (max-width: 1225px) {
+    body {
+        font-size: 13px;
+        font-size: 1.3rem;
+        line-height: 18px;
+        letter-spacing: 0.08px;
+    }
+    
+    h1 {
+        font-size: 28px;
+        font-size: 2.8rem;
+        line-height: 34px;
+        margin: 20px 0;
+    }
+    
+    a.button-primary {
+        padding: 6px 15px;
+    }
+    
+    #welcome-page-header {
+        padding: 10px 20px;
+    }
+
+    #hub-search-bar {
+        width: calc(50% - 20px);
+    }
+    
+    #inner-welcome-page {
+        padding-bottom: 20px;
+    }
+    
+    /* title-wrapper, content-container, update-container */
+    #inner-welcome-page > div {
+        padding: 0 20px;
+    }
+    
+    .inner-content {
+        max-width: unset;
+    }
+    
+    #update-container {
+        height: 50px;
+    }
+    
+    #update-container #update-banner > img {
+        width: 18px;
+        min-width: 18px;
+    }
+    
+    #update-container #update-banner > p {
+        font-size: 16px;
+    }
+    
+    #content-container.update-shown {
+        margin-top: 20px;
+    }
+    
+    .carousel-tile {
+        /* full width minus 2 * margin (20px) between for 3 tiles */
+        width: calc((100% - 40px) / 3);
+    }
+
+    .carousel-tile .content {
+        margin: 0 10px 10px;
+    }
+    
+    .carousel-tile .tile-tag-container {
+        margin-top: 10px;
+    }
+    
+    .carousel-tile p.tile-title {
+        font-size: 18px;
+        line-height: 21px;
+    }
+    
+    .carousel-tile p.tile-text {
+        font-size: 13px;
+        line-height: 18px;
+        margin: 5px 0 15px;
+    }
+}
+
+@media only screen and (max-width: 930px) {
+    h1 {
+        margin: 17px 0;
+    }
+    
+    #welcome-page-header {
+        padding: 5px 15px;
+    }
+    
+    #hub-search-bar {
+        width: calc(60% - 15px);
+    }
+    
+    #hub-search-bar button[type=submit] {
+        padding: 0 0 0 10px;
+    }
+    
+    #hub-search-bar button[type=submit] svg {
+        width: 18px;
+        height: 18px;
+    }
+    
+    #hub-search-bar input {
+        font-size: 13px;
+        line-height: 18px;
+        padding: 0 10px;
+    }
+    
+    #inner-welcome-page {
+        padding-bottom: 15px;
+    }
+    
+    /* title-wrapper, content-container, update-container */
+    #inner-welcome-page > div {
+        padding: 0 15px;
+    }
+    
+    #update-container {
+        height: 40px;
+    }
+    
+    #content-container.update-shown {
+        margin-top: 15px;
+    }
+    
+    .carousel-tile {
+        /* full width minus 2 * margin (10px) between for 3 tiles */
+        width: calc((100% - 20px) / 3);
+    }
+}
+
+@media only screen and (max-width: 620px) {
+    #hub-search-bar {
+        max-width: calc(100% - 154px);
+    }
+    
+    #update-container #update-content p.update-text {
+        display: none;
+    }
+    
+    /* display tiles underneath each other */
+    #carousel-content {
+        -ms-flex-direction: column;
+        -webkit-flex-direction: column;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .carousel-tile {
+        width: 100%;
+        max-width: 360px;
+        margin-bottom: 10px;
+    }
 }

@@ -1,6 +1,0 @@
-{
-    "tile-title": "External Tool",
-    "tile-image": "tiles/tipsAndTricks/external-tool.svg",
-    "tile-text": "Did you know that KNIME offers an External Tool node to run your favorite program from within KNIME.",
-    "tile-tag": "Tips & Tricks"
-}

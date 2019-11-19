@@ -90,12 +90,12 @@ window.displayUpdateTile = function (data) {
     updateBannerDiv.appendChild(tileImage);
 
     var tileText = document.createElement('p');
-    tileText.className = 'tile-text';
+    tileText.className = 'update-text';
     tileText.innerHTML = data.tileContent;
     updateBannerDiv.appendChild(tileText);
 
     var updateText = document.createElement('p');
-    updateText.className = 'tile-text';
+    updateText.className = 'update-title';
     updateText.innerHTML = data.title;
     updateBannerDiv.appendChild(updateText);
 

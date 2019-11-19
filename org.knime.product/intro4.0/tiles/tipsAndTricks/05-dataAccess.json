@@ -1,6 +1,0 @@
-{
-    "tile-title": "Data access",
-    "tile-image": "tiles/tipsAndTricks/data-access.svg",
-    "tile-text": "KNIME can read many file formats including various text files, CSV, XML, and even Excel.",
-    "tile-tag": "Tips & Tricks"
-}

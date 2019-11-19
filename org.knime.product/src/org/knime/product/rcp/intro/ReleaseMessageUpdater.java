@@ -119,14 +119,14 @@ class ReleaseMessageUpdater extends AbstractUpdater {
                 }
                 shortName = m_newReleases.get(0).getShortName();
             }
-            String title = bugfix ? "" : "Update now to " + shortName;
+            String title = "Update now to " + shortName;
             // This needs to be dynamically populated, possibly also a new field in the releases.txt
-            String tileContent = "Get the latest features and enhancements!";
+            String tileContent = bugfix ? "" : "Get the latest features and enhancements!";
             if (bugfix) {
                 if (m_bugfixes.size() >= 2) {
-                    tileContent = "There are updates for " + m_bugfixes.size() + " extensions available.";
+                    title = "There are updates for " + m_bugfixes.size() + " extensions available.";
                 } else {
-                    tileContent = "There is an update for " + m_bugfixes.size() + " extension available.";
+                    title = "There is an update for " + m_bugfixes.size() + " extension available.";
                 }
             }
             String icon = updatePossible ? "img/update.svg" : "img/arrow-download.svg";

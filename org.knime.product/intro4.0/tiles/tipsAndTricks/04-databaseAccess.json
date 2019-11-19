@@ -1,6 +1,0 @@
-{
-    "tile-title": "Database access",
-    "tile-image": "tiles/tipsAndTricks/database-access.svg",
-    "tile-text": "You can connect to many databases by registering the vendor-specific driver in the KNIME preferences.",
-    "tile-tag": "Tips & Tricks"
-}

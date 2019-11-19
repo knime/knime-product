@@ -1,6 +1,0 @@
-{
-    "tile-title": "Powerful statistics with R",
-    "tile-image": "tiles/tipsAndTricks/r-statistics.svg",
-    "tile-text": "You can run R scripts with R connector nodes and KNIME even supports R views.",
-    "tile-tag": "Tips & Tricks"
-}

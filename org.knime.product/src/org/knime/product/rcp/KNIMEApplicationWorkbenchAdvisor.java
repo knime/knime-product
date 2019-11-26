@@ -55,7 +55,6 @@ import org.eclipse.equinox.internal.p2.ui.sdk.scheduler.AutomaticUpdateMessages;
 import org.eclipse.equinox.internal.p2.ui.sdk.scheduler.AutomaticUpdatePlugin;
 import org.eclipse.equinox.internal.p2.ui.sdk.scheduler.AutomaticUpdateScheduler;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.application.IWorkbenchConfigurer;
 import org.eclipse.ui.application.IWorkbenchWindowConfigurer;
 import org.eclipse.ui.application.WorkbenchAdvisor;
@@ -135,7 +134,7 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
         }
     }
 
-    private void changeDefaultPreferences() {
+    private static void changeDefaultPreferences() {
         // enable automatic check for updates every day at 11:00
         final Preferences node = DefaultScope.INSTANCE.getNode(AutomaticUpdatePlugin.PLUGIN_ID);
         node.putBoolean(org.eclipse.equinox.internal.p2.ui.sdk.scheduler.PreferenceConstants.PREF_AUTO_UPDATE_ENABLED,

@@ -194,7 +194,6 @@ public class TileUpdater extends AbstractUpdater {
         builder.append("&osname=" + KNIMEConstants.getOSVariant());
         builder.append("&arch=" + Platform.getOSArch());
 
-        //If there is no custom URL set use the standard one
         if (customizationInfo.containsKey("companyName")) {
             //Add the customizers name to the URL
             String companyName = customizationInfo.get("companyName");

@@ -63,6 +63,7 @@ import org.knime.core.node.NodeLogger;
  */
 abstract class AbstractUpdater extends AbstractIntroPageModifier implements Runnable {
 
+    private final NodeLogger LOGGER = NodeLogger.getLogger(getClass());
     private final ReentrantLock m_introFileLock;
 
     /**
@@ -90,7 +91,7 @@ abstract class AbstractUpdater extends AbstractIntroPageModifier implements Runn
                 m_introFileLock.unlock();
             }
         } catch (Exception ex) {
-            NodeLogger.getLogger(getClass()).warn("Could not modify intro page: " + ex.getMessage(), ex);
+            LOGGER.warn("Could not modify intro page: " + ex.getMessage(), ex);
         }
     }
 
@@ -102,7 +103,9 @@ abstract class AbstractUpdater extends AbstractIntroPageModifier implements Runn
                 public void run() {
                     try {
                         browser.execute(jsCall);
-                    } catch (Exception e) { /* do nothing */ }
+                    } catch (Exception e) {
+                        LOGGER.info("Could not update intro page: " + e.getMessage(), e);
+                    }
                 }
             });
         }

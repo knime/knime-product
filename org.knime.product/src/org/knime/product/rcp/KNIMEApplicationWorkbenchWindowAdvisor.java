@@ -77,8 +77,6 @@ import org.knime.product.rcp.intro.IntroPage;
 import org.knime.workbench.core.KNIMECorePlugin;
 import org.knime.workbench.core.preferences.HeadlessPreferencesConstants;
 import org.knime.workbench.core.util.LinkMessageDialog;
-import org.knime.workbench.ui.KNIMEUIPlugin;
-import org.knime.workbench.ui.preferences.PreferenceConstants;
 import org.knime.workbench.ui.startup.StartupMessage;
 
 /**
@@ -134,11 +132,8 @@ public class KNIMEApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvis
         org.eclipse.ui.ide.IDE.registerAdapters();
     }
 
-    private void showIntroPage() {
-        IPreferenceStore pStore = KNIMEUIPlugin.getDefault().getPreferenceStore();
-        boolean showTipsAndTricks = !pStore.getBoolean(PreferenceConstants.P_HIDE_TIPS_AND_TRICKS);
-
-        if (!EclipseUtil.isRunFromSDK() && showTipsAndTricks) {
+    private static void showIntroPage() {
+        if (!EclipseUtil.isRunFromSDK()) {
             IntroPage.INSTANCE.show();
             if (IntroPage.INSTANCE.isFreshWorkspace()) {
                 PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell().setMaximized(true);
@@ -200,7 +195,7 @@ public class KNIMEApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvis
     /**
      * Asks the user to send anonymous usage statistics to KNIME on a new workspace instance.
      */
-    private void checkAnonymousUsageStatistics(final Shell shell) {
+    private static void checkAnonymousUsageStatistics(final Shell shell) {
         IPreferenceStore pStore = KNIMECorePlugin.getDefault().getPreferenceStore();
         boolean alreadyAsked = pStore.getBoolean(HeadlessPreferencesConstants.P_ASKED_ABOUT_STATISTICS);
         //pStore.setDefault(HeadlessPreferencesConstants.P_SEND_ANONYMOUS_STATISTICS, false);
@@ -221,7 +216,7 @@ public class KNIMEApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvis
     /**
      * Adds a workbench shutdown listener to write and send usage data.
      */
-    private void addGlobalNodeTimerShutdownHook() {
+    private static void addGlobalNodeTimerShutdownHook() {
         IWorkbench wb = PlatformUI.getWorkbench();
         wb.addWorkbenchListener(new IWorkbenchListener() {
             @Override
@@ -237,7 +232,7 @@ public class KNIMEApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvis
     }
 
     @SuppressWarnings("restriction")
-    private String computeTitle() {
+    private static String computeTitle() {
         String title = null;
         IProduct product = Platform.getProduct();
         if (product != null) {

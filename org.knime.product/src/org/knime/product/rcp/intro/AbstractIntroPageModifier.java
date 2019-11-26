@@ -75,6 +75,8 @@ import org.knime.core.node.NodeLogger;
 @SuppressWarnings("restriction")
 public class AbstractIntroPageModifier {
 
+    private final static NodeLogger LOGGER = NodeLogger.getLogger(AbstractIntroPageModifier.class);
+
     private final File m_introPageFile;
 
     /**
@@ -114,8 +116,22 @@ public class AbstractIntroPageModifier {
      */
     static Browser findIntroPageBrowser(final File introPageFile) {
         for (IWorkbenchWindow window : PlatformUI.getWorkbench().getWorkbenchWindows()) {
-            for (IWorkbenchPage page : window.getPages()) {
-                for (IEditorReference ref : page.getEditorReferences()) {
+            IWorkbenchPage[] pages = new IWorkbenchPage[0];
+            try {
+                pages = window.getPages();
+            } catch (Exception e) {
+                LOGGER.debug("Error getting workbench pages for window: " + e.getMessage(), e);
+                continue;
+            }
+            for (IWorkbenchPage page : pages) {
+                IEditorReference[] refs = new IEditorReference[0];
+                try {
+                    refs = page.getEditorReferences();
+                } catch (Exception e) {
+                    LOGGER.debug("Error getting editor refs for workbench page: " + e.getMessage(), e);
+                    continue;
+                }
+                for (IEditorReference ref : refs) {
                     try {
                         if (isIntroPageEditor(ref, introPageFile)) {
                             IEditorPart part = ref.getEditor(false);
@@ -142,6 +158,7 @@ public class AbstractIntroPageModifier {
                 }
             }
         }
+        // browser not created yet or not available anymore
         return null;
     }
 

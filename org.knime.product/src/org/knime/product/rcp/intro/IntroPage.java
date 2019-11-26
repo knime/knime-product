@@ -193,12 +193,9 @@ public class IntroPage implements LocationListener {
 
             updateTiles();
 
-            // query tips and tricks still until instrumentation is switched to a different url
-            /* KNIMEConstants.GLOBAL_THREAD_POOL.submit(new TipsAndNewsInjector(m_introFile, m_lock, m_prefs,
-                m_freshWorkspace, m_parserFactory, m_xpathFactory, m_transformerFactory, customizationInfo)); */
         } catch (IOException | ParserConfigurationException | SAXException | XPathExpressionException
                 | TransformerFactoryConfigurationError | TransformerException ex) {
-            LOGGER.error("Could not copy intro pages: " + ex.getMessage(), ex);
+            LOGGER.error("Could not copy welcome page: " + ex.getMessage(), ex);
         }
     }
 

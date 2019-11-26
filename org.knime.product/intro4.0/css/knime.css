@@ -314,6 +314,7 @@ a.button-primary:focus {
     font-weight: 300;
     line-height: 24px;
     letter-spacing: 0.08px;
+    text-overflow: ellipsis;
     -webkit-appearance: none;
     -moz-appearance: none;
 }
@@ -321,11 +322,13 @@ a.button-primary:focus {
 #hub-search-bar input::placeholder {
     font-weight: 300;
     color: #6e6e6e;
+    text-overflow: ellipsis;
 }
 
 #hub-search-bar input:-ms-input-placeholder {
     font-weight: 300;
     color: #6e6e6e;
+    text-overflow: ellipsis;
 }
 
 /* Hide native IE reset */
@@ -699,6 +702,7 @@ a.button-primary:focus {
         -ms-flex-direction: column;
         -webkit-flex-direction: column;
         flex-direction: column;
+        -webkit-align-items: center;
         align-items: center;
     }
     

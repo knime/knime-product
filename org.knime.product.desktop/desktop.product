@@ -51,7 +51,7 @@ openFile
 -Xdock:icon=../Resources/Knime.icns
 -Dorg.eclipse.swt.internal.carbon.smallFonts
       </vmArgsMac>
-      <vmArgsWin>-Dorg.eclipse.swt.browser.IEVersion=12001
+      <vmArgsWin>-Dorg.eclipse.swt.browser.IEVersion=11001
 -Dsun.awt.noerasebackground=true
 -Dequinox.statechange.timeout=30000
       </vmArgsWin>

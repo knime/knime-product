@@ -122,8 +122,9 @@ public class OfflineJsonCollector {
         return m_mapper.writeValueAsString(allFirstUses);
     }
 
-    public JSONTile fetchSingleOfflineTile(final String prefix) throws IOException {
-        List<URL> ttFiles = listFilesInDir(TILES + "/offline");
+    public JSONTile fetchSingleOfflineTile(final String prefix, final boolean first) throws IOException {
+        String dir = TILES + (first ? "/first" : "/offline");
+        List<URL> ttFiles = listFilesInDir(dir);
         Optional<URL> categoryFile = ttFiles.stream().filter(url -> {
             String fileName = url.getFile().substring(url.getFile().lastIndexOf("/") + 1);
             return fileName.startsWith(prefix);

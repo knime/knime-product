@@ -55,15 +55,18 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.Platform;
 import org.knime.core.node.KNIMEConstants;
 import org.knime.core.node.NodeLogger;
+import org.knime.core.util.HubStatistics;
 import org.knime.product.rcp.intro.json.JSONCategory;
 import org.knime.product.rcp.intro.json.JSONTile;
 import org.knime.product.rcp.intro.json.OfflineJsonCollector;
@@ -145,13 +148,17 @@ public class TileUpdater extends AbstractUpdater {
     protected void updateData() {
         String tiles;
         try {
+            if (TILE_CATEGORIES == null) {
+                if (m_isFreshWorkspace) {
+                    tiles = m_offlineCollector.fetchFirstUse();
+                } else {
+                    tiles = m_offlineCollector.fetchAllOffline();
+                }
+            } else {
+                tiles = buildTilesFromCategories();
+            }
             if (m_isFreshWorkspace) {
                 hideElement("hub-search-bar");
-                tiles = m_offlineCollector.fetchFirstUse();
-            } else if (TILE_CATEGORIES != null) {
-                tiles = buildTilesFromCategories();
-            } else {
-                tiles = m_offlineCollector.fetchAllOffline();
             }
             updateTiles(tiles);
         } catch (IOException e) {
@@ -173,9 +180,9 @@ public class TileUpdater extends AbstractUpdater {
                     }
                 }
             }
-            if (chosenCategoryTile == null) {
+            if (chosenCategoryTile == null || m_isFreshWorkspace) {
                 try {
-                    chosenCategoryTile = m_offlineCollector.fetchSingleOfflineTile("C" + cat);
+                    chosenCategoryTile = m_offlineCollector.fetchSingleOfflineTile("C" + cat, m_isFreshWorkspace);
                 } catch (IOException e) {
                     LOGGER.error("Could not retrieve offline tile: " + e.getMessage(), e);
                     chosenCategoryTile = new JSONTile();
@@ -186,7 +193,7 @@ public class TileUpdater extends AbstractUpdater {
         return m_mapper.writeValueAsString(tileArray);
     }
 
-    private static URL buildTileURL(final Map<String, String> customizationInfo) {
+    private URL buildTileURL(final Map<String, String> customizationInfo) {
         StringBuilder builder = new StringBuilder(WELCOME_PAGE_ENDPOINT);
         builder.append("?knid=" + KNIMEConstants.getKNIMEInstanceID());
         builder.append("&version=" + KNIMEConstants.VERSION);
@@ -194,6 +201,7 @@ public class TileUpdater extends AbstractUpdater {
         builder.append("&osname=" + KNIMEConstants.getOSVariant());
         builder.append("&arch=" + Platform.getOSArch());
 
+        // customization if present
         if (customizationInfo.containsKey("companyName")) {
             //Add the customizers name to the URL
             String companyName = customizationInfo.get("companyName");
@@ -206,6 +214,13 @@ public class TileUpdater extends AbstractUpdater {
                 }
             }
         }
+
+        // details
+        builder.append("&details=");
+        builder.append(buildAPUsage());
+        builder.append(",");
+        builder.append(buildHubUsage());
+
         try {
             return new URL(builder.toString().replace(" ", "%20"));
         } catch (MalformedURLException e) {
@@ -213,6 +228,39 @@ public class TileUpdater extends AbstractUpdater {
             return null;
         }
     }
+
+    private static String buildHubUsage() {
+        String hubUsage = "hubUsage:";
+        Optional<ZonedDateTime> lastLogin = Optional.empty();
+        Optional<ZonedDateTime> lastUpload = Optional.empty();
+        try {
+            lastLogin = HubStatistics.getLastLogin();
+            lastUpload = HubStatistics.getLastUpload();
+        } catch (Exception e) {
+            LOGGER.info("Hub statistics could not be fetched: " + e.getMessage(), e);
+        }
+
+        if (lastUpload.isPresent()) {
+            hubUsage += "contributer";
+        } else if (lastLogin.isPresent()) {
+            hubUsage += "user";
+        } else {
+            hubUsage += "none";
+        }
+        return hubUsage;
+    }
+
+    private String buildAPUsage() {
+        // simple distinction between first and recurring users
+        String apUsage = "apUsage:";
+        if (m_isFreshWorkspace) {
+            apUsage += "first";
+        } else {
+            apUsage += "recurring";
+        }
+        return apUsage;
+    }
+
 
     private void hideElement(final String id) {
         executeUpdateInBrowser("hideElement('" + id + "');");

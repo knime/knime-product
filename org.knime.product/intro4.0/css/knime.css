@@ -208,6 +208,9 @@ a.button-primary:focus {
 }
 
 #welcome-page-header {
+    -ms-flex: 0 0 auto;
+    -webkit-flex: 0 0 auto;
+    flex: 0 0 auto;
     padding: 1em 2em 1em 2em;
     background: #FFF;
     width: 100%;

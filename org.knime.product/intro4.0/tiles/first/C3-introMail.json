@@ -1,8 +1,8 @@
 {
-    "tile-title": "Sign up for introductory emails",
-    "tile-image": "img/mail-signup.svg",
+    "tile-title": "Guided onboarding",
+    "tile-image": "img/email-signup.svg",
     "tile-tag": "Getting started",
-    "tile-text": "These messages will get you up and running as quickly as possible.",
+    "tile-text": "Sign up for intro emails to get up an running as quick as possible.",
     "tile-button-text": "Sign up",
     "tile-link": "https://www.knime.com/form/help-getting-started?src=knimeapp"
 }

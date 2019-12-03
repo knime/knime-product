@@ -102,7 +102,14 @@ abstract class AbstractUpdater extends AbstractIntroPageModifier implements Runn
                 @Override
                 public void run() {
                     try {
-                        browser.execute(jsCall);
+                        //try for a couple of calls till the script is executed successfully
+                        //isn't always the case on the first call maybe because page loading isn't done, yet
+                        //see AP-13094
+                        int i = 0;
+                        while (!browser.execute(jsCall) && i < 10) {
+                            Thread.sleep(100);
+                            i++;
+                        }
                     } catch (Exception e) {
                         LOGGER.info("Could not update intro page: " + e.getMessage(), e);
                     }

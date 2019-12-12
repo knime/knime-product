@@ -798,7 +798,15 @@ propagated with or for interoperation with KNIME.
    </plugins>
 
    <features>
-      <feature id="org.knime.product.desktop"/>
+      <feature id="org.eclipse.gef" installMode="root"/>
+      <feature id="org.eclipse.platform" installMode="root"/>
+      <feature id="org.eclipse.rcp" installMode="root"/>
+      <feature id="org.knime.features.core" installMode="root"/>
+      <feature id="org.knime.features.base" installMode="root"/>
+      <feature id="org.knime.features.workbench" installMode="root" />
+      <feature id="org.knime.features.ext.svg" installMode="root"/>
+      <feature id="org.knime.features.product" installMode="root"/>
+      <feature id="org.knime.binary.jre" installMode="root"/>
    </features>
 
    <configurations>

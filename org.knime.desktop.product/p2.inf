@@ -1,5 +1,9 @@
 #
 #Fri Dec 13 00:18:50 CET 2019
+
+update.matchExp = providedCapabilities.exists(pc | pc.namespace == 'org.eclipse.equinox.p2.iu' && (pc.name == 'org.knime.product.desktop' || pc.name == 'org.knime.desktop.product'))
+update.severity = 1
+
 requires.0.greedy=true
 units.0.version=4.2.0.1576192730836
 units.0.filter=(osgi.os\=macosx)

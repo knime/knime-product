@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-      id="org.knime.product.desktop"
-      label="KNIME Analytics Platform"
+      id="org.knime.features.product"
+      label="KNIME Analytics Platform Minimal Features"
       version="4.2.0.qualifier"
       provider-name="KNIME AG, Zurich, Switzerland">
 
@@ -727,30 +727,6 @@ license terms applicable to such Node, including when such Node is
 propagated with or for interoperation with KNIME.
    </license>
 
-   <includes
-         id="org.knime.features.base"
-         version="0.0.0"/>
-
-   <includes
-         id="org.knime.binary.jre"
-         version="0.0.0"/>
-
-   <includes
-         id="org.knime.features.ext.svg"
-         version="0.0.0"/>
-
-   <includes
-         id="org.eclipse.gef"
-         version="0.0.0"/>
-
-   <includes
-         id="org.eclipse.platform"
-         version="0.0.0"/>
-
-   <includes
-         id="org.eclipse.rcp"
-         version="0.0.0"/>
-
    <requires>
       <import feature="org.eclipse.equinox.p2.user.ui" version="2.0.1" match="greaterOrEqual"/>
    </requires>
@@ -762,54 +738,10 @@ propagated with or for interoperation with KNIME.
          version="0.0.0"/>
 
    <plugin
-         id="org.knime.ext.sun"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="org.knime.startup.macosx"
          os="macosx"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
-
-   <plugin
-         id="javax.mail.glassfish"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="javax.activation"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.apache.commons.math3"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.apache.commons.logging.log4j"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         fragment="true"
-         unpack="false"/>
-
-   <plugin
-         id="org.apache.xerces.clfix"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         fragment="true"/>
-
 </feature>

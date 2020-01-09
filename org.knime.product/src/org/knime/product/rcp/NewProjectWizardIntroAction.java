@@ -99,8 +99,8 @@ public class NewProjectWizardIntroAction implements IIntroAction {
                                     // call static method on NewProjectWizard
                                     AbstractExplorerFileStore workspaceRoot = null;
                                     for (AbstractContentProvider cp : ExplorerMountTable.getMountedContent().values()) {
-                                        if (cp.getFileStore("/") instanceof LocalWorkspaceFileStore) {
-                                            workspaceRoot = cp.getFileStore("/");
+                                        if (cp.getRootStore() instanceof LocalWorkspaceFileStore) {
+                                            workspaceRoot = cp.getRootStore();
                                             break;
                                         }
                                     }

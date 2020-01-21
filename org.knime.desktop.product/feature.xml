@@ -1,86 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?pde version="3.5"?>
+<feature
+      id="org.knime.desktop.product"
+      label="KNIME Analytics Platform"
+      version="4.2.0.qualifier"
+      provider-name="KNIME AG, Zurich, Switzerland">
 
-<product name="KNIME Analytics Platform" uid="org.knime.desktop.product" id="org.knime.product.KNIME_PRODUCT" application="org.knime.product.KNIME_APPLICATION" version="4.2.0.qualifier" useFeatures="true" includeLaunchers="true">
+   <description>This feature contains the minimal KNIME Analytics Platform.</description>
 
-   <aboutInfo>
-      <image path="/org.knime.product/icons/png/knime_about.png"/>
-      <text>
-         Welcome to the KNIME Analytics Platform 4.1.0
-Copyright by KNIME AG, Zurich, Switzerland 
-email: contact@knime.com
-
-This version of KNIME Analytics Platform is licensed under the
-GNU General Public License, Version 3.
-Please see the license file in the installation directory and 
-contact us if you cannot locate it. More details can be found at
-http://www.knime.org/
-
-
-Based on Eclipse, http://www.eclipse.org/
-
-KNIME is a registered trademark of KNIME GmbH, Konstanz, Germany.
-All other trademarks are the property of their respective owners.
-      </text>
-   </aboutInfo>
-
-   <configIni use="default">
-   </configIni>
-
-   <launcherArgs>
-      <programArgsMac>-vm
-../Eclipse/jre/Home/lib/jli/libjli.dylib
-      </programArgsMac>
-      <programArgsWin>--launcher.defaultAction
-openFile
-      </programArgsWin>
-      <vmArgs>-server
--Dsun.java2d.d3d=false
--Dosgi.classloader.lock=classname
--XX:+UnlockDiagnosticVMOptions
--XX:+UnsyncloadClass 
--XX:+UseG1GC
--Dsun.net.client.defaultReadTimeout=0
--XX:CompileCommand=exclude,javax/swing/text/GlyphView,getBreakSpot
-         <argsX86>-Xmx512m</argsX86>
-         <argsX86_64>-Xmx2048m</argsX86_64>
-      </vmArgs>
-      <vmArgsLin>-Dorg.eclipse.swt.internal.gtk.disablePrinting
-      </vmArgsLin>
-      <vmArgsMac>-XstartOnFirstThread
--Xdock:icon=../Resources/Knime.icns
--Dorg.eclipse.swt.internal.carbon.smallFonts
-      </vmArgsMac>
-      <vmArgsWin>-Dorg.eclipse.swt.browser.IEVersion=11001
--Dsun.awt.noerasebackground=true
--Dequinox.statechange.timeout=30000
-      </vmArgsWin>
-   </launcherArgs>
-
-   <windowImages i16="/org.knime.product/icons/png/knime_16.png" i32="/org.knime.product/icons/png/knime_32.png" i48="/org.knime.product/icons/png/knime_48.png" i64="/org.knime.product/icons/png/knime_64.png" i128="/org.knime.product/icons/png/knime_128.png" i256="/org.knime.product/icons/png/knime_256.png"/>
-
-   <splash
-      location="org.knime.product" />
-   <launcher name="knime">
-      <linux icon="../org.knime.product/icons/knime_linux_128.xpm"/>
-      <macosx icon="../org.knime.product/icons/knime_mac.icns"/>
-      <win useIco="true">
-         <ico path="../org.knime.product/icons/knime_windows_256.ico"/>
-         <bmp/>
-      </win>
-   </launcher>
-
-   <intro introId="org.knime.product.intro"/>
-
-   <vm>
-      <linux include="true">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8</linux>
-      <macos include="true">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8</macos>
-      <windows include="true">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8</windows>
-   </vm>
+   <copyright>
+      Copyright by KNIME AG, Zurich, Switzerland
+   </copyright>
 
    <license>
-        <text>
-   GNU GENERAL PUBLIC LICENSE with Additional Permissions according to Sec. 7
+      GNU GENERAL PUBLIC LICENSE with Additional Permissions according to Sec. 7
 *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** 
 Please see below the General Public License (GPL), Version 3, 
 and the Additional Permissions according to Sec. 7 
@@ -791,25 +723,15 @@ Nodes, in each case even if such Nodes are propagated with or for
 interoperation with KNIME.  The owner of a Node may freely choose the
 license terms applicable to such Node, including when such Node is
 propagated with or for interoperation with KNIME.
-         </text>
    </license>
 
-   <plugins>
-   </plugins>
-
-   <features>
-      <feature id="org.knime.desktop.product" />
-   </features>
-
-   <configurations>
-      <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="4" />
-      <plugin id="org.eclipse.equinox.common" autoStart="true" startLevel="2" />
-      <plugin id="org.eclipse.equinox.ds" autoStart="true" startLevel="2" />
-      <plugin id="org.eclipse.equinox.event" autoStart="true" startLevel="2" />
-      <plugin id="org.eclipse.equinox.p2.reconciler.dropins" autoStart="true" startLevel="4" />
-      <plugin id="org.eclipse.equinox.simpleconfigurator" autoStart="true" startLevel="1" />
-      <plugin id="org.eclipse.update.configurator" autoStart="true" startLevel="3" />
-      <property name="osgi.instance.area.default" value="@user.home/knime-workspace" />
-   </configurations>
-
-</product>
+   <includes id="org.eclipse.gef" version="0.0.0" />
+   <includes id="org.eclipse.platform" version="0.0.0" />
+   <includes id="org.eclipse.rcp" version="0.0.0" />
+   <includes id="org.knime.features.core" version="0.0.0" />
+   <includes id="org.knime.features.base" version="0.0.0" />
+   <includes id="org.knime.features.workbench" version="0.0.0" />
+   <includes id="org.knime.features.ext.svg" version="0.0.0" />
+   <includes id="org.knime.features.product" version="0.0.0" />
+   <includes id="org.knime.binary.jre" version="0.0.0" />
+</feature>

@@ -727,10 +727,6 @@ license terms applicable to such Node, including when such Node is
 propagated with or for interoperation with KNIME.
    </license>
 
-   <requires>
-      <import feature="org.eclipse.equinox.p2.user.ui" version="2.0.1" match="greaterOrEqual"/>
-   </requires>
-
    <plugin
          id="org.knime.product"
          download-size="0"

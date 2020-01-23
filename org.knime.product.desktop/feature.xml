@@ -725,9 +725,8 @@ license terms applicable to such Node, including when such Node is
 propagated with or for interoperation with KNIME.
    </license>
 
-   <includes id="org.eclipse.gef" version="0.0.0" />
    <includes id="org.eclipse.platform" version="0.0.0" />
-   <includes id="org.eclipse.rcp" version="0.0.0" />
+   <includes id="org.eclipse.gef" version="0.0.0" />
    <includes id="org.eclipse.equinox.p2.user.ui" version="0.0.0" />
    <includes id="org.knime.features.core" version="0.0.0" />
    <includes id="org.knime.features.base" version="0.0.0" />

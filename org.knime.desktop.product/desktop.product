@@ -800,7 +800,6 @@ propagated with or for interoperation with KNIME.
    <features>
       <feature id="org.eclipse.gef" />
       <feature id="org.eclipse.platform" />
-      <feature id="org.eclipse.rcp" />
       <feature id="org.eclipse.equinox.p2.user.ui" />
       <feature id="org.knime.features.core" />
       <feature id="org.knime.features.base" />

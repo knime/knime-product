@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
       id="org.knime.features.product"
-      label="KNIME Analytics Platform Minimal Features"
+      label="KNIME Analytics Platform Product"
       version="4.2.0.qualifier"
       provider-name="KNIME AG, Zurich, Switzerland">
 

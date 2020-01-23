@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-      id="org.knime.desktop.product"
+      id="org.knime.product.desktop"
       label="KNIME Analytics Platform"
       version="4.2.0.qualifier"
       provider-name="KNIME AG, Zurich, Switzerland">

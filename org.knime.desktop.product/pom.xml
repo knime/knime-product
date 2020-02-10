@@ -8,7 +8,6 @@
     <version>${revision}${changelist}</version>
   </parent>
   <artifactId>org.knime.desktop.product</artifactId>
-  <!-- <version>4.1.0-SNAPSHOT</version> -->
   <packaging>eclipse-repository</packaging>
   <build>
     <plugins>

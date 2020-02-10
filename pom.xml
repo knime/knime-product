@@ -69,44 +69,9 @@
 			<url>${knime.jep.p2}</url>
 		</repository>
 		<repository>
-			<id>knime.ensembles.p2</id>
-			<layout>p2</layout>
-			<url>${knime.ensembles.p2}</url>
-		</repository>
-		<repository>
-			<id>knime.poi.p2</id>
-			<layout>p2</layout>
-			<url>${knime.poi.p2}</url>
-		</repository>
-		<repository>
 			<id>knime.js.core.p2</id>
 			<layout>p2</layout>
 			<url>${knime.js.core.p2}</url>
-		</repository>
-		<repository>
-			<id>knime.js.base.p2</id>
-			<layout>p2</layout>
-			<url>${knime.js.base.p2}</url>
-		</repository>
-		<repository>
-			<id>knime.json.p2</id>
-			<layout>p2</layout>
-			<url>${knime.json.p2}</url>
-		</repository>
-		<repository>
-			<id>knime.productivity.oss.p2</id>
-			<layout>p2</layout>
-			<url>${knime.productivity.oss.p2}</url>
-		</repository>
-		<repository>
-			<id>knime.distance.p2</id>
-			<layout>p2</layout>
-			<url>${knime.distance.p2}</url>
-		</repository>
-		<repository>
-			<id>knime.xml.p2</id>
-			<layout>p2</layout>
-			<url>${knime.xml.p2}</url>
 		</repository>
 		<repository>
 			<id>knime.expressions.p2</id>
@@ -114,29 +79,9 @@
 			<url>${knime.expressions.p2}</url>
 		</repository>
 		<repository>
-			<id>knime.reporting.p2</id>
-			<layout>p2</layout>
-			<url>${knime.reporting.p2}</url>
-		</repository>
-		<repository>
 			<id>knime.svg.p2</id>
 			<layout>p2</layout>
 			<url>${knime.svg.p2}</url>
-		</repository>
-		<repository>
-			<id>knime.database.p2</id>
-			<layout>p2</layout>
-			<url>${knime.database.p2}</url>
-		</repository>
-		<repository>
-			<id>knime.stats.p2</id>
-			<layout>p2</layout>
-			<url>${knime.stats.p2}</url>
-		</repository>
-		<repository>
-			<id>knime.kerberos.p2</id>
-			<layout>p2</layout>
-			<url>${knime.p2.repo}/knime-kerberos/${git.branch}</url>
 		</repository>
 		<repository>
 			<id>knime.filehandling.p2</id>

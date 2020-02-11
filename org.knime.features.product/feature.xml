@@ -6,7 +6,7 @@
       provider-name="KNIME AG, Zurich, Switzerland">
 
    <description>
-      KNIME Analytics Platform feature
+      This feature contains the minimal KNIME Analytics Platform.
    </description>
 
    <copyright>
@@ -736,20 +736,6 @@ propagated with or for interoperation with KNIME.
    <plugin
          id="org.knime.startup.macosx"
          os="macosx"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.eclipse.equinox.p2.reconciler.dropins"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.eclipse.update.configurator"
          download-size="0"
          install-size="0"
          version="0.0.0"

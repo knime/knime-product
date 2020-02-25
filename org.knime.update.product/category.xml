@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature id="org.knime.features.product" version="0.0.0"/>
-   <feature id="org.knime.features.product.source" version="0.0.0"/>
-   <product id="org.knime.desktop.product" version="0.0.0"/>
+   <feature id="org.knime.features.product" version="0.0.0">
+       <category name="knime-product" />
+   </feature>
+   <feature id="org.knime.features.product.source" version="0.0.0">
+       <category name="knime-product" />
+   </feature>
+   <product id="org.knime.desktop.product" version="0.0.0">
+       <category name="knime-product" />
+   </product>
+
+   <category-def name="knime-product" label="Build artifacts from knime-product">
+      <description>Build artifacts from knime-product</description>
+   </category-def>
 </site>

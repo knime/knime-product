@@ -53,19 +53,9 @@
 			<url>${knime.tp.p2}</url>
 		</repository>
 		<repository>
-			<id>knime.javasnippet.p2</id>
-			<layout>p2</layout>
-			<url>${knime.javasnippet.p2}</url>
-		</repository>
-		<repository>
 			<id>knime.workbench.p2</id>
 			<layout>p2</layout>
 			<url>${knime.workbench.p2}</url>
-		</repository>
-		<repository>
-			<id>knime.jep.p2</id>
-			<layout>p2</layout>
-			<url>${knime.jep.p2}</url>
 		</repository>
 		<repository>
 			<id>knime.js.core.p2</id>
@@ -73,50 +63,14 @@
 			<url>${knime.js.core.p2}</url>
 		</repository>
 		<repository>
-			<id>knime.expressions.p2</id>
-			<layout>p2</layout>
-			<url>${knime.expressions.p2}</url>
-		</repository>
-		<repository>
 			<id>knime.svg.p2</id>
 			<layout>p2</layout>
 			<url>${knime.svg.p2}</url>
 		</repository>
 		<repository>
-			<id>knime.filehandling.p2</id>
+			<id>knime.expressions.p2</id>
 			<layout>p2</layout>
-			<url>${knime.filehandling.p2}</url>
-		</repository>
-		<repository>
-			<id>eclipse-p2</id>
-			<layout>p2</layout>
-            <url>https://mirror.knime.org/eclipse/p2-oxygen</url>
+			<url>${knime.expressions.p2}</url>
 		</repository>
 	</repositories>
-    <build>
-		<plugins>
-			<plugin>
-				<groupId>org.eclipse.tycho.extras</groupId>
-				<artifactId>tycho-source-feature-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>source-feature</id>
-						<phase>package</phase>
-						<goals>
-							<goal>source-feature</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<excludes>
-						<feature id="org.knime.binary.jre" />
-						<feature id="org.apache.xerces.clfix" />
-						<feature id="org.apache.commons.logging.log4j" />
-						<plugin  id="org.apache.xerces.clfix" />
-						<plugin  id="org.apache.commons.logging.log4j" />
-					</excludes>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
 </project>

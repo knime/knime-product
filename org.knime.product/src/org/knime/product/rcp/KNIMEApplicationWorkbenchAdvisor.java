@@ -63,6 +63,7 @@ import org.knime.core.node.KNIMEConstants;
 import org.knime.core.ui.util.SWTUtilities;
 import org.knime.core.util.EclipseUtil;
 import org.knime.product.rcp.intro.IntroPage;
+import org.knime.workbench.editor2.WorkflowEditor;
 import org.osgi.framework.Bundle;
 import org.osgi.service.prefs.Preferences;
 
@@ -134,14 +135,16 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
         }
     }
 
-    private static void changeDefaultPreferences() {
-        // enable automatic check for updates every day at 11:00
-        final Preferences node = DefaultScope.INSTANCE.getNode(AutomaticUpdatePlugin.PLUGIN_ID);
-        node.putBoolean(org.eclipse.equinox.internal.p2.ui.sdk.scheduler.PreferenceConstants.PREF_AUTO_UPDATE_ENABLED,
-            true);
-        node.put(org.eclipse.equinox.internal.p2.ui.sdk.scheduler.PreferenceConstants.PREF_AUTO_UPDATE_SCHEDULE,
-            org.eclipse.equinox.internal.p2.ui.sdk.scheduler.PreferenceConstants.PREF_UPDATE_ON_FUZZY_SCHEDULE);
-        node.put(AutomaticUpdateScheduler.P_FUZZY_RECURRENCE, AutomaticUpdateMessages.SchedulerStartup_OnceADay);
+    /**
+     * See AP-5741.
+     *
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean preShutdown() {
+        WorkflowEditor.APP_IS_UNDERGOING_EXIT.set(true);
+
+        return super.preShutdown();
     }
 
     /**
@@ -168,7 +171,6 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
         SWTUtilities.markKNIMEShell();
     }
 
-
     /**
      * {@inheritDoc}
      */
@@ -185,5 +187,16 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
                 Platform.getLog(myself).log(error);
             }
         }
+    }
+
+
+    private static void changeDefaultPreferences() {
+        // enable automatic check for updates every day at 11:00
+        final Preferences node = DefaultScope.INSTANCE.getNode(AutomaticUpdatePlugin.PLUGIN_ID);
+        node.putBoolean(org.eclipse.equinox.internal.p2.ui.sdk.scheduler.PreferenceConstants.PREF_AUTO_UPDATE_ENABLED,
+            true);
+        node.put(org.eclipse.equinox.internal.p2.ui.sdk.scheduler.PreferenceConstants.PREF_AUTO_UPDATE_SCHEDULE,
+            org.eclipse.equinox.internal.p2.ui.sdk.scheduler.PreferenceConstants.PREF_UPDATE_ON_FUZZY_SCHEDULE);
+        node.put(AutomaticUpdateScheduler.P_FUZZY_RECURRENCE, AutomaticUpdateMessages.SchedulerStartup_OnceADay);
     }
 }

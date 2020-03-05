@@ -185,9 +185,8 @@ public class RepositoryUpdater implements ProvisioningListener {
                 } else if ("add".equals(parts[1])) {
                     m_defaultRepositories.add(uri);
 
-                    if (knownRepositories.isEmpty()
-                        || (!knownRepositories.contains(uri) && !preferences.getBoolean(oldPrefName + "-added", false)
-                            && !preferences.getBoolean(newPrefName + "-added", false))) {
+                    if (!knownRepositories.contains(uri) && !preferences.getBoolean(oldPrefName + "-added", false)
+                        && !preferences.getBoolean(newPrefName + "-added", false)) {
                         m_addedDefaultRepositories.add(uri);
 
                         repoManager.addRepository(uri);

@@ -174,6 +174,8 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
         // showIntroPage();
 
         SWTUtilities.markKNIMEShell();
+
+        KNIMEApplication.logStartupTime();
     }
 
     /**

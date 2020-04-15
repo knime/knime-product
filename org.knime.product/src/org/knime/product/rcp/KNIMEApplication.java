@@ -91,6 +91,12 @@ public class KNIMEApplication implements IApplication {
 
     private static final String PROP_EXIT_CODE = "eclipse.exitcode"; //$NON-NLS-1$
 
+    /** The time at which the application was started. */
+    private static final long TIMESTAMP_ON_STARTUP = System.currentTimeMillis();
+
+    /** The amount of time (in seconds) after which startup is considered to have taken overly long. */
+    private static final long STARTUP_TIME_THRESHOLD = 120;
+
     /**
      * A special return code that will be recognized by the launcher and used to
      * restart the workbench.
@@ -652,5 +658,22 @@ public class KNIMEApplication implements IApplication {
                 EventQueue.invokeLater(r);
             }
         };
+    }
+
+    static void logStartupTime() {
+        final long startupTime = (System.currentTimeMillis() - TIMESTAMP_ON_STARTUP) / 1000;
+        final String startupTimeMsg = String.format("Startup took %d seconds.", startupTime);
+        final NodeLogger logger = NodeLogger.getLogger(KNIMEApplication.class);
+        if (startupTime >= STARTUP_TIME_THRESHOLD && Platform.OS_WIN32.equals(Platform.getOS())) {
+            logger.warn(startupTimeMsg);
+            logger.warn(
+                "Antivirus tools are known to substantially slow down the startup of KNIME Analytics Platform.");
+            logger.warn(
+                "If you are using an antivirus tool and you are only installing extensions from trusted sources, "
+                    + "consider registering KNIME Analytics Platform as a trusted application.");
+            logger.warn("See our FAQ at https://www.knime.com/faq#q38 for more details.");
+        } else {
+            logger.debug(startupTimeMsg);
+        }
     }
 }

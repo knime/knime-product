@@ -105,6 +105,8 @@ public class KNIMEApplication implements IApplication {
         Display display = createDisplay();
 
         try {
+            WindowsDefenderExceptionHandler.getInstance().checkForAndAddExceptionToWindowsDefender();
+
             // open document listener needs to be registered as first
             // thing to account for open document events during startup
             KNIMEOpenDocumentEventProcessor openDocProcessor = new KNIMEOpenDocumentEventProcessor();

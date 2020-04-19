@@ -40,6 +40,7 @@ openFile
 -XX:+UnlockDiagnosticVMOptions
 -XX:+UnsyncloadClass 
 -XX:+UseG1GC
+-XX:+UseStringDeduplication
 -Dsun.net.client.defaultReadTimeout=0
 -XX:CompileCommand=exclude,javax/swing/text/GlyphView,getBreakSpot
          <argsX86>-Xmx512m</argsX86>

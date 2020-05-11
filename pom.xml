@@ -27,7 +27,7 @@
 		<module>org.knime.startup.macosx</module>
 		<module>org.knime.product</module>
 		<module>org.knime.features.product</module>
-		<module>org.knime.product.testing</module>
+		<module>org.knime.product.tests</module>
 		<module>org.knime.update.product</module>
 	</modules>
 

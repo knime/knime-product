@@ -49,9 +49,7 @@
 package org.knime.product.profiles;
 
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assume.assumeThat;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -59,13 +57,8 @@ import java.nio.file.Paths;
 
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.framework.ServiceReference;
-import org.osgi.service.application.ApplicationHandle;
 import org.osgi.service.prefs.Preferences;
 
 /**
@@ -77,21 +70,9 @@ public class ProfileManagerTest {
     /**
      * Sets up the test environment.
      */
-    @Before
-    public void setup() {
-        String app = "Unknown";
-        Bundle myself = FrameworkUtil.getBundle(getClass());
-        if (myself != null) {
-            BundleContext ctx = myself.getBundleContext();
-            ServiceReference<ApplicationHandle> ser = ctx.getServiceReference(ApplicationHandle.class);
-            if (ser != null) {
-                ApplicationHandle appHandle = ctx.getService(ser);
-                app = appHandle.getInstanceId();
-                ctx.ungetService(ser);
-            }
-        }
-        // Only KNIME applications set new default preferences
-        assumeThat("Not started with a KNIME application", app, containsString(".knime."));
+    @BeforeClass
+    public static void appliyProfiles() {
+        ProfileManager.getInstance().applyProfiles();
     }
 
     /**

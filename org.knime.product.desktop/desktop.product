@@ -798,10 +798,11 @@ propagated with or for interoperation with KNIME.
    </plugins>
 
    <features>
-      <feature id="org.knime.product.desktop" />
+      <feature id="org.knime.product.desktop"/>
    </features>
 
    <configurations>
+      <plugin id="org.apache.felix.scr" autoStart="true" startLevel="2" />
       <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="4" />
       <plugin id="org.eclipse.equinox.common" autoStart="true" startLevel="2" />
       <plugin id="org.eclipse.equinox.ds" autoStart="true" startLevel="2" />

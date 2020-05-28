@@ -798,25 +798,23 @@ propagated with or for interoperation with KNIME.
    </plugins>
 
    <features>
-      <feature id="org.knime.features.product" />
-      <feature id="org.eclipse.platform" />
-      <feature id="org.eclipse.gef" />
-      <feature id="org.eclipse.equinox.p2.user.ui" />
-      <feature id="org.knime.features.core" />
-      <feature id="org.knime.features.base" />
-      <feature id="org.knime.features.workbench" />
-      <feature id="org.knime.features.ext.svg" />
-      <feature id="org.knime.binary.jre" />
+      <feature id="org.knime.features.product"/>
+      <feature id="org.eclipse.platform"/>
+      <feature id="org.eclipse.gef"/>
+      <feature id="org.eclipse.equinox.p2.user.ui"/>
+      <feature id="org.knime.features.core"/>
+      <feature id="org.knime.features.base"/>
+      <feature id="org.knime.features.workbench"/>
+      <feature id="org.knime.features.ext.svg"/>
+      <feature id="org.knime.binary.jre"/>
    </features>
 
    <configurations>
-      <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="4" />
+      <plugin id="org.apache.felix.scr" autoStart="true" startLevel="2" />
+      <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.equinox.common" autoStart="true" startLevel="2" />
-      <plugin id="org.eclipse.equinox.ds" autoStart="true" startLevel="2" />
       <plugin id="org.eclipse.equinox.event" autoStart="true" startLevel="2" />
-      <plugin id="org.eclipse.equinox.p2.reconciler.dropins" autoStart="true" startLevel="4" />
       <plugin id="org.eclipse.equinox.simpleconfigurator" autoStart="true" startLevel="1" />
-      <plugin id="org.eclipse.update.configurator" autoStart="true" startLevel="3" />
       <property name="osgi.instance.area.default" value="@user.home/knime-workspace" />
    </configurations>
 

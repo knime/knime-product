@@ -72,8 +72,6 @@ import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
 import org.knime.core.node.KNIMEConstants;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.workflow.NodeTimer;
-import org.knime.core.util.EclipseUtil;
-import org.knime.product.rcp.intro.IntroPage;
 import org.knime.workbench.core.KNIMECorePlugin;
 import org.knime.workbench.core.preferences.HeadlessPreferencesConstants;
 import org.knime.workbench.core.util.LinkMessageDialog;
@@ -133,13 +131,12 @@ public class KNIMEApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvis
     }
 
     private static void showIntroPage() {
-        if (!EclipseUtil.isRunFromSDK()) {
-            IntroPage.INSTANCE.show();
-            if (IntroPage.INSTANCE.isFreshWorkspace()) {
-                PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell().setMaximized(true);
-            }
-        }
-
+//        if (!EclipseUtil.isRunFromSDK()) {
+//            IntroPage.INSTANCE.show();
+//            if (IntroPage.INSTANCE.isFreshWorkspace()) {
+//                PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell().setMaximized(true);
+//            }
+//        }
     }
 
     /**

@@ -48,7 +48,7 @@ openFile
       <vmArgsLin>-Dorg.eclipse.swt.internal.gtk.disablePrinting
       </vmArgsLin>
       <vmArgsMac>-XstartOnFirstThread
--Xdock:icon=../Resources/Knime.icns
+-Xdock:icon=../Resources/knime_mac.icns
 -Dorg.eclipse.swt.internal.carbon.smallFonts
       </vmArgsMac>
       <vmArgsWin>-Dorg.eclipse.swt.browser.IEVersion=11001

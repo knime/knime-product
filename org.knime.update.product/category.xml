@@ -9,6 +9,9 @@
    <product id="org.knime.desktop.product" version="0.0.0">
        <category name="knime-product" />
    </product>
+   <product id="org.knime.minimal.product" version="0.0.0">
+       <category name="knime-product" />
+   </product>
 
    <category-def name="knime-product" label="Build artifacts from knime-product">
       <description>Build artifacts from knime-product</description>

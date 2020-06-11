@@ -379,7 +379,9 @@ public class ProfileManager {
                     } else {
                         HttpEntity body = response.getEntity();
                         String msg;
-                        if (body.getContentType().getValue().startsWith("text/")) {
+                        if ((body != null) && (body.getContentType() != null)
+                            && (body.getContentType().getValue() != null)
+                            && body.getContentType().getValue().startsWith("text/")) {
                             byte[] buf = new byte[Math.min(4096, Math.max(4096, (int)body.getContentLength()))];
                             int read = body.getContent().read(buf);
                             msg = new String(buf, 0, read, "US-ASCII").trim();

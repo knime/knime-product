@@ -148,7 +148,8 @@ public class KNIMEApplication implements IApplication {
                 // the workbench globally so that all UI plug-ins can find it
                 // using
                 // PlatformUI.getWorkbench() or AbstractUIPlugin.getWorkbench()
-                returnCode = PlatformUI.createAndRunWorkbench(display, getWorkbenchAdvisor(openDocProcessor, openUrlProcessor));
+                returnCode =
+                    PlatformUI.createAndRunWorkbench(display, getWorkbenchAdvisor(openDocProcessor, openUrlProcessor));
             }
 
             // the workbench doesn't support relaunch yet (bug 61809) so

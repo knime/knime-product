@@ -76,16 +76,20 @@ import org.osgi.service.prefs.Preferences;
 @SuppressWarnings("restriction") // internal SDK scheduler class usage.
 public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
 
-    private KNIMEOpenDocumentEventProcessor m_openDocProcessor;
+    private final KNIMEOpenDocumentEventProcessor m_openDocProcessor;
+    private final KNIMEOpenUrlEventProcessor m_openUrlProcessor;
 
     /**
      * Simple constructor to store the {@code KNIMEOpenDocumentEventProcessor}
      *
-     * @param openDocProcessor the KNIMEOpenDocumentEventProcessor handling the opening of KNIME files
+     * @param openDocProcessor the {@link KNIMEOpenDocumentEventProcessor} handling the opening of KNIME files
+     * @param openUrlProcessor the {@link KNIMEOpenUrlEventProcessor} handling the opening of knime:// URLs
      *
      */
-    public KNIMEApplicationWorkbenchAdvisor(final KNIMEOpenDocumentEventProcessor openDocProcessor) {
+    public KNIMEApplicationWorkbenchAdvisor(final KNIMEOpenDocumentEventProcessor openDocProcessor,
+        final KNIMEOpenUrlEventProcessor openUrlProcessor) {
         m_openDocProcessor = openDocProcessor;
+        m_openUrlProcessor = openUrlProcessor;
     }
 
     /**
@@ -153,6 +157,7 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
     @Override
     public void eventLoopIdle(final Display display) {
         m_openDocProcessor.openFiles();
+        m_openUrlProcessor.openUrls();
         super.eventLoopIdle(display);
     }
 

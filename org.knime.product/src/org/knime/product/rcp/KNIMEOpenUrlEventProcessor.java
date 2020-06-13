@@ -44,32 +44,28 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Mar 14, 2016 (albrecht): created
+ *   13 Jun 2020 (albrecht): created
  */
 package org.knime.product.rcp;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
-import org.knime.workbench.explorer.view.actions.OpenKNIMEArchiveFileAction;
 import org.knime.workbench.explorer.view.actions.OpenKnimeUrlAction;
 
 /**
- * {@link Listener} implementation to allow the opening of KNIME application files (*.knar or *.knwf).
+ * {@link Listener} implementation to allow the opening of KNIME URLs (knime://).
  *
  * @author Christian Albrecht, KNIME GmbH, Konstanz, Germany
  */
-public class KNIMEOpenDocumentEventProcessor implements Listener {
+public class KNIMEOpenUrlEventProcessor implements Listener {
 
-    private ArrayList<String> m_filesToOpen = new ArrayList<String>(1);
+    private ArrayList<String> m_urlsToOpen = new ArrayList<String>(1);
 
     /**
      * {@inheritDoc}
@@ -77,56 +73,39 @@ public class KNIMEOpenDocumentEventProcessor implements Listener {
     @Override
     public void handleEvent(final Event event) {
         if (event.text != null) {
-            m_filesToOpen.add(event.text);
+            m_urlsToOpen.add(event.text);
         }
     }
 
     /**
-     * If there are files to open from an openFile-Event this method triggers the corresponding Actions, depending on
-     * the type of files (knimeURL or knar/knwf).
-     *
+     * If there are URLs to open from an openURL-Event this method triggers the corresponding {@link OpenKnimeUrlAction}s
      */
-    public void openFiles() {
-        if (m_filesToOpen.isEmpty()) {
+    public void openUrls() {
+        if (m_urlsToOpen.isEmpty()) {
             return;
         }
 
-        List<File> archiveFileList = new ArrayList<File>(1);
-        List<String> urlFileList = new ArrayList<String>(1);
-        m_filesToOpen.forEach(file -> {
-            if (KNIMEOpenUrlEventProcessor.isKnimeUrl(file)) {
-                urlFileList.add(file);
-            } else {
-                File fileToOpen = new File(file);
-                if (fileToOpen.exists() && fileToOpen.isFile() && fileToOpen.canRead()) {
-                    if (file.endsWith(".knimeURL")) {
-                        try (BufferedReader reader = new BufferedReader(new FileReader(fileToOpen))) {
-                            String url = reader.readLine();
-                            if (KNIMEOpenUrlEventProcessor.isKnimeUrl(url)) {
-                                urlFileList.add(url);
-                            }
-                        } catch (IOException e) {
-                            // TODO issue warning?
-                        } finally {
-                            fileToOpen.delete();
-                        }
-                    } else {
-                        archiveFileList.add(fileToOpen);
-                    }
-                }
-            }
-        });
-        m_filesToOpen.clear();
+        List<String> urlList = m_urlsToOpen.stream().filter((url) -> {
+            return isKnimeUrl(url);
+        }).collect(Collectors.toList());
+        m_urlsToOpen.clear();
 
         IWorkbenchPage activePage = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-        if (!urlFileList.isEmpty()) {
-            OpenKnimeUrlAction a = new OpenKnimeUrlAction(activePage, urlFileList);
-            a.run();
-        }
-
-        if (!archiveFileList.isEmpty()) {
-            OpenKNIMEArchiveFileAction a = new OpenKNIMEArchiveFileAction(activePage, archiveFileList);
+        if (!urlList.isEmpty()) {
+            OpenKnimeUrlAction a = new OpenKnimeUrlAction(activePage, urlList);
             a.run();
         }
     }
+
+    static boolean isKnimeUrl(final String url) {
+        String protocol = "knime://";
+        int length = protocol.length();
+        if (url != null && !url.isEmpty() && url.length() > length) {
+            if (url.substring(0, length).equalsIgnoreCase(protocol)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

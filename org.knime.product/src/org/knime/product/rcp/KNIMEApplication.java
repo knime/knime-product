@@ -109,6 +109,8 @@ public class KNIMEApplication implements IApplication {
             // thing to account for open document events during startup
             KNIMEOpenDocumentEventProcessor openDocProcessor = new KNIMEOpenDocumentEventProcessor();
             display.addListener(SWT.OpenDocument, openDocProcessor);
+            KNIMEOpenUrlEventProcessor openUrlProcessor = new KNIMEOpenUrlEventProcessor();
+            display.addListener(SWT.OpenUrl, openUrlProcessor);
 
             if (!checkInstanceLocation()) {
                 appContext.applicationRunning();
@@ -146,7 +148,7 @@ public class KNIMEApplication implements IApplication {
                 // the workbench globally so that all UI plug-ins can find it
                 // using
                 // PlatformUI.getWorkbench() or AbstractUIPlugin.getWorkbench()
-                returnCode = PlatformUI.createAndRunWorkbench(display, getWorkbenchAdvisor(openDocProcessor));
+                returnCode = PlatformUI.createAndRunWorkbench(display, getWorkbenchAdvisor(openDocProcessor, openUrlProcessor));
             }
 
             // the workbench doesn't support relaunch yet (bug 61809) so
@@ -192,8 +194,9 @@ public class KNIMEApplication implements IApplication {
         }
     }
 
-    private WorkbenchAdvisor getWorkbenchAdvisor(final KNIMEOpenDocumentEventProcessor openDocProcessor) {
-        return new KNIMEApplicationWorkbenchAdvisor(openDocProcessor);
+    private static WorkbenchAdvisor getWorkbenchAdvisor(final KNIMEOpenDocumentEventProcessor openDocProcessor,
+        final KNIMEOpenUrlEventProcessor openUrlProcessor) {
+        return new KNIMEApplicationWorkbenchAdvisor(openDocProcessor, openUrlProcessor);
     }
 
     /**
@@ -212,7 +215,7 @@ public class KNIMEApplication implements IApplication {
      * @return true if a valid instance location has been set and false
      *         otherwise
      */
-    private boolean checkInstanceLocation() {
+    private static boolean checkInstanceLocation() {
         // -data @none was specified but an ide requires workspace
         Location instanceLoc = Platform.getInstanceLocation();
         if (instanceLoc == null) {
@@ -329,7 +332,7 @@ public class KNIMEApplication implements IApplication {
      * @return An URL storing the selected workspace or null if the user has
      *         canceled the launch operation.
      */
-    private URL promptForWorkspace(final ChooseWorkspaceData launchData, boolean force) {
+    private static URL promptForWorkspace(final ChooseWorkspaceData launchData, boolean force) {
         URL url = null;
         do {
             // don't use the parent shell to make the dialog a top-level
@@ -394,7 +397,7 @@ public class KNIMEApplication implements IApplication {
      * @return true if the argument URL is ok to use as a workspace and false
      *         otherwise.
      */
-    private boolean checkValidWorkspace(final URL url) {
+    private static boolean checkValidWorkspace(final URL url) {
         // a null url is not a valid workspace
         if (url == null) {
             return false;
@@ -448,11 +451,8 @@ public class KNIMEApplication implements IApplication {
             // file, it happens to follow the same format currently, so using
             // Properties to read it is convenient.
             Properties props = new Properties();
-            FileInputStream is = new FileInputStream(versionFile);
-            try {
+            try (FileInputStream is = new FileInputStream(versionFile)) {
                 props.load(is);
-            } finally {
-                is.close();
             }
 
             return props.getProperty(WORKSPACE_VERSION_KEY);
@@ -553,7 +553,7 @@ public class KNIMEApplication implements IApplication {
         });
     }
 
-    private boolean checkForUpdates() {
+    private static boolean checkForUpdates() {
         final IPreferenceStore prefStore =
                 ProductPlugin.getDefault().getPreferenceStore();
         if (prefStore.getBoolean(JUSTUPDATED)) {
@@ -625,7 +625,7 @@ public class KNIMEApplication implements IApplication {
         return restart.booleanValue();
     }
 
-    private void startDeadlockDetectors(final Display display) {
+    private static void startDeadlockDetectors(final Display display) {
         new GUIDeadlockDetector() {
             @Override
             protected String getThreadName() {

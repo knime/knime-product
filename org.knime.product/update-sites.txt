@@ -10,7 +10,7 @@ http://update.knime.com/partner/4.1,remove
 http://update.knime.com/community-contributions/trusted/4.1,remove
 http://update.knime.com/community-contributions/4.1,remove
 
-http://update.knime.com/analytics-platform/4.2,add,enabled,KNIME Analytics Platform Update Site
-http://update.knime.com/partner/4.2,add,enabled,KNIME Partner Extensions
-http://update.knime.com/community-contributions/trusted/4.2,add,enabled,KNIME Community Extensions (Trusted)
-http://update.knime.com/community-contributions/4.2,add,disabled,KNIME Community Extensions (Experimental)
+https://update.knime.com/analytics-platform/4.2,add,enabled,KNIME Analytics Platform Update Site
+https://update.knime.com/partner/4.2,add,enabled,KNIME Partner Extensions
+https://update.knime.com/community-contributions/trusted/4.2,add,enabled,KNIME Community Extensions (Trusted)
+https://update.knime.com/community-contributions/4.2,add,disabled,KNIME Community Extensions (Experimental)

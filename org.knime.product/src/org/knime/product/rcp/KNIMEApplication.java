@@ -67,6 +67,9 @@ import org.knime.core.util.MutableBoolean;
 import org.knime.product.ProductPlugin;
 import org.knime.product.p2.RepositoryUpdater;
 import org.knime.product.profiles.ProfileManager;
+import org.knime.product.rcp.startup.ConfigAreaFlag;
+import org.knime.product.rcp.startup.LongStartupHandler;
+import org.knime.product.rcp.startup.WindowsDefenderExceptionHandler;
 
 /**
  * This class controls all aspects of the application's execution.
@@ -91,12 +94,6 @@ public class KNIMEApplication implements IApplication {
 
     private static final String PROP_EXIT_CODE = "eclipse.exitcode"; //$NON-NLS-1$
 
-    /** The time at which the application was started. */
-    private static final long TIMESTAMP_ON_STARTUP = System.currentTimeMillis();
-
-    /** The amount of time (in seconds) after which startup is considered to have taken overly long. */
-    private static final long STARTUP_TIME_THRESHOLD = 120;
-
     /**
      * A special return code that will be recognized by the launcher and used to
      * restart the workbench.
@@ -111,7 +108,10 @@ public class KNIMEApplication implements IApplication {
         Display display = createDisplay();
 
         try {
-            WindowsDefenderExceptionHandler.getInstance().checkForAndAddExceptionToWindowsDefender();
+            final ConfigAreaFlag flag = new ConfigAreaFlag("check-defender-on-startup", true, false);
+            final boolean defenderDialogShown =
+                WindowsDefenderExceptionHandler.getInstance().checkForAndAddExceptionToWindowsDefender(flag);
+            LongStartupHandler.getInstance().onStartupCommenced(flag, !defenderDialogShown, display);
 
             // open document listener needs to be registered as first
             // thing to account for open document events during startup
@@ -660,20 +660,4 @@ public class KNIMEApplication implements IApplication {
         };
     }
 
-    static void logStartupTime() {
-        final long startupTime = (System.currentTimeMillis() - TIMESTAMP_ON_STARTUP) / 1000;
-        final String startupTimeMsg = String.format("Startup took %d seconds.", startupTime);
-        final NodeLogger logger = NodeLogger.getLogger(KNIMEApplication.class);
-        if (startupTime >= STARTUP_TIME_THRESHOLD && Platform.OS_WIN32.equals(Platform.getOS())) {
-            logger.warn(startupTimeMsg);
-            logger.warn(
-                "Antivirus tools are known to substantially slow down the startup of KNIME Analytics Platform.");
-            logger.warn(
-                "If you are using an antivirus tool and you are only installing extensions from trusted sources, "
-                    + "consider registering KNIME Analytics Platform as a trusted application.");
-            logger.warn("See our FAQ at https://www.knime.com/faq#q38 for more details.");
-        } else {
-            logger.debug(startupTimeMsg);
-        }
-    }
 }

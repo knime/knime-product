@@ -182,12 +182,19 @@ a.button-primary {
     white-space: nowrap;
 }
 
+a.welcome-button {
+     background-color: #FFD800;
+     border-color: #FFD800;
+     color: #3E3A39;
+}
+
 a.button-primary:hover,
 a.button-primary:active,
 a.button-primary:focus {
     outline: none;
     text-decoration: none;
     background-color: #3E3A39;
+    border-color: #3E3A39;
     color: #FFFFFF;
 }
 

@@ -72,6 +72,7 @@ public class JSONTile {
     private String m_text;
     private String m_buttonText;
     private String m_link;
+    private String m_welcomeButtonClass;
 
     /**
      * @return the id
@@ -199,6 +200,22 @@ public class JSONTile {
     @JsonProperty("tile-link")
     public void setLink(final String link) {
         m_link = link;
+    }
+
+    /**
+     * @return the buttonClass of the welcome tile-button
+     */
+    @JsonProperty("tile-welcome-button-class")
+    public String getWelcomeButtonClass() {
+        return m_welcomeButtonClass;
+    }
+
+    /**
+     * @param buttonClass the styles to set for the welcome tile-button
+     */
+    @JsonProperty("tile-welcome-button-class")
+    public void setWelcomeButtonClass(final String buttonClass) {
+        m_welcomeButtonClass = buttonClass;
     }
 
     /**

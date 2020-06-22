@@ -56,6 +56,10 @@ window.updateTile = function (data) {
             buttonTag.href = data[buttonIndex]['tile-link'];
             buttonTag.innerHTML = data[buttonIndex]['tile-button-text'];
             carouselButtons[buttonIndex].parentNode.appendChild(button);
+            // When there is a fresh workspace the button of the 'Get Started'-tile should be in yellow AP-14402
+            if (data[buttonIndex]['tile-welcome-button-class']) {
+                buttonTag.className += " " + data[buttonIndex]['tile-welcome-button-class'];
+            }
             button.appendChild(buttonTag);
         }
         carouselButtons[buttonIndex].parentNode.removeChild(carouselButtons[buttonIndex]);

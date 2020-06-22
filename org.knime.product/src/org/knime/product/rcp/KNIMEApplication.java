@@ -67,7 +67,6 @@ import org.knime.core.util.MutableBoolean;
 import org.knime.product.ProductPlugin;
 import org.knime.product.p2.RepositoryUpdater;
 import org.knime.product.profiles.ProfileManager;
-import org.knime.product.rcp.startup.ConfigAreaFlag;
 import org.knime.product.rcp.startup.LongStartupHandler;
 import org.knime.product.rcp.startup.WindowsDefenderExceptionHandler;
 
@@ -108,10 +107,9 @@ public class KNIMEApplication implements IApplication {
         Display display = createDisplay();
 
         try {
-            final ConfigAreaFlag flag = new ConfigAreaFlag("check-defender-on-startup", true, false);
-            final boolean defenderDialogShown =
-                WindowsDefenderExceptionHandler.getInstance().checkForAndAddExceptionToWindowsDefender(flag);
-            LongStartupHandler.getInstance().onStartupCommenced(flag, !defenderDialogShown, display);
+            final boolean defenderDialogShown = WindowsDefenderExceptionHandler.getInstance()
+                .checkForAndAddExceptionToWindowsDefender("startup-dialog-noshow", display);
+            LongStartupHandler.getInstance().onStartupCommenced("startup-dialog-noshow", !defenderDialogShown, display);
 
             // open document listener needs to be registered as first
             // thing to account for open document events during startup
@@ -659,5 +657,4 @@ public class KNIMEApplication implements IApplication {
             }
         };
     }
-
 }

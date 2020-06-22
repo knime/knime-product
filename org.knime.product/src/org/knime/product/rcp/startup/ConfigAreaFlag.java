@@ -58,79 +58,68 @@ import java.util.Optional;
 
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.osgi.service.datalocation.Location;
-import org.knime.core.node.NodeLogger;
 
 /**
- * A helper class for setting and retrieving a flag to / from the Eclipse configuration area.
+ * A helper class for setting and retrieving a flag to / from the Eclipse configuration area. We use the Eclipse
+ * configuration area (as opposed to the KNIME configuration area), since we want to delay calling code from other KNIME
+ * plugins.
  *
  * @author Marc Bux, KNIME GmbH, Berlin, Germany
  */
-public final class ConfigAreaFlag {
+final class ConfigAreaFlag {
 
     static Optional<Path> getPathFromLocation(final Location location) {
-
+        // code copied from ConfigurationAreaChecker#getConfigurationLocationPath
         final URL configURL = location.getURL();
-        if (configURL == null) {
-            return Optional.empty();
+        if (configURL != null) {
+            String path = configURL.getPath();
+            if (Platform.OS_WIN32.equals(Platform.getOS()) && path.matches("^/[a-zA-Z]:/.*")) {
+                // Windows path with drive letter => remove first slash
+                path = path.substring(1);
+            }
+            return Optional.of(Paths.get(path));
         }
-
-        String path = configURL.getPath();
-        if (path.matches("^/[a-zA-Z]:/.*")) {
-            // Windows path with drive letter => remove first slash
-            path = path.substring(1);
-        }
-        return Optional.of(Paths.get(path));
+        return Optional.empty();
     }
 
-    private final String m_configName;
+    private final String m_key;
 
-    private final boolean m_defaultIfNotPresent;
+    private final DelayedMessageLogger m_logger;
 
-    private final boolean m_defaultOnError;
-
-    /**
-     * @param configName the name by which this flag is identified
-     * @param defaultIfNotPresent the default value of this flag if it is not found in the configuration area
-     * @param defaultOnError the default value of this flag if an error occurs while obtaining its value from the
-     *            configuration area
-     */
-    public ConfigAreaFlag(final String configName, final boolean defaultIfNotPresent, final boolean defaultOnError) {
-        m_configName = configName;
-        m_defaultIfNotPresent = defaultIfNotPresent;
-        m_defaultOnError = defaultOnError;
+    ConfigAreaFlag(final String configName, final DelayedMessageLogger logger) {
+        m_key = configName;
+        m_logger = logger;
     }
 
     boolean isFlagSet() {
         try {
             final Path path = getConfigPath();
-            if (!Files.exists(path)) {
-                return m_defaultIfNotPresent;
-            }
-            try (final BufferedReader reader = Files.newBufferedReader(path)) {
-                return Boolean.parseBoolean(reader.readLine());
+            if (Files.exists(path)) {
+                try (final BufferedReader reader = Files.newBufferedReader(path)) {
+                    return Boolean.parseBoolean(reader.readLine());
+                }
             }
         } catch (final IOException e) {
-            NodeLogger.getLogger(ConfigAreaFlag.class)
-                .error(String.format("Error when reading %s settings from configuration area.", m_configName), e);
-            return m_defaultOnError;
+            m_logger.queueError(String.format("Error when reading %s settings from configuration area.", m_key), e);
         }
+        return false;
     }
 
-    void setFlag(final boolean checkForDefenderOnStartup) {
+    void setFlag(final boolean value) {
         try {
             final Path path = getConfigPath();
             if (!Files.exists(path)) {
                 Files.createDirectories(path.getParent());
             }
-            final byte[] bytes = Boolean.toString(checkForDefenderOnStartup).getBytes();
+            final byte[] bytes = Boolean.toString(value).getBytes();
             Files.write(path, bytes);
         } catch (final IOException e) {
-            NodeLogger.getLogger(ConfigAreaFlag.class)
-                .error(String.format("Error when writing %s settings to configuration area.", m_configName), e);
+            m_logger.queueError(String.format("Error when writing %s settings to configuration area.", m_key), e);
         }
     }
 
     private Path getConfigPath() throws IOException {
+        // code mostly copied from org.knime.core.internal.ConfigurationAreaChecker#getConfigurationLocationPath
         final Location configLocation = Platform.getConfigurationLocation();
         if (configLocation == null) {
             throw new IOException("No configuration area set.");
@@ -138,7 +127,8 @@ public final class ConfigAreaFlag {
 
         final Optional<Path> configPath = getPathFromLocation(configLocation);
         if (configPath.isPresent()) {
-            return configPath.get().resolve(getClass().getPackage().getName()).resolve(m_configName);
+            // use same folder as org.knime.core.node.KNIMEConstants#assignUniqueID
+            return configPath.get().resolve("org.knime.core").resolve(m_key);
         } else {
             throw new IOException("Configuration path cannot be resolved.");
         }

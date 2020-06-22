@@ -60,7 +60,7 @@ import org.knime.core.node.NodeLogger;
  *
  * @author Marc Bux, KNIME GmbH, Berlin, Germany
  */
-public final class DelayedMessageLogger {
+final class DelayedMessageLogger {
 
     private enum LogMessageLevel {
             DEBUG, ERROR;
@@ -98,20 +98,20 @@ public final class DelayedMessageLogger {
 
     private final List<LogMessage> m_log = new ArrayList<>();
 
-    void queueDebug(final String message) {
+    synchronized void queueDebug(final String message) {
         m_log.add(new LogMessage(LogMessageLevel.DEBUG, message, null));
     }
 
-    void queueError(final String message) {
+    synchronized void queueError(final String message) {
         m_log.add(new LogMessage(LogMessageLevel.ERROR, message, null));
     }
 
-    void queueError(final String message, final Exception e) {
+    synchronized void queueError(final String message, final Exception e) {
         m_log.add(new LogMessage(LogMessageLevel.ERROR, message, e));
     }
 
-    void logQueuedMessaged(final NodeLogger logger) {
-        for (LogMessage logMessage : m_log) {
+    synchronized void logQueuedMessaged(final NodeLogger logger) {
+        for (final LogMessage logMessage : m_log) {
             final LogMessageLevel level = logMessage.getLevel();
             final String message = logMessage.getMessage();
             final Optional<Exception> exception = logMessage.getException();

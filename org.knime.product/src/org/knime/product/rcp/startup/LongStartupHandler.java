@@ -60,7 +60,8 @@ import org.eclipse.swt.widgets.Display;
 import org.knime.core.node.NodeLogger;
 
 /**
- * A class that provides a method for checking for an adding an exception to Windows Defender.
+ * A singleton class that detects overly long startups on Windows and, in such cases, displays a information dialog and
+ * logs a warning. Otherwise (even when not on Windows), it logs the startup time as debug message.
  *
  * @author Marc Bux, KNIME GmbH, Berlin, Germany
  */
@@ -80,8 +81,9 @@ public final class LongStartupHandler {
                 + "consider registering KNIME Analytics Platform as a trusted application. "
                 + String.format("See <a href=\"%s\">our FAQ</a> for more details.", URL);
 
-        LongStartupDetectedDialog(final DelayedMessageLogger logger) {
-            super(TITLE, URL, MESSAGE, logger, MessageDialog.INFORMATION, new String[]{IDialogConstants.OK_LABEL});
+        LongStartupDetectedDialog(final Display display, final DelayedMessageLogger logger) {
+            super(display, TITLE, URL, MESSAGE, logger, MessageDialog.INFORMATION,
+                new String[]{IDialogConstants.OK_LABEL});
         }
     }
 
@@ -112,43 +114,37 @@ public final class LongStartupHandler {
     /**
      * Method that should be invoked as early as possible during startup.
      *
-     * @param flag the flag in the Eclipse configuration area that is set if the checkbox to not show the dialog again
-     *            is checked
+     * @param configKey the key of the flag in the Eclipse configuration area that can be set to prevent the dialog to
+     *            be shown
      * @param showDialogAndWarn if true, if startup is taking overly long, a dialog is shown and the startup time is
      *            logged as a warning; otherwise, the startup time is merely logged as a debug message
      * @param display the {@link Display}
      */
-    public void onStartupCommenced(final ConfigAreaFlag flag, final boolean showDialogAndWarn, final Display display) {
+    public void onStartupCommenced(final String configKey, final boolean showDialogAndWarn, final Display display) {
+
         m_timestampOnStartup = System.currentTimeMillis();
+        final ConfigAreaFlag flag = new ConfigAreaFlag(configKey, m_logger);
 
         // check if we should even show the dialog
-        if (!showDialogAndWarn) {
-            return;
-        }
-
         // check if we are on Windows 10
-        if (!Platform.OS_WIN32.equals(Platform.getOS()) || !System.getProperty("os.name").equals("Windows 10")) {
-            return;
-        }
-
         // look up the Eclipse configuration area to determine if we should even check for Windows Defender
-        if (!flag.isFlagSet()) {
-            return;
-        }
+        if (showDialogAndWarn && Platform.OS_WIN32.equals(Platform.getOS()) && !flag.isFlagSet()) {
 
-        final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+            final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
 
-        m_future = executor.schedule(() -> {
-            display.asyncExec(() -> {
-                final LongStartupDetectedDialog dialog = new LongStartupDetectedDialog(m_logger);
+            m_future = executor.schedule(() -> display.asyncExec(() -> {
+                final LongStartupDetectedDialog dialog = new LongStartupDetectedDialog(display, m_logger);
+                long timestampOnOpen = System.currentTimeMillis();
                 dialog.open();
+                // while waiting fot the dialog to close, we should not log startup time
+                m_timestampOnStartup += System.currentTimeMillis() - timestampOnOpen;
                 if (dialog.getToggleState()) {
                     flag.setFlag(false);
                 }
-            });
-        }, STARTUP_TIME_THRESHOLD_SECONDS, TimeUnit.SECONDS);
+            }), STARTUP_TIME_THRESHOLD_SECONDS, TimeUnit.SECONDS);
 
-        executor.shutdown();
+            executor.shutdown();
+        }
     }
 
     /**

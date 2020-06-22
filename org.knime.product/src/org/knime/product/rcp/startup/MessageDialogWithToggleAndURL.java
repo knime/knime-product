@@ -53,6 +53,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import org.eclipse.core.runtime.IProduct;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialogWithToggle;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -60,11 +62,13 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.program.Program;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Link;
-import org.knime.core.ui.util.SWTUtilities;
+import org.eclipse.swt.widgets.Shell;
 
 /**
  * A message dialog with toggle that can display URLs and open these URLs in an external web browser.
@@ -79,10 +83,38 @@ class MessageDialogWithToggleAndURL extends MessageDialogWithToggle {
 
     private final DelayedMessageLogger m_logger;
 
-    MessageDialogWithToggleAndURL(final String title, final String url, final String text,
+    // copied from org.knime.core.ui.util.SWTUtilities#getActiveShell
+    private static Shell getActiveShell(final Display display) {
+        if (display == null) {
+            return null;
+        }
+
+        final Shell shell = display.getActiveShell();
+
+        if (shell == null) {
+            final IProduct product = Platform.getProduct();
+            Shell likelyActiveShell = null;
+
+            for (Shell s : display.getShells()) {
+                if (s.getText().startsWith(product.getName())) {
+                    return s;
+                }
+
+                if (s.getShells().length == 0) {
+                    likelyActiveShell = s;
+                }
+            }
+
+            return likelyActiveShell;
+        }
+
+        return shell;
+    }
+
+    MessageDialogWithToggleAndURL(final Display display, final String title, final String url, final String text,
         final DelayedMessageLogger logger, final int dialogImageType, final String[] dialogButtonLabels) {
-        super(SWTUtilities.getActiveShell(), title, null, text, dialogImageType, dialogButtonLabels, 0,
-            "Do not ask again", false);
+        super(getActiveShell(display), title, null, text, dialogImageType, dialogButtonLabels, 0, "Do not ask again",
+            false);
         setShellStyle(SWT.SHEET);
         m_url = url;
         m_text = text;
@@ -92,7 +124,7 @@ class MessageDialogWithToggleAndURL extends MessageDialogWithToggle {
     @Override
     protected final Control createMessageArea(final Composite composite) {
         // mostly copied over from super.createMessageArea(composite), but with added link support
-        // create composite
+
         // create image
         final Image image = getImage();
         if (image != null) {
@@ -107,16 +139,25 @@ class MessageDialogWithToggleAndURL extends MessageDialogWithToggle {
         link.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(final SelectionEvent e) {
-                try {
-                    // open default external browser
-                    // PlatformUI.getWorkbench().getBrowserSupport() in't an option as we don't have a workbench yet
-                    if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-                        Desktop.getDesktop().browse(new URI(m_url));
+                // code inspired by org.knime.core.util.DesktopUtil#browse
+                Display.getDefault().asyncExec(() -> {
+                    //try a normal launch
+                    if (!Program.launch(m_url) && Desktop.isDesktopSupported()
+                        && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                        try {
+                            // we cannot use PlatformUI.getWorkbench().getBrowserSupport().getExternalBrowser().openURL
+                            // as we don't have a workbench yet
+                            Desktop.getDesktop().browse(new URI(m_url));
+                        } catch (IOException | URISyntaxException ex) {
+                            m_logger.queueError(
+                                String.format("Error when trying to open external browser at location \"%s\".", m_url),
+                                ex);
+                        }
+                    } else {
+                        m_logger
+                            .queueError(String.format("Could not open external browser at location \"%s\".", m_url));
                     }
-                } catch (IOException | URISyntaxException ex) {
-                    m_logger.queueError(String.format("Could not open external browser at location \"%s\".", m_url),
-                        ex);
-                }
+                });
             }
         });
         GridDataFactory.fillDefaults().align(SWT.FILL, SWT.BEGINNING).grab(true, false)

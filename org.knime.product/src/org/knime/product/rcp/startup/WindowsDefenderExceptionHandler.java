@@ -65,6 +65,7 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.osgi.service.datalocation.Location;
+import org.eclipse.swt.widgets.Display;
 import org.knime.core.node.NodeLogger;
 
 /**
@@ -91,8 +92,8 @@ public final class WindowsDefenderExceptionHandler {
             + "\n\nAlternatively, would you like knime.exe to be automatically registered "
             + "as a trusted exception with Windows Defender?";
 
-        WindowsDefenderDetectedDialog(final DelayedMessageLogger logger) {
-            super(TITLE, URL, MESSAGE, logger, MessageDialog.QUESTION,
+        WindowsDefenderDetectedDialog(final Display display, final DelayedMessageLogger logger) {
+            super(display, TITLE, URL, MESSAGE, logger, MessageDialog.QUESTION,
                 new String[]{IDialogConstants.YES_LABEL, IDialogConstants.NO_LABEL});
         }
     }
@@ -134,9 +135,6 @@ public final class WindowsDefenderExceptionHandler {
     // the maximum amount of time (in seconds) until a PowerShell command times out
     private static final int COMMAND_TIMEOUT = 30;
 
-    // the executor service for running PowerShell commands
-    private final ExecutorService m_executor = Executors.newSingleThreadExecutor();
-
     private final DelayedMessageLogger m_logger = new DelayedMessageLogger();
 
     private WindowsDefenderExceptionHandler() {
@@ -147,43 +145,33 @@ public final class WindowsDefenderExceptionHandler {
      * When on Windows 10, determine if Windows Defender is enabled. If no exception to Defender has already been set,
      * displays a dialog that informs the user about Defender slowing down the startup of KNIME AP.
      *
-     * @param flag the flag in the Eclipse configuration area that is set if the checkbox to not show the dialog again
-     *            is checked
+     * @param configKey the key of the flag in the Eclipse configuration area that determines whether to show the dialog
+     * @param display display the {@link Display}
      * @return true if and only if the dialog was shown
      */
-    public boolean checkForAndAddExceptionToWindowsDefender(final ConfigAreaFlag flag) {
+    public boolean checkForAndAddExceptionToWindowsDefender(final String configKey, final Display display) {
         try {
+            final ConfigAreaFlag flag = new ConfigAreaFlag(configKey, m_logger);
+
             // check if we are on Windows 10
-            if (!Platform.OS_WIN32.equals(Platform.getOS()) || !System.getProperty("os.name").equals("Windows 10")) {
-                return false;
-            }
-
             // look up the Eclipse configuration area to determine if we should even check for Windows Defender
-            if (!flag.isFlagSet()) {
-                return false;
-            }
-
             // run the PowerShell command Get-MpComputerStatus to determine if Windows Defender is enabled
-            if (!isDefenderEnabled()) {
-                return false;
-            }
-
             // run the PowerShell command Get-MpPreference to check if an exception to Defender has already been set
-            if (isExceptionSet()) {
-                return false;
-            }
+            if (Platform.OS_WIN32.equals(Platform.getOS()) && System.getProperty("os.name").equals("Windows 10")
+                && !flag.isFlagSet() && isDefenderEnabled() && !isExceptionSet()) {
 
-            // only if we went through all the checks above will we show the dialog
-            final WindowsDefenderDetectedDialog dialog = new WindowsDefenderDetectedDialog(m_logger);
-            dialog.open();
-            if (dialog.getToggleState()) {
-                flag.setFlag(false);
+                // only if we went through all the checks above will we show the dialog
+                final WindowsDefenderDetectedDialog dialog = new WindowsDefenderDetectedDialog(display, m_logger);
+                dialog.open();
+                if (dialog.getToggleState()) {
+                    flag.setFlag(false);
+                }
+                if (dialog.getReturnCode() == IDialogConstants.YES_ID) {
+                    // run the PowerShell command Add-MpPreference elevated to an an exception to Windows Defender
+                    addException();
+                }
+                return true;
             }
-            if (dialog.getReturnCode() == IDialogConstants.YES_ID) {
-                // run the PowerShell command Add-MpPreference elevated to an an exception to Windows Defender
-                addException();
-            }
-
         } catch (RuntimeException e) {
             // when a runtime exception occurs, do not cancel startup but merely log the error
             m_logger.queueError("Runtime exception while checking for and adding an exception to Windows Defender.", e);
@@ -193,7 +181,7 @@ public final class WindowsDefenderExceptionHandler {
             m_logger.logQueuedMessaged(NodeLogger.getLogger(WindowsDefenderExceptionHandler.class));
         }
 
-        return true;
+        return false;
     }
 
     /**
@@ -300,22 +288,38 @@ public final class WindowsDefenderExceptionHandler {
             m_logger.queueDebug("Executing PowerShell command");
             m_logger.queueDebug(fullCommand);
 
+            // TODO: consider using a ProcessBuilder
             final Process process = Runtime.getRuntime().exec(fullCommand);
-            try (final InputStream is = process.getInputStream()) {
-                final StreamGobbler streamGobbler = new StreamGobbler(is);
-                m_executor.submit(streamGobbler);
+
+            try (final InputStream stdoutStream = process.getInputStream();
+                    final InputStream stderrStream = process.getErrorStream()) {
+                // TODO: consider using some default library like org.apache.commons.io.IOUtils#readLines
+            	final StreamGobbler stdoutGobbler = new StreamGobbler(stdoutStream);
+            	final StreamGobbler stderrGobbler = new StreamGobbler(stderrStream);
+
+                final ExecutorService executor = Executors.newFixedThreadPool(2);
+                executor.submit(stdoutGobbler);
+                executor.submit(stderrGobbler);
+                executor.shutdown();
+
                 final boolean timeout = !process.waitFor(COMMAND_TIMEOUT, TimeUnit.SECONDS);
+                final List<String> stdout = stdoutGobbler.getOutput();
+                final List<String> stderr = stderrGobbler.getOutput();
                 if (timeout) {
                     m_logger.queueError(String.format("PowerShell command %s timed out.", command));
-                    m_logger.queueDebug("Output is:");
-                    streamGobbler.getOutput().stream().forEach(m_logger::queueDebug);
                 } else if (process.exitValue() == 0) {
-                    return Optional.of(streamGobbler.getOutput());
+                    return Optional.of(stdoutGobbler.getOutput());
                 } else {
                     m_logger
                         .queueError(String.format("PowerShell command %s did not terminate successfully.", command));
-                    m_logger.queueDebug("Output is:");
-                    streamGobbler.getOutput().stream().forEach(m_logger::queueDebug);
+                }
+                if (!stdout.isEmpty()) {
+                    m_logger.queueDebug("Stdout is:");
+                    stdout.stream().forEach(m_logger::queueDebug);
+                }
+                if (!stderr.isEmpty()) {
+                    m_logger.queueError("Stderr is:");
+                    stderr.stream().forEach(m_logger::queueError);
                 }
             }
         } catch (IOException e) {

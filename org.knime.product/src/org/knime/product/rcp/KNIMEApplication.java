@@ -107,10 +107,6 @@ public class KNIMEApplication implements IApplication {
         Display display = createDisplay();
 
         try {
-            final boolean defenderDialogShown = WindowsDefenderExceptionHandler.getInstance()
-                .checkForAndAddExceptionToWindowsDefender("startup-dialog-noshow", display);
-            LongStartupHandler.getInstance().onStartupCommenced("startup-dialog-noshow", !defenderDialogShown, display);
-
             // open document listener needs to be registered as first
             // thing to account for open document events during startup
             KNIMEOpenDocumentEventProcessor openDocProcessor = new KNIMEOpenDocumentEventProcessor();
@@ -122,6 +118,10 @@ public class KNIMEApplication implements IApplication {
                 appContext.applicationRunning();
                 return EXIT_OK;
             }
+
+            final boolean defenderDialogShown = WindowsDefenderExceptionHandler.getInstance()
+                .checkForAndAddExceptionToWindowsDefender("startup-dialog-noshow", display);
+            LongStartupHandler.getInstance().onStartupCommenced("startup-dialog-noshow", !defenderDialogShown, display);
 
             ViewUtils.setLookAndFeel();
 

@@ -41,25 +41,6 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<groupId>org.eclipse.tycho.extras</groupId>
-				<artifactId>tycho-p2-extras-plugin</artifactId>
-				<version>1.1.0</version>
-				<!-- 1.2.0 has a bug, see https://bugs.eclipse.org/bugs/show_bug.cgi?id=540844 -->
-				<executions>
-					<execution>
-						<id>Re-generate artifacts.jar</id>
-						<phase>package</phase>
-						<goals>
-							<goal>publish-features-and-bundles</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<sourceLocation>${project.build.directory}/repository</sourceLocation>
-					<publishArtifacts>false</publishArtifacts>
-				</configuration>
-			</plugin>
 		</plugins>
 	</build>
 </project>

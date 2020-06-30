@@ -302,17 +302,20 @@ public final class WindowsDefenderExceptionHandler {
                 executor.submit(stderrGobbler);
                 executor.shutdown();
 
-                final boolean timeout = !process.waitFor(COMMAND_TIMEOUT, TimeUnit.SECONDS);
-                final List<String> stdout = stdoutGobbler.getOutput();
-                final List<String> stderr = stderrGobbler.getOutput();
-                if (timeout) {
+                if (!process.waitFor(COMMAND_TIMEOUT, TimeUnit.SECONDS)) {
                     m_logger.queueError(String.format("PowerShell command %s timed out.", command));
-                } else if (process.exitValue() == 0) {
+                    process.destroyForcibly().waitFor();
+                }
+                
+                if (process.exitValue() == 0) {
                     return Optional.of(stdoutGobbler.getOutput());
                 } else {
                     m_logger
                         .queueError(String.format("PowerShell command %s did not terminate successfully.", command));
                 }
+                
+                final List<String> stdout = stdoutGobbler.getOutput();
+                final List<String> stderr = stderrGobbler.getOutput();
                 if (!stdout.isEmpty()) {
                     m_logger.queueDebug("Stdout is:");
                     stdout.stream().forEach(m_logger::queueDebug);

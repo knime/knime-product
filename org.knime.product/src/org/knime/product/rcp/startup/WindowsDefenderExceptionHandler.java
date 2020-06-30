@@ -50,7 +50,6 @@ package org.knime.product.rcp.startup;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -60,6 +59,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -95,30 +95,6 @@ public final class WindowsDefenderExceptionHandler {
         WindowsDefenderDetectedDialog(final Display display, final DelayedMessageLogger logger) {
             super(display, TITLE, URL, MESSAGE, logger, MessageDialog.QUESTION,
                 new String[]{IDialogConstants.YES_LABEL, IDialogConstants.NO_LABEL});
-        }
-    }
-
-    /**
-     * A helper class for consuming the output stream of our executed PowerShell commands and providing it as a
-     * {@link List} of {@link String Strings}.
-     */
-    private static final class StreamGobbler implements Runnable {
-
-        private final InputStream m_inputStream;
-
-        private final List<String> m_output = new ArrayList<>();
-
-        StreamGobbler(final InputStream inputStream) {
-            m_inputStream = inputStream;
-        }
-
-        @Override
-        public void run() {
-            new BufferedReader(new InputStreamReader(m_inputStream)).lines().forEach(m_output::add);
-        }
-
-        List<String> getOutput() {
-            return m_output;
         }
     }
 
@@ -264,76 +240,75 @@ public final class WindowsDefenderExceptionHandler {
      */
     private Optional<List<String>> executePowerShellCommand(final String command, final String selectProperty,
         final boolean elevated, final String... arguments) {
-        try {
-            final StringBuilder commandBuilder =
-                new StringBuilder("powershell -inputformat none -outputformat text -NonInteractive -Command ");
+        final StringBuilder commandBuilder =
+            new StringBuilder("powershell -inputformat none -outputformat text -NonInteractive -Command ");
+        if (elevated) {
+            commandBuilder.append("Start-Process powershell -Verb runAs -ArgumentList "
+                + "`-inputformat,none,`-outputformat,text,`-NonInteractive,`-Command,");
+        }
+        commandBuilder.append(command);
+        if (arguments.length > 0) {
             if (elevated) {
-                commandBuilder.append("Start-Process powershell -Verb runAs -ArgumentList "
-                    + "`-inputformat,none,`-outputformat,text,`-NonInteractive,`-Command,");
+                commandBuilder.append(",");
+            } else {
+                commandBuilder.append(" -ArgumentList ");
             }
-            commandBuilder.append(command);
-            if (arguments.length > 0) {
-                if (elevated) {
-                    commandBuilder.append(",");
-                } else {
-                    commandBuilder.append(" -ArgumentList ");
-                }
-                commandBuilder.append(String.join(",", arguments));
-            }
-            if (selectProperty != null) {
-                commandBuilder.append(" | select -ExpandProperty ");
-                commandBuilder.append(selectProperty);
-            }
-            final String fullCommand = commandBuilder.toString();
-            m_logger.queueDebug("Executing PowerShell command");
-            m_logger.queueDebug(fullCommand);
+            commandBuilder.append(String.join(",", arguments));
+        }
+        if (selectProperty != null) {
+            commandBuilder.append(" | select -ExpandProperty ");
+            commandBuilder.append(selectProperty);
+        }
+        final String fullCommand = commandBuilder.toString();
+        m_logger.queueDebug("Executing PowerShell command");
+        m_logger.queueDebug(fullCommand);
 
-            // TODO: consider using a ProcessBuilder
-            final Process process = Runtime.getRuntime().exec(fullCommand);
-
-            try (final InputStream stdoutStream = process.getInputStream();
-                    final InputStream stderrStream = process.getErrorStream()) {
-                // TODO: consider using some default library like org.apache.commons.io.IOUtils#readLines
-            	final StreamGobbler stdoutGobbler = new StreamGobbler(stdoutStream);
-            	final StreamGobbler stderrGobbler = new StreamGobbler(stderrStream);
-
-                final ExecutorService executor = Executors.newFixedThreadPool(2);
-                executor.submit(stdoutGobbler);
-                executor.submit(stderrGobbler);
-                executor.shutdown();
-
-                if (!process.waitFor(COMMAND_TIMEOUT, TimeUnit.SECONDS)) {
-                    m_logger.queueError(String.format("PowerShell command %s timed out.", command));
-                    process.destroyForcibly().waitFor();
-                }
-                
-                if (process.exitValue() == 0) {
-                    return Optional.of(stdoutGobbler.getOutput());
-                } else {
-                    m_logger
-                        .queueError(String.format("PowerShell command %s did not terminate successfully.", command));
-                }
-                
-                final List<String> stdout = stdoutGobbler.getOutput();
-                final List<String> stderr = stderrGobbler.getOutput();
-                if (!stdout.isEmpty()) {
-                    m_logger.queueDebug("Stdout is:");
-                    stdout.stream().forEach(m_logger::queueDebug);
-                }
-                if (!stderr.isEmpty()) {
-                    m_logger.queueError("Stderr is:");
-                    stderr.stream().forEach(m_logger::queueError);
-                }
-            }
+        // TODO: consider using a ProcessBuilder
+        final Process process;
+        try {
+            process = Runtime.getRuntime().exec(fullCommand);
         } catch (IOException e) {
             m_logger.queueError(String.format("I/O error occured while executing PowerShell command %s.", command), e);
+            return Optional.empty();
+        }
+
+        final AtomicReference<List<String>> stdoutRef = new AtomicReference<>(new ArrayList<>());
+        final AtomicReference<List<String>> stderrRef = new AtomicReference<>(new ArrayList<>());
+        final ExecutorService executor = Executors.newFixedThreadPool(2);
+        executor.submit(() -> new BufferedReader(new InputStreamReader(process.getInputStream())).lines()
+            .forEach(l -> stdoutRef.get().add(l)));
+        executor.submit(() -> new BufferedReader(new InputStreamReader(process.getErrorStream())).lines()
+            .forEach(l -> stderrRef.get().add(l)));
+        executor.shutdown();
+
+        try {
+            if (!process.waitFor(COMMAND_TIMEOUT, TimeUnit.SECONDS)) {
+                m_logger.queueError(String.format("PowerShell command %s timed out.", command));
+                process.destroyForcibly().waitFor();
+            }
         } catch (InterruptedException e) {
             m_logger.queueError(
                 String.format("Thread was interrupted while waiting for PowerShell command %s.", command), e);
             // interrupt thread, as otherwise the information that the thread was interrupted would be lost
             Thread.currentThread().interrupt();
+            return Optional.empty();
         }
-        return Optional.empty();
-    }
 
+        if (process.exitValue() == 0) {
+            return Optional.of(stdoutRef.get());
+        } else {
+            m_logger.queueError(String.format("PowerShell command %s did not terminate successfully.", command));
+            final List<String> stdout = stdoutRef.get();
+            final List<String> stderr = stderrRef.get();
+            if (!stdout.isEmpty()) {
+                m_logger.queueError("Stdout is:");
+                stdout.stream().forEach(m_logger::queueDebug);
+            }
+            if (!stderr.isEmpty()) {
+                m_logger.queueError("Stderr is:");
+                stderr.stream().forEach(m_logger::queueError);
+            }
+            return Optional.empty();
+        }
+    }
 }

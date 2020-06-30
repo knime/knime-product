@@ -249,12 +249,13 @@ public final class WindowsDefenderExceptionHandler {
         commandBuilder.append(command);
         if (arguments.length > 0) {
             if (elevated) {
-                commandBuilder.append(",");
+                commandBuilder.append(",`-ErrorAction,Stop,");
             } else {
                 commandBuilder.append(" -ArgumentList ");
             }
             commandBuilder.append(String.join(",", arguments));
         }
+        commandBuilder.append(" -ErrorAction Stop");
         if (selectProperty != null) {
             commandBuilder.append(" | select -ExpandProperty ");
             commandBuilder.append(selectProperty);
@@ -263,7 +264,6 @@ public final class WindowsDefenderExceptionHandler {
         m_logger.queueDebug("Executing PowerShell command");
         m_logger.queueDebug(fullCommand);
 
-        // TODO: consider using a ProcessBuilder
         final Process process;
         try {
             process = Runtime.getRuntime().exec(fullCommand);

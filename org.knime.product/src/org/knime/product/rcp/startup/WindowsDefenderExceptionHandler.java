@@ -59,7 +59,6 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -269,6 +268,7 @@ public final class WindowsDefenderExceptionHandler {
         m_logger.queueDebug("Executing PowerShell command");
         m_logger.queueDebug(fullCommand);
 
+        // TODO: consider using a ProcessBuilder
         final Process process;
         try {
             process = Runtime.getRuntime().exec(fullCommand);
@@ -277,13 +277,13 @@ public final class WindowsDefenderExceptionHandler {
             return Optional.empty();
         }
 
-        final AtomicReference<List<String>> stdoutRef = new AtomicReference<>(new ArrayList<>());
-        final AtomicReference<List<String>> stderrRef = new AtomicReference<>(new ArrayList<>());
+        final List<String> stdoutRef = new ArrayList<>();
+        final List<String> stderrRef = new ArrayList<>();
         final ExecutorService executor = Executors.newFixedThreadPool(2);
         executor.submit(() -> new BufferedReader(new InputStreamReader(process.getInputStream())).lines()
-            .forEach(l -> stdoutRef.get().add(l)));
+            .forEach(l -> stdoutRef.add(l)));
         executor.submit(() -> new BufferedReader(new InputStreamReader(process.getErrorStream())).lines()
-            .forEach(l -> stderrRef.get().add(l)));
+            .forEach(l -> stderrRef.add(l)));
         executor.shutdown();
 
         try {
@@ -300,11 +300,11 @@ public final class WindowsDefenderExceptionHandler {
         }
 
         if (process.exitValue() == 0) {
-            return Optional.of(stdoutRef.get());
+            return Optional.of(stdoutRef);
         } else {
             m_logger.queueError(String.format("PowerShell command %s did not terminate successfully.", command));
-            final List<String> stdout = stdoutRef.get();
-            final List<String> stderr = stderrRef.get();
+            final List<String> stdout = stdoutRef;
+            final List<String> stderr = stderrRef;
             if (!stdout.isEmpty()) {
                 m_logger.queueError("Stdout is:");
                 stdout.stream().forEach(m_logger::queueDebug);

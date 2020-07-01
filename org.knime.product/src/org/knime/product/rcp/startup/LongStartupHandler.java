@@ -54,7 +54,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Display;
 import org.knime.core.node.NodeLogger;
@@ -69,21 +68,23 @@ public final class LongStartupHandler {
 
     private static final class LongStartupDetectedDialog extends MessageDialogWithToggleAndURL {
 
-        private static final String TITLE = "Accelerate Startup of KNIME Analytics Platform";
+        private static final String TITLE = "Startup of KNIME Analytics Platform is taking long";
+
+        private static final String SUMMARY = String.format("Startup of KNIME Analytics Platform is taking "
+            + "longer than %d seconds, potentially due to an antivirus tool.", STARTUP_TIME_THRESHOLD_SECONDS);
+
+        private static final String TEXT =
+            "Antivirus tools are known to substantially slow down the startup of KNIME Analytics Platform. "
+                + "If you are using an antivirus tool and only installing extensions from trusted sources, "
+                + "consider registering KNIME Analytics Platform as a trusted application.";
 
         private static final String URL = "https://www.knime.com/faq#q38";
 
-        private static final String MESSAGE =
-            String.format("Startup of KNIME Analytics Platform is taking longer than %d seconds. ",
-                STARTUP_TIME_THRESHOLD_SECONDS)
-                + "\n\nAntivirus tools are known to substantially slow down the startup of KNIME Analytics Platform. "
-                + "If you are using an antivirus tool and you are only installing extensions from trusted sources, "
-                + "consider registering KNIME Analytics Platform as a trusted application. "
-                + String.format("See <a href=\"%s\">our FAQ</a> for more details.", URL);
+        private static final String LINK = "See <a href=\"" + URL + "\">our FAQ</a> for more details.";
 
         LongStartupDetectedDialog(final Display display, final DelayedMessageLogger logger) {
-            super(display, TITLE, URL, MESSAGE, logger, MessageDialog.INFORMATION,
-                new String[]{IDialogConstants.OK_LABEL});
+            super(display, logger, MessageDialog.INFORMATION, new String[]{}, TITLE, SUMMARY,
+                TEXT, LINK, URL, null);
         }
     }
 

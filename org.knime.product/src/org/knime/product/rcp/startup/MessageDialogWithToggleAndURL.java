@@ -56,13 +56,17 @@ import java.net.URISyntaxException;
 import org.eclipse.core.runtime.IProduct;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.IDialogConstants;
-import org.eclipse.jface.dialogs.MessageDialogWithToggle;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.program.Program;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
@@ -75,13 +79,7 @@ import org.eclipse.swt.widgets.Shell;
  *
  * @author Marc Bux, KNIME GmbH, Berlin, Germany
  */
-class MessageDialogWithToggleAndURL extends MessageDialogWithToggle {
-
-    private final String m_url;
-
-    private final String m_text;
-
-    private final DelayedMessageLogger m_logger;
+class MessageDialogWithToggleAndURL extends MessageDialog {
 
     // copied from org.knime.core.ui.util.SWTUtilities#getActiveShell
     private static Shell getActiveShell(final Display display) {
@@ -111,19 +109,38 @@ class MessageDialogWithToggleAndURL extends MessageDialogWithToggle {
         return shell;
     }
 
-    MessageDialogWithToggleAndURL(final Display display, final String title, final String url, final String text,
-        final DelayedMessageLogger logger, final int dialogImageType, final String[] dialogButtonLabels) {
-        super(getActiveShell(display), title, null, text, dialogImageType, dialogButtonLabels, 0, "Do not ask again",
-            false);
+    private final Display m_display;
+
+    private final String m_summary;
+
+    private final String m_text;
+
+    private final String m_link;
+
+    private final String m_url;
+
+    private final String m_toggleMessage;
+
+    private final DelayedMessageLogger m_logger;
+
+    private boolean m_toggleState = false;
+
+    MessageDialogWithToggleAndURL(final Display display, final DelayedMessageLogger logger, final int dialogImageType,
+        final String[] dialogButtonLabels, final String title, final String summary, final String text,
+        final String link, final String url, final String toggleMessage) {
+        super(getActiveShell(display), title, null, null, dialogImageType, 0, dialogButtonLabels);
         setShellStyle(SWT.SHEET);
-        m_url = url;
+        m_display = display;
+        m_summary = summary;
         m_text = text;
+        m_link = link;
+        m_url = url;
+        m_toggleMessage = toggleMessage;
         m_logger = logger;
     }
 
     @Override
     protected final Control createMessageArea(final Composite composite) {
-        // mostly copied over from super.createMessageArea(composite), but with added link support
 
         // create image
         final Image image = getImage();
@@ -133,9 +150,36 @@ class MessageDialogWithToggleAndURL extends MessageDialogWithToggle {
             imageLabel.setImage(image);
             GridDataFactory.fillDefaults().align(SWT.CENTER, SWT.BEGINNING).applyTo(imageLabel);
         }
+
+        // create vertical composite
+        final Composite vertical = new Composite(composite, SWT.NONE);
+        final GridLayout layout = new GridLayout();
+        layout.marginHeight = 0;
+        layout.marginWidth = 0;
+        layout.verticalSpacing = 25;
+        vertical.setLayout(layout);
+        GridDataFactory.fillDefaults().align(SWT.FILL, SWT.BEGINNING).applyTo(vertical);
+
+        final Label summary = new Label(vertical, getMessageLabelStyle());
+        final FontData[] fd = summary.getFont().getFontData();
+        for (FontData f : fd) {
+            f.setStyle(SWT.BOLD);
+        }
+        summary.setFont(new Font(m_display, fd));
+        summary.setText(m_summary);
+        GridDataFactory.fillDefaults().align(SWT.FILL, SWT.BEGINNING).grab(true, false)
+            .hint(convertHorizontalDLUsToPixels(IDialogConstants.MINIMUM_MESSAGE_AREA_WIDTH), SWT.DEFAULT)
+            .applyTo(summary);
+
+        final Label text = new Label(vertical, getMessageLabelStyle());
+        text.setText(m_text);
+        GridDataFactory.fillDefaults().align(SWT.FILL, SWT.BEGINNING).grab(true, false)
+            .hint(convertHorizontalDLUsToPixels(IDialogConstants.MINIMUM_MESSAGE_AREA_WIDTH), SWT.DEFAULT)
+            .applyTo(text);
+
         // create message
-        final Link link = new Link(composite, getMessageLabelStyle());
-        link.setText(m_text);
+        final Link link = new Link(vertical, getMessageLabelStyle());
+        link.setText(m_link);
         link.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(final SelectionEvent e) {
@@ -163,6 +207,23 @@ class MessageDialogWithToggleAndURL extends MessageDialogWithToggle {
         GridDataFactory.fillDefaults().align(SWT.FILL, SWT.BEGINNING).grab(true, false)
             .hint(convertHorizontalDLUsToPixels(IDialogConstants.MINIMUM_MESSAGE_AREA_WIDTH), SWT.DEFAULT)
             .applyTo(link);
+
+        if (m_toggleMessage != null) {
+            final Button button = new Button(vertical, SWT.CHECK | SWT.LEFT);
+            button.setText(m_toggleMessage);
+            button.setSelection(m_toggleState);
+            button.addSelectionListener(new SelectionAdapter() {
+                @Override
+                public void widgetSelected(final SelectionEvent e) {
+                    m_toggleState = button.getSelection();
+                }
+            });
+        }
+
         return composite;
+    }
+
+    boolean getToggleState() {
+        return m_toggleState;
     }
 }

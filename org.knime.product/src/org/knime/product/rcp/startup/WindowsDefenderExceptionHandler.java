@@ -82,19 +82,24 @@ public final class WindowsDefenderExceptionHandler {
 
         private static final String TITLE = "Accelerate Startup of KNIME Analytics Platform";
 
-        private static final String URL = "https://www.knime.com/faq#q38";
-
-        private static final String MESSAGE = "We have detected that your system is running Windows Defender, "
-            + "which is known to substantially slow down the startup of KNIME Analytics Platform. "
-            + "If you are only installing extensions from trusted sources, "
-            + "consider adding an exception to Windows Defender to accelerate your startup. " + "See <a href=\"" + URL
-            + "\">our FAQ</a> for details and instructions on how to do this manually."
-            + "\n\nAlternatively, would you like knime.exe to be automatically registered "
+        private static final String SUMMARY = "Would you like knime.exe to be automatically registered "
             + "as a trusted exception with Windows Defender?";
 
+        private static final String TEXT = "We have detected that your system is running Windows Defender, "
+            + "which is known to substantially slow down the startup of KNIME Analytics Platform. "
+            + "If you are only installing extensions from trusted sources, "
+            + "consider adding an exception to Windows Defender to accelerate your startup.";
+
+        private static final String URL = "https://www.knime.com/faq#q38";
+
+        private static final String LINK = "See <a href=\"" + URL + "\">our FAQ</a> for more details.";
+
+        private static final String TOGGLE_MESSAGE = "Do not ask again";
+
         WindowsDefenderDetectedDialog(final Display display, final DelayedMessageLogger logger) {
-            super(display, TITLE, URL, MESSAGE, logger, MessageDialog.QUESTION,
-                new String[]{IDialogConstants.YES_LABEL, IDialogConstants.NO_LABEL});
+            super(display, logger, MessageDialog.QUESTION,
+                new String[]{IDialogConstants.YES_LABEL, IDialogConstants.NO_LABEL}, TITLE, SUMMARY, TEXT, LINK, URL,
+                TOGGLE_MESSAGE);
         }
     }
 
@@ -138,11 +143,11 @@ public final class WindowsDefenderExceptionHandler {
 
                 // only if we went through all the checks above will we show the dialog
                 final WindowsDefenderDetectedDialog dialog = new WindowsDefenderDetectedDialog(display, m_logger);
-                dialog.open();
+                    dialog.open();
                 if (dialog.getToggleState()) {
                     flag.setFlag(false);
                 }
-                if (dialog.getReturnCode() == IDialogConstants.YES_ID) {
+                if (dialog.getReturnCode() == 0) {
                     // run the PowerShell command Add-MpPreference elevated to an an exception to Windows Defender
                     addException();
                 }

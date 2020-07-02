@@ -173,18 +173,15 @@ public final class WindowsDefenderExceptionHandler {
 
         final Optional<List<String>> antiMalwareServiceEnabled =
             executePowerShellCommand("Get-MpComputerStatus", "AMServiceEnabled", false);
-        final Optional<List<String>> realTimeProtectionEnabled =
-            executePowerShellCommand("Get-MpComputerStatus", "RealTimeProtectionEnabled", false);
-
-        // when an error occurs, assume Windows Defender is disabled
-        if (!antiMalwareServiceEnabled.isPresent() || !realTimeProtectionEnabled.isPresent()) {
+        if (!antiMalwareServiceEnabled.isPresent() || antiMalwareServiceEnabled.get().size() != 1
+            || !Boolean.parseBoolean(antiMalwareServiceEnabled.get().iterator().next())) {
             return false;
         }
 
-        return antiMalwareServiceEnabled.get().size() == 1
-            && Boolean.parseBoolean(antiMalwareServiceEnabled.get().iterator().next())
-            && realTimeProtectionEnabled.get().size() == 1
-            && Boolean.parseBoolean(realTimeProtectionEnabled.get().iterator().next());
+        final Optional<List<String>> realTimeProtectionEnabled =
+            executePowerShellCommand("Get-MpComputerStatus", "RealTimeProtectionEnabled", false);
+        return (realTimeProtectionEnabled.isPresent() && realTimeProtectionEnabled.get().size() == 1
+            && Boolean.parseBoolean(realTimeProtectionEnabled.get().iterator().next()));
     }
 
     /**
@@ -196,16 +193,15 @@ public final class WindowsDefenderExceptionHandler {
 
         final Optional<List<String>> exclusionProcesses =
             executePowerShellCommand("Get-MpPreference", "ExclusionProcess", false);
-        final Optional<List<String>> exclusionPaths =
-            executePowerShellCommand("Get-MpPreference", "ExclusionPath", false);
 
-        // when an error occurred, assume an exception has already been set
-        if (!exclusionProcesses.isPresent() || !exclusionPaths.isPresent()) {
+        if (!exclusionProcesses.isPresent() || exclusionProcesses.get().contains("knime.exe")) {
             return true;
         }
 
+        final Optional<List<String>> exclusionPaths =
+            executePowerShellCommand("Get-MpPreference", "ExclusionPath", false);
         // check if an exception to the knime.exe process has been added
-        if (exclusionProcesses.get().contains("knime.exe")) {
+        if (!exclusionPaths.isPresent()) {
             return true;
         }
 

@@ -142,7 +142,7 @@ public final class WindowsDefenderExceptionHandler {
 
                 // only if we went through all the checks above will we show the dialog
                 final WindowsDefenderDetectedDialog dialog = new WindowsDefenderDetectedDialog(display, m_logger);
-                    dialog.open();
+                dialog.open();
                 if (dialog.getToggleState()) {
                     flag.setFlag(false);
                 }
@@ -222,7 +222,7 @@ public final class WindowsDefenderExceptionHandler {
      * Run the PowerShell command Add-MpPreference elevated to an an exception to Windows Defender.
      */
     private void addException() {
-        executePowerShellCommand("Add-MpPreference", null, true, "`-ExclusionProcess", "knime.exe");
+        executePowerShellCommand("Add-MpPreference", null, true, "-ExclusionProcess", "knime.exe");
     }
 
     /**
@@ -235,39 +235,62 @@ public final class WindowsDefenderExceptionHandler {
      * @param elevated a flag that determines whether to run the command elevated (i.e. with root access, triggering
      *            Windows User Account Control)
      * @param arguments the arguments for the command
-     * @return the output of the PowerShell command or a selected property thereof, if the process terminated
-     *         successfully, otherwise an empty Optional
+     * @return the output of the PowerShell command or a selected property thereof, if the process was not run elevated
+     *         and it terminated successfully, otherwise an empty Optional
      */
     private Optional<List<String>> executePowerShellCommand(final String command, final String selectProperty,
         final boolean elevated, final String... arguments) {
-        final StringBuilder commandBuilder =
-            new StringBuilder("powershell -inputformat none -outputformat text -NonInteractive -Command ");
+        final List<String> commands = new ArrayList<>();
+        commands.add("powershell");
+        commands.add("-inputformat");
+        commands.add("none");
+        commands.add("-outputformat");
+        commands.add("text");
+        commands.add("-NonInteractive");
+        commands.add("-Command");
         if (elevated) {
-            commandBuilder.append("Start-Process powershell -Verb runAs -ArgumentList "
-                + "`-inputformat,none,`-outputformat,text,`-NonInteractive,`-Command,");
-        }
-        commandBuilder.append(command);
-        if (arguments.length > 0) {
-            if (elevated) {
-                commandBuilder.append(",`-ErrorAction,Stop,");
-            } else {
-                commandBuilder.append(" -ArgumentList ");
+            commands.add("Start-Process");
+            commands.add("powershell");
+            commands.add("-Verb");
+            commands.add("runAs");
+            commands.add("-ArgumentList");
+            StringBuilder sb = new StringBuilder();
+            sb.append("`-inputformat,none,`-outputformat,text,`-NonInteractive,`-Command,");
+            sb.append(command);
+            if (arguments.length > 0) {
+                sb.append(",");
+                final String joinedArgs = String.join(",", arguments);
+                sb.append(joinedArgs.replace("-", "`-"));
             }
-            commandBuilder.append(String.join(",", arguments));
+            sb.append(",`-ErrorAction,Stop");
+            commands.add(sb.toString());
+        } else {
+            commands.add(command);
+            if (arguments.length > 0) {
+                commands.add(String.join(" ", arguments));
+            }
         }
-        commandBuilder.append(" -ErrorAction Stop");
+        commands.add("-ErrorAction");
+        commands.add("Stop");
         if (selectProperty != null) {
-            commandBuilder.append(" | select -ExpandProperty ");
-            commandBuilder.append(selectProperty);
+            commands.add("|");
+            commands.add("select");
+            commands.add("-ExpandProperty");
+            commands.add(selectProperty);
         }
-        final String fullCommand = commandBuilder.toString();
         m_logger.queueDebug("Executing PowerShell command");
-        m_logger.queueDebug(fullCommand);
+        m_logger.queueDebug(String.join(" ", commands));
 
-        // TODO: consider using a ProcessBuilder
+        return executePowerShellCommand(commands);
+    }
+
+    private Optional<List<String>> executePowerShellCommand(final List<String> commands) {
+
+        final String command = String.join(" ", commands);
+
         final Process process;
         try {
-            process = Runtime.getRuntime().exec(fullCommand);
+            process = (new ProcessBuilder(commands)).start();
         } catch (IOException e) {
             m_logger.queueError(String.format("I/O error occured while executing PowerShell command %s.", command), e);
             return Optional.empty();
@@ -276,10 +299,10 @@ public final class WindowsDefenderExceptionHandler {
         final List<String> stdoutRef = new ArrayList<>();
         final List<String> stderrRef = new ArrayList<>();
         final ExecutorService executor = Executors.newFixedThreadPool(2);
-        executor.submit(() -> new BufferedReader(new InputStreamReader(process.getInputStream())).lines()
-            .forEach(l -> stdoutRef.add(l)));
-        executor.submit(() -> new BufferedReader(new InputStreamReader(process.getErrorStream())).lines()
-            .forEach(l -> stderrRef.add(l)));
+        executor.submit(
+            () -> new BufferedReader(new InputStreamReader(process.getInputStream())).lines().forEach(stdoutRef::add));
+        executor.submit(
+            () -> new BufferedReader(new InputStreamReader(process.getErrorStream())).lines().forEach(stderrRef::add));
         executor.shutdown();
 
         try {

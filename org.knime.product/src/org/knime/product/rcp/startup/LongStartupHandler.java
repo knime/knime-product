@@ -97,7 +97,7 @@ public final class LongStartupHandler {
     private static final LongStartupHandler INSTANCE = new LongStartupHandler();
 
     /** The amount of time (in seconds) after which startup is considered to have taken overly long. */
-    private static final int STARTUP_TIME_THRESHOLD_MILLIS = 60_000;
+    private static final int STARTUP_TIME_THRESHOLD_MILLIS = 90_000;
 
     private final DelayedMessageLogger m_logger = new DelayedMessageLogger();
 

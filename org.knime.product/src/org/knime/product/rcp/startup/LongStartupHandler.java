@@ -82,9 +82,11 @@ public final class LongStartupHandler {
 
         private static final String LINK = "See <a href=\"" + URL + "\">our FAQ</a> for more details.";
 
+        private static final String TOGGLE_MESSAGE = "Do not show again";
+
         LongStartupDetectedDialog(final Display display, final DelayedMessageLogger logger) {
-            super(display, logger, MessageDialog.INFORMATION, new String[]{}, TITLE, SUMMARY,
-                TEXT, LINK, URL, null);
+            super(display, logger, MessageDialog.INFORMATION, new String[]{IDialogConstants.OK_LABEL}, TITLE, SUMMARY,
+                TEXT, LINK, URL, TOGGLE_MESSAGE);
         }
     }
 

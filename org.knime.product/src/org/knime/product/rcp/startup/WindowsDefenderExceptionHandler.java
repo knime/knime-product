@@ -144,7 +144,7 @@ public final class WindowsDefenderExceptionHandler {
                 final WindowsDefenderDetectedDialog dialog = new WindowsDefenderDetectedDialog(display, m_logger);
                 dialog.open();
                 if (dialog.getToggleState()) {
-                    flag.setFlag(false);
+                    flag.setFlag(true);
                 }
                 if (dialog.getReturnCode() == 0) {
                     // run the PowerShell command Add-MpPreference elevated to an an exception to Windows Defender

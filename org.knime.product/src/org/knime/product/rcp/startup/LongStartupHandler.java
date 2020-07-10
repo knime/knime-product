@@ -139,7 +139,7 @@ public final class LongStartupHandler {
                     // while waiting for the dialog to close, we should not log startup time
                     m_timestampOnStartup += System.currentTimeMillis() - timestampOnOpen;
                     if (dialog.getToggleState()) {
-                        flag.setFlag(false);
+                        flag.setFlag(true);
                     }
                 }
             });

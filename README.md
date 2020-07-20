@@ -8,5 +8,9 @@ This repository contains the source code of [KNIME Analytics Platform](http://ww
 ### Development
 Instructions for how to develop extensions for KNIME Analytics Platform can be found in the _knime-sdk-setup_ repository on [BitBucket](https://bitbucket.org/KNIME/knime-sdk-setup) or [GitHub](http://github.com/knime/knime-sdk-setup).
 
+### Build a local minimal KNIME AP installation locally:
+
+Run maven with the *local-build* profile enabled: `mvn verify -P local-build`.
+
 ### Join the Community!
 * [KNIME Forum](https://tech.knime.org/forum)

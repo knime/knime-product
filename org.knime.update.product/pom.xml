@@ -15,6 +15,36 @@
 	<artifactId>org.knime.update.product</artifactId>
 	<packaging>eclipse-repository</packaging>
 
+	<profiles>
+		<profile>
+			<id>local-build</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.eclipse.tycho</groupId>
+						<artifactId>tycho-p2-director-plugin</artifactId>
+						<version>${tycho.version}</version>
+						<executions>
+							<execution>
+								<id>create-distributions</id>
+								<goals>
+									<goal>materialize-products</goal>
+								</goals>
+							</execution>
+						</executions>
+						<configuration>
+							<products>
+								<product>
+									<id>org.knime.desktop.product</id>
+								</product>
+							</products>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
 	<build>
 		<plugins>
 			<plugin>

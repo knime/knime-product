@@ -35,6 +35,8 @@ import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
 import org.eclipse.equinox.internal.p2.core.helpers.LogHelper;
@@ -75,6 +77,13 @@ import org.knime.product.rcp.startup.WindowsDefenderExceptionHandler;
  */
 @SuppressWarnings("restriction")
 public class KNIMEApplication implements IApplication {
+
+    private static final String THEME_PLUGIN_ID = "org.eclipse.e4.ui.css.swt.theme";
+
+    private static final String THEME_ID_PREFERENCE_KEY = "themeid";
+
+    private static final String KNIME_THEME_ID = "org.knime.product.theme.knime";
+
     private static final String JUSTUPDATED = "justUpdated";
 
     private boolean m_checkForUpdates = false;
@@ -140,6 +149,12 @@ public class KNIMEApplication implements IApplication {
 
             RepositoryUpdater.INSTANCE.addDefaultRepositories();
             RepositoryUpdater.INSTANCE.updateArtifactRepositoryURLs();
+
+            // Set the theme to the KNIME theme if not theme is configured
+            final IEclipsePreferences node = InstanceScope.INSTANCE.getNode(THEME_PLUGIN_ID);
+            if (node.get(THEME_ID_PREFERENCE_KEY, null) == null) {
+                node.put(THEME_ID_PREFERENCE_KEY, KNIME_THEME_ID);
+            }
 
             int returnCode;
             if (m_checkForUpdates && checkForUpdates()) {

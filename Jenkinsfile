@@ -5,10 +5,8 @@ library "knime-pipeline@$BN"
 
 properties([
     pipelineTriggers([
-    upstream('knime-tp/' + env.BRANCH_NAME.replaceAll('/', '%2F')),
-        upstream(upstreamProjects: 'knime-core/' + env.BRANCH_NAME.replaceAll('/', '%2F'), threshold: 'UNSTABLE'),
-        upstream(upstreamProjects: 'knime-base/' + env.BRANCH_NAME.replaceAll('/', '%2F'), threshold: 'UNSTABLE'),
-        upstream(upstreamProjects: 'knime-workbench/' + env.BRANCH_NAME.replaceAll('/', '%2F'), threshold: 'UNSTABLE')
+		// knime-tp -> knime-core -> knime-base -> knime-svg -> knime-js-core -> knime-workbench
+        upstream("knime-workbench/${env.BRANCH_NAME.replaceAll('/', '%2F')}")
     ]),
 
     buildDiscarder(logRotator(numToKeepStr: '5')),

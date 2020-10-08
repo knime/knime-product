@@ -141,6 +141,15 @@ CTabItem CLabel {
     background-color: #f0f0f0; /* HACK for background of CTabFolder inner Toolbars e.g. editor split panel*/
 }
 
+/** Makes sure that the metadata views (component and workflow) always keep white as background color, 
+even when switch back from the web-ui perspective (or any other theme)*/ 
+.MetadataView {
+	background-color: white;
+}
+.MetadataViewButtonPane {
+	background-color: rgb(240, 240, 242);
+}
+
 
 
 

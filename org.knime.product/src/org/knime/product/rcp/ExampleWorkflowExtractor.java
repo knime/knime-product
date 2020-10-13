@@ -52,12 +52,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Optional;
 import java.util.zip.ZipInputStream;
 
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.viewers.TreeViewer;
-import org.eclipse.osgi.service.datalocation.Location;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.ui.IViewReference;
 import org.eclipse.ui.IWorkbenchPage;
@@ -66,6 +64,7 @@ import org.eclipse.ui.PlatformUI;
 import org.knime.core.internal.KNIMEPath;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.util.FileUtil;
+import org.knime.product.ProductPlugin;
 import org.knime.workbench.explorer.view.ExplorerView;
 
 /**
@@ -79,26 +78,19 @@ class ExampleWorkflowExtractor implements Runnable {
      */
     @Override
     public void run() {
-        Location loc = Platform.getInstallLocation();
-        if (loc == null) {
-            NodeLogger.getLogger(getClass()).error("Cannot detect KNIME installation directory");
+        Optional<Path> installationLocation = ProductPlugin.getInstallationLocation();
+        Path initialWorkspace;
+        if (!installationLocation.isPresent()) {
+            // ignore, logged in ProductPlugin.getInstallationLocation()
             return;
-        } else if (!loc.getURL().getProtocol().equals("file")) {
-            NodeLogger.getLogger(getClass()).error("KNIME installation directory is not local");
-            return;
-        }
-
-        String path = loc.getURL().getPath();
-        if (Platform.OS_WIN32.equals(Platform.getOS()) && path.matches("^/[a-zA-Z]:/.*")) {
-            // Windows path with drive letter => remove first slash
-            path = path.substring(1);
-        }
-        Path initialWorkspace = Paths.get(path, "knime-workspace.zip");
-        if (!Files.exists(initialWorkspace)) {
-            NodeLogger.getLogger(getClass()).warn(
-                initialWorkspace.toAbsolutePath()
+        } else {
+            initialWorkspace = installationLocation.get().resolve("knime-workspace.zip");
+            if (!Files.exists(initialWorkspace)) {
+                NodeLogger.getLogger(getClass()).warn(
+                    initialWorkspace.toAbsolutePath()
                     + " not found in installation directory, not creating inital workspace");
-            return;
+                return;
+            }
         }
 
 
@@ -131,4 +123,5 @@ class ExampleWorkflowExtractor implements Runnable {
             }
         }
     }
+
 }

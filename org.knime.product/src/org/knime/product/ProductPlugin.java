@@ -44,16 +44,26 @@
  */
 package org.knime.product;
 
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.MissingResourceException;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.osgi.service.datalocation.Location;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
+import org.knime.core.node.NodeLogger;
 import org.osgi.framework.BundleContext;
 
 /**
  * The main plugin class to be used in the desktop.
  */
 public class ProductPlugin extends AbstractUIPlugin {
+
+    private static final NodeLogger LOGGER = NodeLogger.getLogger(ProductPlugin.class);
+
     // The shared instance.
     private static ProductPlugin plugin;
 
@@ -132,4 +142,34 @@ public class ProductPlugin extends AbstractUIPlugin {
         }
         return m_resourceBundle;
     }
+
+    /**
+     * Determine and return the installation location of KNIME.
+     *
+     * @return A non-empty optional if the path can be determined, an empty optional in case of errors (logged to
+     *         NodeLogger) or the installation path isn't local.
+     */
+    public static Optional<Path> getInstallationLocation() {
+        Location loc = Platform.getInstallLocation();
+        if (loc == null) {
+            LOGGER.error("Cannot detect KNIME installation directory");
+            return Optional.empty();
+        } else if (!loc.getURL().getProtocol().equals("file")) {
+            LOGGER.error("KNIME installation directory is not local");
+            return Optional.empty();
+        }
+
+        String path = loc.getURL().getPath();
+        if (Platform.OS_WIN32.equals(Platform.getOS()) && path.matches("^/[a-zA-Z]:/.*")) {
+            // Windows path with drive letter => remove first slash
+            path = path.substring(1);
+        }
+        try {
+            return Optional.ofNullable(Paths.get(path));
+        } catch (InvalidPathException e) {
+            LOGGER.error("Unable to determine installation path from " + path, e);
+            return Optional.empty();
+        }
+    }
+
 }

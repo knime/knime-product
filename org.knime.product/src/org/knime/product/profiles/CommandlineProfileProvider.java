@@ -55,8 +55,10 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import org.eclipse.core.runtime.Platform;
+import org.knime.product.ProductPlugin;
 
 /**
  * Implementation of a profile provider that reads the required parameters from the command line. It reads the
@@ -86,8 +88,16 @@ class CommandlineProfileProvider implements IProfileProvider {
                     try {
                         m_profilesLocation = new URI(args[++i]);
                         if (m_profilesLocation.getScheme() == null) {
-                            Path p = Paths.get(args[i]);
-                            m_profilesLocation = p.toUri();
+                            Path argPath = Paths.get(args[i]);
+                            Optional<Path> installPath = ProductPlugin.getInstallationLocation();
+                            // AP-15232 -- resolve relative to installation location. Corner cases:
+                            //  - If "argPath" is absolute, this trivially resolves to only "argPath".
+                            //  - if install location can't be determined (empty optional) an error is
+                            //    logged in ProductPlugin and "argPath" is used as-is
+                            if (installPath.isPresent()) {
+                                argPath = installPath.get().resolve(argPath);
+                            }
+                            m_profilesLocation = argPath.toAbsolutePath().toUri();
                         }
                     } catch (URISyntaxException ex) {
                         Path p = Paths.get(args[i]);

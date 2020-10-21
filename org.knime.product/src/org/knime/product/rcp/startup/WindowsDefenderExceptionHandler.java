@@ -191,15 +191,15 @@ public final class WindowsDefenderExceptionHandler {
      */
     private boolean isExceptionSet() {
 
-        final Optional<List<String>> exclusionProcesses =
-            executePowerShellCommand("Get-MpPreference", "ExclusionProcess", false);
+        final Optional<List<String>> exclusionProcesses = executePowerShellCommand("Get-Item", "Property", false,
+            "-Path", "'Registry::HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows Defender\\Exclusions\\Processes'");
 
         if (!exclusionProcesses.isPresent() || exclusionProcesses.get().contains("knime.exe")) {
             return true;
         }
 
-        final Optional<List<String>> exclusionPaths =
-            executePowerShellCommand("Get-MpPreference", "ExclusionPath", false);
+        final Optional<List<String>> exclusionPaths = executePowerShellCommand("Get-Item", "Property", false, "-Path",
+            "'Registry::HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows Defender\\Exclusions\\Paths'");
         // check if an exception to the knime.exe process has been added
         if (!exclusionPaths.isPresent()) {
             return true;
@@ -274,7 +274,7 @@ public final class WindowsDefenderExceptionHandler {
         commands.add("Stop");
         if (selectProperty != null) {
             commands.add("|");
-            commands.add("select");
+            commands.add("Select-Object");
             commands.add("-ExpandProperty");
             commands.add(selectProperty);
         }

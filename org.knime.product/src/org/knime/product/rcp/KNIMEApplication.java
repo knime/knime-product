@@ -204,7 +204,7 @@ public class KNIMEApplication implements IApplication {
      */
     private static void preventWebUIStartup(final IEclipsePreferences themeNode, final String themeConfigured) {
         // make sure that we don't start with the Web UI theme
-        if (themeConfigured.equals("org.knime.ui.java.theme")) {
+        if (themeConfigured != null && themeConfigured.equals("org.knime.ui.java.theme")) {
             themeNode.put(THEME_ID_PREFERENCE_KEY, KNIME_THEME_ID);
         }
 

@@ -157,6 +157,8 @@ public class KNIMEApplication implements IApplication {
                 themeNode.put(THEME_ID_PREFERENCE_KEY, KNIME_THEME_ID);
             }
 
+            preventWebUIStartup(themeNode, themeConfigured);
+
             int returnCode;
             if (m_checkForUpdates && checkForUpdates()) {
                 returnCode = PlatformUI.RETURN_RESTART;
@@ -195,6 +197,19 @@ public class KNIMEApplication implements IApplication {
                 }
             }
         }
+    }
+
+    /*
+     * Prevents the Web UI from being started. Can be removed once the AP is allowed to be started with the new Web UI.
+     */
+    private static void preventWebUIStartup(final IEclipsePreferences themeNode, final String themeConfigured) {
+        // make sure that we don't start with the Web UI theme
+        if (themeConfigured.equals("org.knime.ui.java.theme")) {
+            themeNode.put(THEME_ID_PREFERENCE_KEY, KNIME_THEME_ID);
+        }
+
+        // make sure to start with the classic perspective (and not the Web UI perspective)
+        System.setProperty("perspective", "org.knime.workbench.ui.ModellerPerspective");
     }
 
     private void parseApplicationArguments(final IApplicationContext context) {

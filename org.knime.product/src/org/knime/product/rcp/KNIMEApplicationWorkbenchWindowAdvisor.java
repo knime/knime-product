@@ -56,6 +56,7 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.action.ICoolBarManager;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.swt.dnd.URLTransfer;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchListener;
@@ -130,6 +131,9 @@ public class KNIMEApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvis
         // dependency to org.eclipse.ui.ide (otherwise we don't see our
         // Resources)
         org.eclipse.ui.ide.IDE.registerAdapters();
+
+        configurer.addEditorAreaTransfer(URLTransfer.getInstance());
+        configurer.configureEditorAreaDropListener(new EditorAreaURLDropListener());
     }
 
     private static void showIntroPage() {

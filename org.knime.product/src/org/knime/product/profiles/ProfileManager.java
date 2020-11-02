@@ -270,10 +270,12 @@ public class ProfileManager {
             throw new IllegalArgumentException("Profiles from '" + profileLocation.getScheme() + " are not supported");
         }
 
+        Path localProfileLocationNormalized = localProfileLocation.normalize();
         return profiles.stream().map(p -> localProfileLocation.resolve(p).normalize())
                 .filter(p -> Files.isDirectory(p))
                 // remove profiles that are outside the profile root (e.g. with "../" in their name)
-                .filter(p -> p.startsWith(localProfileLocation))
+                // Use normalized profile root s.t. the `startsWith` check considers the real paths.
+                .filter(p -> p.startsWith(localProfileLocationNormalized))
                 .collect(Collectors.toList());
     }
 

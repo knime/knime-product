@@ -62,8 +62,6 @@ import org.osgi.framework.BundleContext;
  */
 public class ProductPlugin extends AbstractUIPlugin {
 
-    private static final NodeLogger LOGGER = NodeLogger.getLogger(ProductPlugin.class);
-
     // The shared instance.
     private static ProductPlugin plugin;
 
@@ -152,10 +150,10 @@ public class ProductPlugin extends AbstractUIPlugin {
     public static Optional<Path> getInstallationLocation() {
         Location loc = Platform.getInstallLocation();
         if (loc == null) {
-            LOGGER.error("Cannot detect KNIME installation directory");
+            NodeLogger.getLogger(ProductPlugin.class).error("Cannot detect KNIME installation directory");
             return Optional.empty();
         } else if (!loc.getURL().getProtocol().equals("file")) {
-            LOGGER.error("KNIME installation directory is not local");
+            NodeLogger.getLogger(ProductPlugin.class).error("KNIME installation directory is not local");
             return Optional.empty();
         }
 
@@ -167,7 +165,7 @@ public class ProductPlugin extends AbstractUIPlugin {
         try {
             return Optional.ofNullable(Paths.get(path));
         } catch (InvalidPathException e) {
-            LOGGER.error("Unable to determine installation path from " + path, e);
+            NodeLogger.getLogger(ProductPlugin.class).error("Unable to determine installation path from " + path, e);
             return Optional.empty();
         }
     }

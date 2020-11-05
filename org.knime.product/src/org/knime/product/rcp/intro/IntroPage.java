@@ -117,6 +117,7 @@ import org.knime.workbench.explorer.view.actions.NewWorkflowWizardPage;
 import org.knime.workbench.explorer.view.preferences.EditMountPointDialog;
 import org.knime.workbench.explorer.view.preferences.MountSettings;
 import org.knime.workbench.ui.KNIMEUIPlugin;
+import org.knime.workbench.ui.hub.HubLinkHandlerExtension;
 import org.knime.workbench.ui.p2.actions.InvokeInstallSiteAction;
 import org.knime.workbench.ui.p2.actions.InvokeUpdateAction;
 import org.knime.workbench.ui.preferences.PreferenceConstants;
@@ -348,6 +349,9 @@ public class IntroPage implements LocationListener {
     }
 
     private static void handleLink(final URI link) {
+        if (HubLinkHandlerExtension.handleLink(link.toString())) {
+            return;
+        }
         try {
             URL url = link.toURL();
             Program.launch(url.toString());

@@ -48,11 +48,14 @@
  */
 package org.knime.product.rcp;
 
+import static org.knime.workbench.editor2.editparts.policy.NewWorkflowContainerEditPolicy.downloadAndOpenRepoObject;
+
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DropTargetAdapter;
 import org.eclipse.swt.dnd.DropTargetEvent;
 import org.eclipse.swt.dnd.URLTransfer;
-import org.knime.workbench.explorer.view.dnd.ExplorerURIDropUtil;
+import org.knime.workbench.core.imports.RepoObjectImport;
+import org.knime.workbench.core.imports.URIImporterUtil;
 
 /**
  * Drop target listener that listens for URLs (from the hub) being dropped onto the empty editor area. The
@@ -76,10 +79,10 @@ class EditorAreaURLDropListener extends DropTargetAdapter {
     @Override
     public void drop(final DropTargetEvent event) {
         if (event.data instanceof String) {
-            if (ExplorerURIDropUtil.performDrop((String)event.data)) {
+            RepoObjectImport repoImport = URIImporterUtil.getRepoObjectImportFromURI((String)event.data).orElse(null);
+            if (repoImport != null) {
+                downloadAndOpenRepoObject(repoImport);
                 return;
-            } else {
-                //
             }
         }
         event.detail = DND.DROP_NONE;

@@ -3,3 +3,4 @@
 */build/
 **/.flattened-pom.xml
 */*.jar
+**/CHANGELOG.md

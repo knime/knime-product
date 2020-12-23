@@ -64,7 +64,6 @@ import org.knime.core.ui.util.SWTUtilities;
 import org.knime.core.util.EclipseUtil;
 import org.knime.product.rcp.intro.IntroPage;
 import org.knime.product.rcp.startup.LongStartupHandler;
-import org.knime.workbench.editor2.WorkflowEditor;
 import org.osgi.framework.Bundle;
 import org.osgi.service.prefs.Preferences;
 
@@ -138,18 +137,6 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
             }
             changeDefaultPreferences();
         }
-    }
-
-    /**
-     * See AP-5741.
-     *
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean preShutdown() {
-        WorkflowEditor.APP_IS_UNDERGOING_EXIT.set(true);
-
-        return super.preShutdown();
     }
 
     /**

@@ -85,6 +85,8 @@ public class KNIMEApplication implements IApplication {
 
     private static final String JUSTUPDATED = "justUpdated";
 
+    private static final String PERSPECTIVE_SYS_PROP = "perspective";
+
     private boolean m_checkForUpdates = false;
 
     /**
@@ -203,13 +205,17 @@ public class KNIMEApplication implements IApplication {
      * Prevents the Web UI from being started. Can be removed once the AP is allowed to be started with the new Web UI.
      */
     private static void preventWebUIStartup(final IEclipsePreferences themeNode, final String themeConfigured) {
-        // make sure that we don't start with the Web UI theme
-        if (themeConfigured != null && themeConfigured.equals("org.knime.ui.java.theme")) {
-            themeNode.put(THEME_ID_PREFERENCE_KEY, KNIME_THEME_ID);
-        }
+        // if the 'perspective' system property is explicitly set to the web ui perspective, don't change it
+        // (useful to purposely start with the Web UI, e.g., for testing)
+        if (!"org.knime.ui.java.perspective".equals(System.getProperty(PERSPECTIVE_SYS_PROP))) {
+            // make sure that we don't start with the Web UI theme
+            if (themeConfigured != null && themeConfigured.equals("org.knime.ui.java.theme")) {
+                themeNode.put(THEME_ID_PREFERENCE_KEY, KNIME_THEME_ID);
+            }
 
-        // make sure to start with the classic perspective (and not the Web UI perspective)
-        System.setProperty("perspective", "org.knime.workbench.ui.ModellerPerspective");
+            // make sure to start with the classic perspective (and not the Web UI perspective)
+            System.setProperty(PERSPECTIVE_SYS_PROP, "org.knime.workbench.ui.ModellerPerspective");
+        }
     }
 
     private void parseApplicationArguments(final IApplicationContext context) {

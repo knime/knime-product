@@ -163,7 +163,7 @@ public class ProductPlugin extends AbstractUIPlugin {
             path = path.substring(1);
         }
         try {
-            return Optional.ofNullable(Paths.get(path));
+            return Optional.ofNullable(Paths.get(path)); // NOSONAR False positive. The path comes from `loc`.
         } catch (InvalidPathException e) {
             NodeLogger.getLogger(ProductPlugin.class).error("Unable to determine installation path from " + path, e);
             return Optional.empty();

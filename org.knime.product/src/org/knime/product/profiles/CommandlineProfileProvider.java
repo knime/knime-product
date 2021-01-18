@@ -88,7 +88,8 @@ class CommandlineProfileProvider implements IProfileProvider {
                     try {
                         m_profilesLocation = new URI(args[++i]);
                         if (m_profilesLocation.getScheme() == null) {
-                            Path argPath = Paths.get(args[i]);
+                            Path argPath = Paths.get(args[i]); // NOSONAR The path being user-controlled is exactly
+                            // the intended usage.
                             Optional<Path> installPath = ProductPlugin.getInstallationLocation();
                             // AP-15232 -- resolve relative to installation location. Corner cases:
                             //  - If "argPath" is absolute, this trivially resolves to only "argPath".

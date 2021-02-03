@@ -121,6 +121,14 @@
          </run>
       </application>
    </extension>
+   <extension
+         id="org.knime.product.fragment"
+         point="org.eclipse.e4.workbench.model">
+      <fragment
+            apply="always"
+            uri="fragment.e4xmi">
+      </fragment>
+   </extension>
 <!--
 -->
 </plugin>

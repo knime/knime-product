@@ -1346,4 +1346,31 @@ ICTabRendering {
             return null;
         }
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setSelectedTabHighlightTop(final boolean drawTabHiglightOnTop) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setSelectedTabHighlight(final Color color) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setDrawCustomTabContentBackground(final boolean drawCustomTabContentBackground) {
+        // TODO Auto-generated method stub
+
+    }
 }

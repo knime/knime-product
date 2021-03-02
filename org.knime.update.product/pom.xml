@@ -13,7 +13,7 @@
 	<packaging>eclipse-repository</packaging>
 
     <properties>
-        <revision>4.2.4</revision>
+        <revision>4.2.5</revision>
     </properties>
 
 	<profiles>

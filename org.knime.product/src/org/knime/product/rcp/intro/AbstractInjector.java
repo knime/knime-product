@@ -177,7 +177,7 @@ abstract class AbstractInjector extends AbstractIntroPageModifier implements Run
 
         try (OutputStream out = new FileOutputStream(temp)) {
             Transformer serializer = m_transformerFactory.newTransformer();
-            serializer.setOutputProperty(OutputKeys.METHOD, "xhtml");
+            serializer.setOutputProperty(OutputKeys.METHOD, "html");
             serializer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, "about:legacy-compat");
             serializer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
             serializer.transform(new DOMSource(doc), new StreamResult(out));

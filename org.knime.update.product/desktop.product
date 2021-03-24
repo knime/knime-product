@@ -804,6 +804,7 @@ propagated with or for interoperation with KNIME.
       <feature id="org.eclipse.equinox.p2.user.ui"/>
       <feature id="org.knime.features.core"/>
       <feature id="org.knime.features.base"/>
+      <feature id="org.knime.features.filehandling.core"/>
       <feature id="org.knime.features.workbench"/>
       <feature id="org.knime.features.ext.svg"/>
       <feature id="org.knime.binary.jre"/>

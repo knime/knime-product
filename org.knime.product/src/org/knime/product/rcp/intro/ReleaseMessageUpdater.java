@@ -119,7 +119,7 @@ class ReleaseMessageUpdater extends AbstractUpdater {
                 }
                 shortName = m_newReleases.get(0).getShortName();
             }
-            String title = "Update now to " + shortName;
+            String title = updatePossible ? ("Update now to " + shortName) : ("Get " + shortName + " now");
             // This needs to be dynamically populated, possibly also a new field in the releases.txt
             String tileContent = bugfix ? "" : "Get the latest features and enhancements!";
             if (bugfix) {

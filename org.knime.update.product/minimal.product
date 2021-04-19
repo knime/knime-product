@@ -23,7 +23,6 @@ openFile
 -Dsun.java2d.d3d=false
 -Dosgi.classloader.lock=classname
 -XX:+UnlockDiagnosticVMOptions
--XX:+UnsyncloadClass 
 -XX:+UseG1GC
 -Dsun.net.client.defaultReadTimeout=0
          <argsX86>-Xmx512m</argsX86>
@@ -42,9 +41,9 @@ openFile
    </launcherArgs>
 
    <launcher name="knime">
-      <linux />
-      <macosx />
-      <win />
+      <win useIco="false">
+         <bmp/>
+      </win>
    </launcher>
 
    <vm>
@@ -792,4 +791,5 @@ propagated with or for interoperation with KNIME.
 
    <cssInfo>
    </cssInfo>
+
 </product>

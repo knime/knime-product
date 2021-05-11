@@ -44,49 +44,90 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   May 21, 2016 (Ferry Abt): created
+ *   May 10, 2021 (hornm): created
  */
 package org.knime.product.customizations;
 
-import java.util.Collections;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
+import java.util.Optional;
 
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.framework.ServiceReference;
+import org.knime.core.node.NodeLogger;
 
 /**
- * The Interface for a Customization Service. Do not implement.
+ * Helper to access the customization info specific to the (optional) 'Contact Support' help-menu entry.
  *
  * @author Ferry Abt
- * @noimplement This interface is not intended for implementation
+ * @author Martin Horn, KNIME GmbH, Konstanz, Germany
  */
-public interface ICustomizationService {
-    /**
-     * Returns a map containing the customization information provided by a KNIME Server.
-     *
-     * @return a (possibly empty) map but not <code>null</code>
-     */
-    Map<String, String> getCustomizationInfo();
+public final class CustomizedContactSupportAction {
+
+    private static Optional<CustomizedContactSupportAction> instance;
+
+    private final URI m_helpContact;
+
+    private final boolean m_isMailTo;
+
+    private final String m_helpActionLabel;
 
     /**
-     * Helper method to find a registered service implementation and return the customization info it provides.
-     *
-     * @return the custom info map if there is a service providing it, otherwise an empty map.
+     * @return the singleton instance or an empty optional if there is no customization info available
      */
-    static Map<String, String> findServiceAndGetCustomizationInfo() {
-        BundleContext context = FrameworkUtil.getBundle(ICustomizationService.class).getBundleContext();
-        ServiceReference<?> serviceReference = context.getServiceReference(ICustomizationService.class.getName());
-        if (serviceReference != null) {
-            try {
-                ICustomizationService service = (ICustomizationService)context.getService(serviceReference);
-                if (service != null) {
-                    return service.getCustomizationInfo();
-                }
-            } finally {
-                context.ungetService(serviceReference);
+    public static Optional<CustomizedContactSupportAction> getInstance() {
+        if (instance == null) {
+            Map<String, String> customizationInfo = ICustomizationService.findServiceAndGetCustomizationInfo();
+            String helpAddress = null;
+            String helpActionLabel = null;
+            if (customizationInfo.containsKey("helpContact") && customizationInfo.containsKey("helpButton")) {
+                helpAddress = customizationInfo.get("helpContact");
+                helpActionLabel = customizationInfo.get("helpButton");
+                instance = Optional.of(new CustomizedContactSupportAction(helpAddress, helpActionLabel));
+            } else {
+                instance = Optional.empty();
             }
         }
-        return Collections.emptyMap();
+        return instance;
     }
+
+    private CustomizedContactSupportAction(final String helpAddress, final String helpActionLabel) {
+        URI helpContact = null;
+        try {
+            helpContact = new URI(helpAddress);
+        } catch (URISyntaxException e) {
+            NodeLogger.getLogger(CustomizedContactSupportAction.class)
+                .coding("Custom contact-URI invalid: " + e.getMessage());
+        }
+        if (helpContact != null) {
+            m_helpContact = helpContact;
+            m_isMailTo = helpAddress.startsWith("mailto");
+            m_helpActionLabel = helpActionLabel;
+        } else {
+            m_helpContact = null;
+            m_isMailTo = false;
+            m_helpActionLabel = null;
+        }
+    }
+
+    /**
+     * @return the help contact URI
+     */
+    public URI getHelpContact() {
+        return m_helpContact;
+    }
+
+    /**
+     * @return the label of the action of the help-menu entry
+     */
+    public String getHelpActionLabel() {
+        return m_helpActionLabel;
+    }
+
+    /**
+     * @return whether the help-contact URI should be opened in a browser or the mail-program ('mailto'-URI-scheme)
+     */
+    public boolean isMailTo() {
+        return m_isMailTo;
+    }
+
 }

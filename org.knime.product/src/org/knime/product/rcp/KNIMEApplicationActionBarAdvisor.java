@@ -86,6 +86,8 @@ import org.eclipse.ui.internal.registry.IActionSetDescriptor;
 import org.eclipse.ui.views.IViewDescriptor;
 import org.eclipse.ui.views.IViewRegistry;
 import org.knime.core.node.KNIMEConstants;
+import org.knime.product.customizations.CustomizedContactSupportAction;
+import org.knime.product.customizations.CustomizedDocAction;
 import org.knime.product.rcp.intro.IntroPageAction;
 import org.knime.workbench.explorer.view.actions.export.WorkflowExportApplicationAction;
 import org.knime.workbench.explorer.view.actions.imports.WorkflowImportApplicationAction;
@@ -117,9 +119,11 @@ public class KNIMEApplicationActionBarAdvisor extends ActionBarAdvisor {
 
     private IWorkbenchAction m_aboutAction;
 
-    private IWorkbenchAction m_helpAction;
+    private IAction m_cheatSheetsAction;
 
-    private IWorkbenchAction m_helpSearchAction;
+    private IAction m_docsAction;
+
+    private IAction m_contactSupportAction;
 
     private IAction m_introAction;
 
@@ -259,11 +263,25 @@ public class KNIMEApplicationActionBarAdvisor extends ActionBarAdvisor {
          * m_introAction.setText("Show &Intro page"); register(m_introAction);
          */
 
-        m_helpAction = ActionFactory.HELP_CONTENTS.create(window);
-        register(m_helpAction);
+        m_cheatSheetsAction = new OpenURLAction("cheat_cheets", "KNIME cheat sheets", null,
+            "https://www.knime.com/learning/cheatsheets", false);
+        register(m_cheatSheetsAction);
+        if (CustomizedDocAction.getInstance().isPresent()) {
+            CustomizedDocAction custom = CustomizedDocAction.getInstance().get();
+            m_docsAction =
+                new OpenURLAction("knime_docs", custom.getDocsActionLabel(), null, custom.getDocsAddress(), false);
+        } else {
+            m_docsAction =
+                new OpenURLAction("knime_docs", "KNIME documentation", null, "https://docs.knime.com", false);
+        }
+        register(m_docsAction);
 
-        m_helpSearchAction = ActionFactory.HELP_SEARCH.create(window);
-        register(m_helpSearchAction);
+        if (CustomizedContactSupportAction.getInstance().isPresent()) {
+            CustomizedContactSupportAction custom = CustomizedContactSupportAction.getInstance().get();
+            m_contactSupportAction = new OpenURLAction("contact_support", custom.getHelpActionLabel(), null,
+                custom.getHelpContact().toString(), custom.isMailTo());
+            register(m_contactSupportAction);
+        }
 
         m_introAction = new IntroPageAction();
         register(m_introAction);
@@ -365,9 +383,14 @@ public class KNIMEApplicationActionBarAdvisor extends ActionBarAdvisor {
 
         // Help menu
         // helpMenu.add(m_introAction);
-        helpMenu.add(m_helpAction);
-        helpMenu.add(m_helpSearchAction);
+        helpMenu.add(m_cheatSheetsAction);
+        helpMenu.add(m_docsAction);
+        if (m_contactSupportAction != null) {
+            helpMenu.add(m_contactSupportAction);
+        }
+        helpMenu.add(new Separator());
         helpMenu.add(m_introAction);
+        helpMenu.add(new Separator());
         // menuBar.add(new GroupMarker(IWorkbenchActionConstants.MB_ADDITIONS));
         helpMenu.add(m_aboutAction);
 

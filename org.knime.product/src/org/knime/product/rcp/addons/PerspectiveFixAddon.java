@@ -43,50 +43,67 @@
  *  when such Node is propagated with or for interoperation with KNIME.
  * ---------------------------------------------------------------------
  *
- * History
- *   May 21, 2016 (Ferry Abt): created
  */
-package org.knime.product.customizations;
+package org.knime.product.rcp.addons;
 
-import java.util.Collections;
-import java.util.Map;
+import java.util.List;
 
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.framework.ServiceReference;
+import javax.inject.Inject;
+
+import org.eclipse.e4.core.di.annotations.Optional;
+import org.eclipse.e4.core.di.extensions.EventTopic;
+import org.eclipse.e4.ui.model.application.MApplication;
+import org.eclipse.e4.ui.model.application.ui.advanced.MPerspectiveStack;
+import org.eclipse.e4.ui.model.application.ui.basic.MPartSashContainer;
+import org.eclipse.e4.ui.model.application.ui.basic.MTrimmedWindow;
+import org.eclipse.e4.ui.workbench.UIEvents;
+import org.eclipse.e4.ui.workbench.modeling.EModelService;
+import org.osgi.service.event.Event;
 
 /**
- * The Interface for a Customization Service. Do not implement.
+ * Add-on registered as fragment with the application model. Fixes a problem with the state of the perspective, i.e.
+ * there is sometimes an empty superfluous perspective. The reason why it's there is still not known. This add-on fixes
+ * the application model by simply removing that empty, superfluous perspective before shutdown such that it's not saved
+ * and, thus, remains absent on the next start.
  *
- * @author Ferry Abt
- * @noimplement This interface is not intended for implementation
+ * @author Martin Horn, KNIME GmbH, Konstanz, Germany
  */
-public interface ICustomizationService {
-    /**
-     * Returns a map containing the customization information provided by a KNIME Server.
-     *
-     * @return a (possibly empty) map but not <code>null</code>
-     */
-    Map<String, String> getCustomizationInfo();
+public final class PerspectiveFixAddon {
+
+    @Inject
+    private MApplication m_app;
+
+    @Inject
+    private EModelService m_modelService;
 
     /**
-     * Helper method to find a registered service implementation and return the customization info it provides.
+     * Hack to remove an empty, superfluous perspective (which is sometimes present for a still unknown reasons) on
+     * shutdown such that it's not saved.
      *
-     * @return the custom info map if there is a service providing it, otherwise an empty map.
+     * @param event
      */
-    static Map<String, String> findServiceAndGetCustomizationInfo() {
-        BundleContext context = FrameworkUtil.getBundle(ICustomizationService.class).getBundleContext();
-        ServiceReference<?> serviceReference = context.getServiceReference(ICustomizationService.class.getName());
-        if (serviceReference != null) {
-            try {
-                ICustomizationService service = (ICustomizationService)context.getService(serviceReference);
-                if (service != null) {
-                    return service.getCustomizationInfo();
+    @Inject
+    @Optional
+    @SuppressWarnings({"java:S3776", "java:S134"})
+    public void
+        removeEmptyPerspectiveOnShutdown(@EventTopic(UIEvents.UILifeCycle.APP_SHUTDOWN_STARTED) final Event event) {
+        List<MPerspectiveStack> perspectiveStacks = m_modelService.findElements(m_app, null, MPerspectiveStack.class);
+        if (perspectiveStacks != null && perspectiveStacks.size() == 2) {
+            for (MPerspectiveStack stack : perspectiveStacks) {
+                if (stack.getChildren().isEmpty()) {
+                    // if there is an empty second perspective stack
+                    // -> remove it by removing its parent (PartSashContainer) from the parent (TrimmedWindow)
+                    Object parent = stack.getParent();
+                    if (parent instanceof MPartSashContainer) {
+                        Object parentParent = ((MPartSashContainer)parent).getParent();
+                        if (parentParent instanceof MTrimmedWindow) {
+                            ((MTrimmedWindow)parentParent).getChildren().remove(parent);
+                            return;
+                        }
+                    }
                 }
-            } finally {
-                context.ungetService(serviceReference);
             }
         }
-        return Collections.emptyMap();
     }
+
 }

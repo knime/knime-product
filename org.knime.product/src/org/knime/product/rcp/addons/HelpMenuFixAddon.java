@@ -43,67 +43,82 @@
  *  when such Node is propagated with or for interoperation with KNIME.
  * ---------------------------------------------------------------------
  *
+ * History
+ *   May 4, 2021 (hornm): created
  */
-package org.knime.product.rcp;
+package org.knime.product.rcp.addons;
 
-import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
 import org.eclipse.e4.core.di.annotations.Optional;
 import org.eclipse.e4.core.di.extensions.EventTopic;
 import org.eclipse.e4.ui.model.application.MApplication;
-import org.eclipse.e4.ui.model.application.ui.advanced.MPerspectiveStack;
-import org.eclipse.e4.ui.model.application.ui.basic.MPartSashContainer;
-import org.eclipse.e4.ui.model.application.ui.basic.MTrimmedWindow;
+import org.eclipse.e4.ui.model.application.ui.menu.MMenu;
+import org.eclipse.e4.ui.model.application.ui.menu.MMenuElement;
 import org.eclipse.e4.ui.workbench.UIEvents;
-import org.eclipse.e4.ui.workbench.modeling.EModelService;
+import org.knime.core.node.NodeLogger;
 import org.osgi.service.event.Event;
 
 /**
- * Add-on registered as fragment with the application model. Fixes a problem with the state of the perspective, i.e.
- * there is sometimes an empty superfluous perspective. The reason why it's there is still not known. This add-on fixes
- * the application model by simply removing that empty, superfluous perspective before shutdown such that it's not saved
- * and, thus, remains absent on the next start.
+ * Add-on registered as fragment with the application model. It is called once the startup is complete and removes (or
+ * at least hides) all unwanted help-menu entries.
  *
  * @author Martin Horn, KNIME GmbH, Konstanz, Germany
  */
-public final class PerspectiveFixAddon {
+public class HelpMenuFixAddon {
+
+    private static final String ELEMENT_ID_HELP_MENU = "help";
+
+    private static final String ELEMENT_ID_IDE_WINDOW = "IDEWindow";
+
+    private static final Set<String> MENU_ENTRY_IDS_TO_REMOVE = Set.of("helpContents", "helpSearch");
+
+    /* Those entries refuse to be removed, but hiding them works */
+    private static final Set<String> MENU_ENTRY_IDS_TO_HIDE = Set.of("org.eclipse.ui.actions.showKeyAssistHandler",
+        "org.eclipse.ui.cheatsheets.actions.CheatSheetHelpMenuAction", "group.assist", "group.tutorials");
 
     @Inject
     private MApplication m_app;
 
-    @Inject
-    private EModelService m_modelService;
-
     /**
-     * Hack to remove an empty, superfluous perspective (which is sometimes present for a still unknown reasons) on
-     * shutdown such that it's not saved.
+     * Carries out the help-menu entry removal.
      *
      * @param event
      */
     @Inject
     @Optional
-    @SuppressWarnings({"java:S3776", "java:S134"})
-    public void
-        removeEmptyPerspectiveOnShutdown(@EventTopic(UIEvents.UILifeCycle.APP_SHUTDOWN_STARTED) final Event event) {
-        List<MPerspectiveStack> perspectiveStacks = m_modelService.findElements(m_app, null, MPerspectiveStack.class);
-        if (perspectiveStacks != null && perspectiveStacks.size() == 2) {
-            for (MPerspectiveStack stack : perspectiveStacks) {
-                if (stack.getChildren().isEmpty()) {
-                    // if there is an empty second perspective stack
-                    // -> remove it by removing its parent (PartSashContainer) from the parent (TrimmedWindow)
-                    Object parent = stack.getParent();
-                    if (parent instanceof MPartSashContainer) {
-                        Object parentParent = ((MPartSashContainer)parent).getParent();
-                        if (parentParent instanceof MTrimmedWindow) {
-                            ((MTrimmedWindow)parentParent).getChildren().remove(parent);
-                            return;
-                        }
-                    }
-                }
-            }
+    public void removeHelpMenuEntries(@EventTopic(UIEvents.UILifeCycle.APP_STARTUP_COMPLETE) final Event event) {
+        MMenuElement helpMenu = getHelpMenu(m_app);
+        if (!(helpMenu instanceof MMenu)) {
+            NodeLogger.getLogger(HelpMenuFixAddon.class).error("No help menu found");
+            return;
         }
+        removeHelpMenuEntries((MMenu)helpMenu);
+    }
+
+    private static MMenuElement getHelpMenu(final MApplication app) {
+        return app.getChildren().stream()//
+            .filter(w -> ELEMENT_ID_IDE_WINDOW.equals(w.getElementId()))//
+            .findFirst()//
+            .map(w -> w.getMainMenu().getChildren().stream().filter(m -> ELEMENT_ID_HELP_MENU.equals(m.getElementId()))
+                .findFirst().orElse(null))//
+            .orElse(null);
+    }
+
+    private static void removeHelpMenuEntries(final MMenu helpMenu) {
+        helpMenu.getChildren()
+            .removeIf(e -> e.getElementId() != null && MENU_ENTRY_IDS_TO_REMOVE.contains(e.getElementId()));
+
+        Set<MMenuElement> toHide = helpMenu.getChildren().stream()
+            .filter(e -> e.getElementId() != null && MENU_ENTRY_IDS_TO_HIDE.contains(e.getElementId()))
+            .collect(Collectors.toSet());
+        toHide.forEach(e -> {
+            e.setVisible(false);
+            e.setToBeRendered(false);
+        });
     }
 
 }

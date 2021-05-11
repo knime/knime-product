@@ -44,49 +44,58 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   May 21, 2016 (Ferry Abt): created
+ *   May 10, 2021 (hornm): created
  */
-package org.knime.product.customizations;
+package org.knime.product.rcp;
 
-import java.util.Collections;
-import java.util.Map;
+import java.net.MalformedURLException;
+import java.net.URL;
 
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.framework.ServiceReference;
+import org.eclipse.jface.action.Action;
+import org.knime.core.node.NodeLogger;
+import org.knime.core.util.DesktopUtil;
 
 /**
- * The Interface for a Customization Service. Do not implement.
+ * Action that opens a URL either in the browser or e-mail-application.
  *
- * @author Ferry Abt
- * @noimplement This interface is not intended for implementation
+ * @author Martin Horn, KNIME GmbH, Konstanz, Germany
  */
-public interface ICustomizationService {
-    /**
-     * Returns a map containing the customization information provided by a KNIME Server.
-     *
-     * @return a (possibly empty) map but not <code>null</code>
-     */
-    Map<String, String> getCustomizationInfo();
+final class OpenURLAction extends Action {
 
-    /**
-     * Helper method to find a registered service implementation and return the customization info it provides.
-     *
-     * @return the custom info map if there is a service providing it, otherwise an empty map.
-     */
-    static Map<String, String> findServiceAndGetCustomizationInfo() {
-        BundleContext context = FrameworkUtil.getBundle(ICustomizationService.class).getBundleContext();
-        ServiceReference<?> serviceReference = context.getServiceReference(ICustomizationService.class.getName());
-        if (serviceReference != null) {
-            try {
-                ICustomizationService service = (ICustomizationService)context.getService(serviceReference);
-                if (service != null) {
-                    return service.getCustomizationInfo();
-                }
-            } finally {
-                context.ungetService(serviceReference);
+    private URL m_url;
+
+    private boolean m_isMailTo;
+
+    OpenURLAction(final String id, final String label, final String tooltip, final String url, final boolean isMailTo) {
+        this(id, label, tooltip, getUrl(url), isMailTo);
+    }
+
+    OpenURLAction(final String id, final String label, final String tooltip, final URL url, final boolean isMailTo) {
+        super(label);
+        m_url = url;
+        m_isMailTo = isMailTo;
+        setToolTipText(tooltip);
+        setId(id);
+    }
+
+    private static URL getUrl(final String url) {
+        try {
+            return new URL(url);
+        } catch (MalformedURLException e) {
+            NodeLogger.getLogger(OpenURLAction.class).error("Invalid URL: " + url, e);
+            return null;
+        }
+    }
+
+    @Override
+    public void run() {
+        if (m_url != null) {
+            if (m_isMailTo) {
+                DesktopUtil.mailTo(m_url);
+            } else {
+                DesktopUtil.browse(m_url);
             }
         }
-        return Collections.emptyMap();
     }
+
 }

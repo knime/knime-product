@@ -54,7 +54,10 @@ import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.equinox.internal.p2.ui.sdk.scheduler.AutomaticUpdateMessages;
 import org.eclipse.equinox.internal.p2.ui.sdk.scheduler.AutomaticUpdatePlugin;
 import org.eclipse.equinox.internal.p2.ui.sdk.scheduler.AutomaticUpdateScheduler;
+import org.eclipse.jface.preference.IPreferenceNode;
+import org.eclipse.jface.preference.PreferenceManager;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.application.IWorkbenchConfigurer;
 import org.eclipse.ui.application.IWorkbenchWindowConfigurer;
 import org.eclipse.ui.application.WorkbenchAdvisor;
@@ -160,6 +163,38 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
         // if the Update Site is password protected
         IProxyService.class.getName();
         // showIntroPage();
+
+        // Remove preference pages we don't want to expose to our users
+        PreferenceManager preferenceRoot = PlatformUI.getWorkbench().getPreferenceManager();
+
+        // root preference pages
+        preferenceRoot.remove("org.eclipse.ant.ui.AntPreferencePage");
+        preferenceRoot.remove("org.eclipse.datatools.connectivity.ui.preferences.dataNode");
+        preferenceRoot.remove("org.eclipse.debug.ui.DebugPreferencePage");
+        preferenceRoot.remove("org.eclipse.emf.validation.ui.rootPage");
+        preferenceRoot.remove("org.eclipse.help.ui.browsersPreferencePage");
+        preferenceRoot.remove("org.eclipse.jdt.ui.preferences.JavaBasePreferencePage");
+        preferenceRoot.remove("org.eclipse.pde.ui.MainPreferencePage");
+        preferenceRoot.remove("org.eclipse.team.ui.TeamPreferences");
+        preferenceRoot.remove("org.eclipse.wst.xml.ui.preferences.xml");
+        preferenceRoot.remove("ValidationPreferencePage");
+
+        // Pages below the 'General' preference page
+        IPreferenceNode generalPage = preferenceRoot.find("org.eclipse.ui.preferencePages.Workbench");
+        generalPage.remove("org.eclipse.compare.internal.ComparePreferencePage");
+        generalPage.remove("org.eclipse.search.preferences.SearchPreferencePage");
+        generalPage.remove("org.eclipse.text.quicksearch.PreferencesPage");
+        generalPage.remove("org.eclipse.ui.monitoring.page");
+        generalPage.remove("org.eclipse.ui.preferencePages.ContentTypes");
+        generalPage.remove("org.eclipse.ui.preferencePages.Editors");
+        generalPage.remove("org.eclipse.ui.preferencePages.General.LinkHandlers");
+        generalPage.remove("org.eclipse.ui.preferencePages.Globalization");
+        generalPage.remove("org.eclipse.ui.preferencePages.Perspectives");
+        generalPage.remove("org.eclipse.ui.trace.tracingPage");
+
+        // Pages below General -> Appearance
+        IPreferenceNode views = generalPage.findSubNode("org.eclipse.ui.preferencePages.Views");
+        views.remove("org.eclipse.ui.preferencePages.Decorators");
 
         SWTUtilities.markKNIMEShell();
 

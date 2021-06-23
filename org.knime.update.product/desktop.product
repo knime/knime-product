@@ -798,6 +798,7 @@ propagated with or for interoperation with KNIME.
 
    <features>
       <feature id="org.knime.features.product"/>
+      <feature id="org.knime.features.clfixes"/>
       <feature id="org.eclipse.platform"/>
       <feature id="org.eclipse.gef"/>
       <feature id="org.eclipse.equinox.p2.user.ui"/>

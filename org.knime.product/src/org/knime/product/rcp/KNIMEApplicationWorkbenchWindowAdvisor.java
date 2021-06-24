@@ -47,8 +47,10 @@
  */
 package org.knime.product.rcp;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.IProduct;
@@ -68,8 +70,12 @@ import org.eclipse.ui.application.IActionBarConfigurer;
 import org.eclipse.ui.application.IWorkbenchWindowConfigurer;
 import org.eclipse.ui.application.WorkbenchWindowAdvisor;
 import org.eclipse.ui.internal.WorkbenchWindow;
+import org.eclipse.ui.internal.dialogs.WorkbenchWizardElement;
 import org.eclipse.ui.internal.ide.IDEInternalPreferences;
 import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
+import org.eclipse.ui.internal.wizards.AbstractExtensionWizardRegistry;
+import org.eclipse.ui.wizards.IWizardCategory;
+import org.eclipse.ui.wizards.IWizardDescriptor;
 import org.knime.core.node.KNIMEConstants;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.workflow.NodeTimer;
@@ -173,21 +179,68 @@ public class KNIMEApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvis
 
         menuManager.updateAll(true);
 
-        Collection<String> toRemove =
-            Arrays.asList("org.eclipse.debug.ui.launchActionSet",
-                "org.eclipse.ui.edit.text.actionSet.annotationNavigation",
-                "org.eclipse.ui.edit.text.actionSet.navigation",
-                "org.eclipse.search.searchActionSet");
+        Collection<String> toRemove = Arrays.asList("org.eclipse.debug.ui.launchActionSet",
+            "org.eclipse.ui.edit.text.actionSet.annotationNavigation", "org.eclipse.ui.edit.text.actionSet.navigation",
+            "org.eclipse.search.searchActionSet");
 
         ICoolBarManager toolbarManager = ((WorkbenchWindow)workbenchWindow).getCoolBarManager2();
         Stream.of(toolbarManager.getItems()).filter(item -> toRemove.contains(item.getId()))
             .forEach(item -> toolbarManager.remove(item));
         toolbarManager.update(true);
 
+        removeWizards();
         showIntroPage();
         showStartupMessages();
         checkAnonymousUsageStatistics(workbenchWindow.getShell());
         addGlobalNodeTimerShutdownHook();
+    }
+
+    /**
+     * Removes all wizards that we do not want to expose to our users
+     */
+    @SuppressWarnings("restriction")
+    private static void removeWizards() {
+        AbstractExtensionWizardRegistry wizardRegistry =
+            (AbstractExtensionWizardRegistry)PlatformUI.getWorkbench().getNewWizardRegistry();
+        IWizardCategory[] categories =
+            PlatformUI.getWorkbench().getNewWizardRegistry().getRootCategory().getCategories();
+        List<String> toRemove = List.of(//
+            "org.eclipse.datatools.connectivity", //
+            "org.eclipse.birt.report.designer.ui.wizard.category", //
+            "org.eclipse.datatools.sql", //
+            "org.eclipse.jdt.ui.java", //
+            "org.eclipse.jdt.debug.ui.java", //
+            "org.eclipse.jdt.junit", //
+            "org.eclipse.pde.PDE", //
+            "org.eclipse.pde.userAssistance", //
+            "org.eclipse.ui.Basic", "org.eclipse.wst.xml.examples", //
+            "org.eclipse.wst.XMLCategory", //
+            "org.eclipse.emf.codegen.ui.JETNewWizards", //
+            "org.eclipse.emf.codegen.ecore.ui.mappingWizardCategory", //
+            "org.eclipse.emf.codegen.ecore.ui.wizardCategory");
+
+        for (IWizardDescriptor wizard : getAllWizards(categories)) {
+            if (toRemove.contains(wizard.getCategory().getId())) {
+                WorkbenchWizardElement wizardElement = (WorkbenchWizardElement)wizard;
+                wizardRegistry.removeExtension(wizardElement.getConfigurationElement().getDeclaringExtension(),
+                    new Object[]{wizardElement});
+            }
+        }
+    }
+
+    /**
+     * Creates a list of a wizards in the given categories
+     *
+     * @param categories the categories to scan
+     * @return a list of all the wizards in the given categories
+     */
+    private static IWizardDescriptor[] getAllWizards(final IWizardCategory[] categories) {
+        List<IWizardDescriptor> results = new ArrayList<>();
+        for (IWizardCategory wizardCategory : categories) {
+            results.addAll(Arrays.asList(wizardCategory.getWizards()));
+            results.addAll(Arrays.asList(getAllWizards(wizardCategory.getCategories())));
+        }
+        return results.toArray(new IWizardDescriptor[0]);
     }
 
     private void showStartupMessages() {
@@ -213,11 +266,11 @@ public class KNIMEApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvis
             return;
         }
         String message = "Help us to further improve KNIME Analytics Platform by sending us anonymous usage data. "
-                + "The data collected is used for recommendations of the new built-in Workflow Coach. "
-                + "Click <a href=\"https://www.knime.com/faq#usage_data\">here</a> to find out what is being transmitted. "
-                + "You can also change this setting in the KNIME preferences later.\n\n"
-                + "Do you allow KNIME to collect and send anonymous usage data? "
-                + "This will also enable the Workflow Coach.";
+            + "The data collected is used for recommendations of the new built-in Workflow Coach. "
+            + "Click <a href=\"https://www.knime.com/faq#usage_data\">here</a> to find out what is being transmitted. "
+            + "You can also change this setting in the KNIME preferences later.\n\n"
+            + "Do you allow KNIME to collect and send anonymous usage data? "
+            + "This will also enable the Workflow Coach.";
         boolean allow = LinkMessageDialog.openQuestion(shell, "Help improve KNIME", message);
         pStore.setValue(HeadlessPreferencesConstants.P_ASKED_ABOUT_STATISTICS, true);
         pStore.setValue(HeadlessPreferencesConstants.P_SEND_ANONYMOUS_STATISTICS, allow);
@@ -236,8 +289,10 @@ public class KNIMEApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvis
                 // Don't interrupt regular shutdown!
                 return true;
             }
+
             @Override
-            public void postShutdown(final IWorkbench workbench) { /*nothing to do*/ }
+            public void postShutdown(final IWorkbench workbench) {
+                /*nothing to do*/ }
         });
     }
 

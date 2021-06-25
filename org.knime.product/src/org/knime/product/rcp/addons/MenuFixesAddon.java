@@ -64,13 +64,19 @@ import org.osgi.service.event.Event;
 
 /**
  * Add-on registered as fragment with the application model. It is called once the startup is complete and removes (or
- * at least hides) all unwanted help-menu entries.
+ * at least hides) all unwanted menu entries. That is:
+ * <ul>
+ * <li>the 'Search' entry in the main menu</li>
+ * <li>unwanted entries in the help-menu</li>
+ * </ul>
  *
  * @author Martin Horn, KNIME GmbH, Konstanz, Germany
  */
-public class HelpMenuFixAddon {
+public class MenuFixesAddon {
 
     private static final String ELEMENT_ID_HELP_MENU = "help";
+
+    private static final String ELEMENT_ID_SEARCH_MENU = "org.eclipse.search.menu";
 
     private static final String ELEMENT_ID_IDE_WINDOW = "IDEWindow";
 
@@ -90,20 +96,34 @@ public class HelpMenuFixAddon {
      */
     @Inject
     @Optional
-    public void removeHelpMenuEntries(@EventTopic(UIEvents.UILifeCycle.APP_STARTUP_COMPLETE) final Event event) {
-        MMenuElement helpMenu = getHelpMenu(m_app);
+    public void removeMenuEntries(@EventTopic(UIEvents.UILifeCycle.APP_STARTUP_COMPLETE) final Event event) {
+        fixSearchMenu(m_app);
+        fixHelpMenu(m_app);
+    }
+
+    private static void fixSearchMenu(final MApplication app) {
+        MMenuElement searchMenu = getMainMenuEntry(app, ELEMENT_ID_SEARCH_MENU);
+        if (!(searchMenu instanceof MMenu)) {
+            return;
+        }
+        searchMenu.setVisible(false);
+        searchMenu.setToBeRendered(false);
+    }
+
+    private static void fixHelpMenu(final MApplication app) {
+        MMenuElement helpMenu = getMainMenuEntry(app, ELEMENT_ID_HELP_MENU);
         if (!(helpMenu instanceof MMenu)) {
-            NodeLogger.getLogger(HelpMenuFixAddon.class).error("No help menu found");
+            NodeLogger.getLogger(MenuFixesAddon.class).error("No help menu found");
             return;
         }
         removeHelpMenuEntries((MMenu)helpMenu);
     }
 
-    private static MMenuElement getHelpMenu(final MApplication app) {
+    private static MMenuElement getMainMenuEntry(final MApplication app, final String id) {
         return app.getChildren().stream()//
             .filter(w -> ELEMENT_ID_IDE_WINDOW.equals(w.getElementId()))//
             .findFirst()//
-            .map(w -> w.getMainMenu().getChildren().stream().filter(m -> ELEMENT_ID_HELP_MENU.equals(m.getElementId()))
+            .map(w -> w.getMainMenu().getChildren().stream().filter(m -> id.equals(m.getElementId()))
                 .findFirst().orElse(null))//
             .orElse(null);
     }

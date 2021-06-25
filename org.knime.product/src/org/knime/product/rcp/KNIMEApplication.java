@@ -161,6 +161,11 @@ public class KNIMEApplication implements IApplication {
 
             preventWebUIStartup(themeNode, themeConfigured);
 
+            // Required to make the CEF browser work properly (in particular the so-called 'browser functions' which are
+            // used to call java-functions from js).
+            // With every CEF update we'll need to check whether this is still necessary.
+            System.setProperty("chromium.args", "--disable-web-security");
+
             int returnCode;
             if (m_checkForUpdates && checkForUpdates()) {
                 returnCode = PlatformUI.RETURN_RESTART;

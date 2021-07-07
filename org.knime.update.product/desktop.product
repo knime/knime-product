@@ -28,9 +28,6 @@ All other trademarks are the property of their respective owners.
    </configIni>
 
    <launcherArgs>
-      <programArgsMac>-vm
-../Eclipse/jre/Home/lib/jli/libjli.dylib
-      </programArgsMac>
       <programArgsWin>--launcher.defaultAction
 openFile
       </programArgsWin>

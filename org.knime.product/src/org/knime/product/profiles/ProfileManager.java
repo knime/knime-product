@@ -316,7 +316,7 @@ public class ProfileManager {
 
             // proxies
             HttpHost proxy = ProxySelector.getDefault().select(profileUri).stream()
-                    .filter(p -> p.address() != null)
+                    .filter(p -> p != null && p.address() != null)
                     .findFirst()
                     .map(p -> new HttpHost(((InetSocketAddress) p.address()).getAddress()))
                     .orElse(null);

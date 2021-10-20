@@ -56,7 +56,7 @@ import java.util.Optional;
 import java.util.zip.ZipInputStream;
 
 import org.eclipse.jface.viewers.TreeViewer;
-import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IViewReference;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -101,6 +101,13 @@ class ExampleWorkflowExtractor implements Runnable {
             NodeLogger.getLogger(getClass()).error("Could not extract example workflows: " + ex.getMessage(), ex);
         }
 
+        Display display = PlatformUI.getWorkbench().getDisplay();
+        if (display != null && !display.isDisposed()) { // application got closed while extracting zip?
+            display.asyncExec(() -> refreshExplorerView());
+        }
+    }
+
+    private static void refreshExplorerView() {
         for (IWorkbenchWindow window : PlatformUI.getWorkbench().getWorkbenchWindows()) {
             for (IWorkbenchPage page : window.getPages()) {
                 for (IViewReference ref : page.getViewReferences()) {
@@ -108,15 +115,7 @@ class ExampleWorkflowExtractor implements Runnable {
                         final ExplorerView explorer = (ExplorerView)ref.getView(true);
                         if (explorer != null) {
                             final TreeViewer viewer = explorer.getViewer();
-                            final Control control = viewer.getControl();
-                            if (control != null && control.getDisplay() != null) {
-                                control.getDisplay().asyncExec(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        viewer.refresh();
-                                    }
-                                });
-                            }
+                            viewer.refresh();
                         }
                     }
                 }

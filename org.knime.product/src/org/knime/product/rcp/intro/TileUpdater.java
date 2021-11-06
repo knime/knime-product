@@ -195,7 +195,7 @@ public class TileUpdater extends AbstractUpdater {
 
     private URL buildTileURL(final Map<String, String> customizationInfo) {
         StringBuilder builder = new StringBuilder(WELCOME_PAGE_ENDPOINT);
-        builder.append("?knid=" + KNIMEConstants.getKNIMEInstanceID());
+        builder.append("?knid=" + KNIMEConstants.getKNID());
         builder.append("&version=" + KNIMEConstants.VERSION);
         builder.append("&os=" + Platform.getOS());
         builder.append("&osname=" + KNIMEConstants.getOSVariant());

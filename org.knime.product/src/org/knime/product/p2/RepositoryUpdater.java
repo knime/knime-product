@@ -221,7 +221,7 @@ public class RepositoryUpdater implements ProvisioningListener {
         if (uri.getScheme().startsWith("http") && isKnimeURI(uri)) {
             if (!urlContainsID(uri)) {
                 String knidPath =
-                    (uri.getPath().endsWith("/") ? "" : "/") + "knid=" + KNIMEConstants.getKNIMEInstanceID() + "/";
+                    (uri.getPath().endsWith("/") ? "" : "/") + "knid=" + KNIMEConstants.getKNID() + "/";
                 try {
                     URI newUri =
                         new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri.getPort(), uri.getPath()

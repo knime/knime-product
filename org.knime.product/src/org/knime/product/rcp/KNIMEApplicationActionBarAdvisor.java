@@ -263,7 +263,7 @@ public class KNIMEApplicationActionBarAdvisor extends ActionBarAdvisor {
          * m_introAction.setText("Show &Intro page"); register(m_introAction);
          */
 
-        m_cheatSheetsAction = new OpenURLAction("cheat_cheets", "KNIME cheat sheets", null,
+        m_cheatSheetsAction = new OpenURLAction("cheat_cheets", "KNIME Cheat Sheets", null,
             "https://www.knime.com/learning/cheatsheets", false);
         register(m_cheatSheetsAction);
         if (CustomizedDocAction.getInstance().isPresent()) {
@@ -272,7 +272,7 @@ public class KNIMEApplicationActionBarAdvisor extends ActionBarAdvisor {
                 new OpenURLAction("knime_docs", custom.getDocsActionLabel(), null, custom.getDocsAddress(), false);
         } else {
             m_docsAction =
-                new OpenURLAction("knime_docs", "KNIME documentation", null, "https://docs.knime.com", false);
+                new OpenURLAction("knime_docs", "KNIME Documentation", null, "https://docs.knime.com", false);
         }
         register(m_docsAction);
 

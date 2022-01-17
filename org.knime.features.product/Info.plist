@@ -49,7 +49,7 @@
 		</dict>
 	</array>
 	<key>CFBundleGetInfoString</key>
-	<string>KNIME Analytics Platform 4.4.3</string>
+	<string>KNIME Analytics Platform 4.4.4</string>
 	<key>CFBundleIconFile</key>
 	<string>knime_mac.icns</string>
 	<key>CFBundleIdentifier</key>
@@ -61,11 +61,11 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>4.4.3</string>
+	<string>4.4.4</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>4.4.3</string>
+	<string>4.4.4</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

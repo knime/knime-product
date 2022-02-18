@@ -39,6 +39,15 @@ openFile
 -Dsun.net.client.defaultReadTimeout=0
 -XX:CompileCommand=exclude,javax/swing/text/GlyphView,getBreakSpot
 -Dknime.xml.disable_external_entities=true
+--add-opens=java.base/java.lang=ALL-UNNAMED
+--add-opens=java.base/java.lang.invoke=ALL-UNNAMED
+--add-opens=java.base/java.net=ALL-UNNAMED
+--add-opens=java.base/java.nio=ALL-UNNAMED
+--add-opens=java.base/java.nio.channels=ALL-UNNAMED
+--add-opens=java.base/java.util=ALL-UNNAMED
+--add-opens=java.base/sun.nio.ch=ALL-UNNAMED
+--add-opens=java.security.jgss/sun.security.krb5=ALL-UNNAMED
+--add-opens=java.desktop/javax.swing.plaf.basic=ALL-UNNAMED
          <argsX86>-Xmx512m</argsX86>
          <argsX86_64>-Xmx2048m</argsX86_64>
       </vmArgs>

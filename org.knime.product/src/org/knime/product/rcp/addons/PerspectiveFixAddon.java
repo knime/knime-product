@@ -77,6 +77,16 @@ public final class PerspectiveFixAddon {
     private EModelService m_modelService;
 
     /**
+     * The ID of the "main" perspective stack. This is where perspectives used by the workbench commonly live.
+     */
+    private static final String MAIN_PERSPECTIVE_STACK_ID = "org.eclipse.ui.ide.perspectivestack";
+
+    /**
+     * The ID  of the Web UI perspective of the "KNIME UI" Extension.
+     */
+    private static final String WEBUI_PERSPECTIVE_ID = "org.knime.ui.java.perspective";
+
+    /**
      * Hack to remove an empty, superfluous perspective (which is sometimes present for a still unknown reasons) on
      * shutdown such that it's not saved.
      *
@@ -106,4 +116,21 @@ public final class PerspectiveFixAddon {
         }
     }
 
+    /**
+     * Remove the "Web UI" (AP.NEXT) perspective, s.t. it is not persisted with the application model. This is useful
+     * because otherwise the perspective would still be an available choice even after the "KNIME UI" Extension has been
+     * uninstalled. The perspective is added on each startup by the extension.
+     *
+     * @param event
+     */
+    @Inject
+    @Optional
+    public void removeWebUIPerspective(@EventTopic(UIEvents.UILifeCycle.APP_SHUTDOWN_STARTED) final Event event) {
+        var mainPerspectiveStack =
+            m_modelService.findElements(m_app, MAIN_PERSPECTIVE_STACK_ID, MPerspectiveStack.class).get(0);
+        var webUIPerspective = m_modelService.find(WEBUI_PERSPECTIVE_ID, mainPerspectiveStack);
+        if (webUIPerspective != null) {
+            mainPerspectiveStack.getChildren().remove(webUIPerspective);
+        }
+    }
 }

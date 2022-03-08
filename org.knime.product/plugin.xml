@@ -138,11 +138,6 @@
       </activity>
       <activityPatternBinding
             activityId="forbidden.contributions"
-            isEqualityPattern="true"
-            pattern="org.eclipse.gef/org.eclipse.gef.ui.palette_view">
-      </activityPatternBinding>
-      <activityPatternBinding
-            activityId="forbidden.contributions"
             isEqualityPattern="false"
             pattern="org.eclipse.ui.ide/org.eclipse.ui.views.(BookmarkView|ResourceNavigator|AllMarkersView|ProblemView|TaskList)">
       </activityPatternBinding>

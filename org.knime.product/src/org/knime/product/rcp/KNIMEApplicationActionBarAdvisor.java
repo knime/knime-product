@@ -123,6 +123,8 @@ public class KNIMEApplicationActionBarAdvisor extends ActionBarAdvisor {
 
     private IAction m_docsAction;
 
+    private IAction m_forumAction;
+
     private IAction m_contactSupportAction;
 
     private IAction m_introAction;
@@ -264,7 +266,7 @@ public class KNIMEApplicationActionBarAdvisor extends ActionBarAdvisor {
          */
 
         m_cheatSheetsAction = new OpenURLAction("cheat_cheets", "KNIME Cheat Sheets", null,
-            "https://www.knime.com/learning/cheatsheets", false);
+            "https://www.knime.com/learning/cheatsheets?src=knimeapp", false);
         register(m_cheatSheetsAction);
         if (CustomizedDocAction.getInstance().isPresent()) {
             CustomizedDocAction custom = CustomizedDocAction.getInstance().get();
@@ -272,9 +274,13 @@ public class KNIMEApplicationActionBarAdvisor extends ActionBarAdvisor {
                 new OpenURLAction("knime_docs", custom.getDocsActionLabel(), null, custom.getDocsAddress(), false);
         } else {
             m_docsAction =
-                new OpenURLAction("knime_docs", "KNIME Documentation", null, "https://docs.knime.com", false);
+                new OpenURLAction("knime_docs", "KNIME Documentation", null, "https://docs.knime.com?src=knimeapp", false);
         }
         register(m_docsAction);
+
+        m_forumAction = new OpenURLAction("knime_forum", "Get Help from the Community", null,
+            "https://forum.knime.com?src=knimeapp", false);
+        register(m_forumAction);
 
         if (CustomizedContactSupportAction.getInstance().isPresent()) {
             CustomizedContactSupportAction custom = CustomizedContactSupportAction.getInstance().get();
@@ -385,6 +391,7 @@ public class KNIMEApplicationActionBarAdvisor extends ActionBarAdvisor {
         // helpMenu.add(m_introAction);
         helpMenu.add(m_cheatSheetsAction);
         helpMenu.add(m_docsAction);
+        helpMenu.add(m_forumAction);
         if (m_contactSupportAction != null) {
             helpMenu.add(m_contactSupportAction);
         }

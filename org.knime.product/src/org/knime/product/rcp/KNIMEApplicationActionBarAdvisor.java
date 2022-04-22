@@ -278,7 +278,7 @@ public class KNIMEApplicationActionBarAdvisor extends ActionBarAdvisor {
         }
         register(m_docsAction);
 
-        m_forumAction = new OpenURLAction("knime_forum", "Get Help from the Community", null,
+        m_forumAction = new OpenURLAction("knime_forum", "Get Help from the KNIME Community", null,
             "https://forum.knime.com?src=knimeapp", false);
         register(m_forumAction);
 

@@ -816,7 +816,6 @@ propagated with or for interoperation with KNIME.
       <feature id="org.knime.features.workbench"/>
       <feature id="org.knime.features.ext.svg"/>
       <feature id="org.knime.features.conda.bin"/>
-      <!--dummy comment-->
       <feature id="org.knime.binary.jre"/>
    </features>
 

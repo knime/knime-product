@@ -45,8 +45,14 @@
 package org.knime.product.p2.actions;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.function.Supplier;
 
+import org.apache.commons.io.IOUtils;
 import org.eclipse.core.runtime.ILog;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
@@ -84,29 +90,27 @@ public class ShellExec extends ProvisioningAction {
 
             if (parameters.containsKey("command")) {
                 command = (String)parameters.get("command");
-                logger.log(new Status(IStatus.INFO, bundle.getSymbolicName(),
-                        "ShellExec command: " + command));
+                logInfo("ShellExec command: %s", command);
             }
             if (command == null) {
-                logger.log(new Status(IStatus.ERROR, bundle.getSymbolicName(),
-                        "Command is null!"));
+                logError("Command is null!");
                 return Status.CANCEL_STATUS;
             }
 
             if (parameters.containsKey("directory")) {
                 directory = (String)parameters.get("directory");
-                logger.log(new Status(IStatus.INFO, bundle.getSymbolicName(),
-                        "ShellExec directory: " + directory));
+                logInfo("ShellExec directory : %s", directory);
             }
             if (directory == null) {
-                logger.log(new Status(IStatus.ERROR, bundle.getSymbolicName(),
-                        "ShellExec directory is null!"));
+                logError("ShellExec directory is null!");
                 return Status.CANCEL_STATUS;
             }
 
             File dirFile = new File(directory);
             try {
                 Process p = Runtime.getRuntime().exec(command, null, dirFile);
+                captureOutput("Standard output", p::getInputStream);
+                captureOutput("Standard error", p::getErrorStream);
                 int exitVal = p.waitFor();
                 if (exitVal != 0) {
                     logger.log(new Status(IStatus.ERROR, bundle
@@ -123,7 +127,44 @@ public class ShellExec extends ProvisioningAction {
         return Status.OK_STATUS;
     }
 
-    private boolean verifyOS(final String os) {
+    private static void captureOutput(final String outputType, final Supplier<InputStream> streamSupplier) {
+        new Thread(() -> logIfNotBlank(outputType, consumeStream(streamSupplier))).start();
+    }
+
+    private static void logIfNotBlank(final String outputType, final String output) {
+        if (!output.isBlank()) {
+            logInfo("%s: %s", outputType, output);
+        }
+    }
+
+    private static void logInfo(final String format, final Object ... args) {
+        log(IStatus.INFO, format, args);
+    }
+
+    private static void logError(final String format, final Object ... args) {
+        log(IStatus.ERROR, format, args);
+    }
+
+    private static void logError(final Throwable cause, final String format, final Object...args) {
+        logger.log(new Status(IStatus.ERROR, bundle.getSymbolicName(), String.format(format, args), cause));
+    }
+
+    private static void log(final int statusType, final String format, final Object ... args) {
+        logger.log(new Status(statusType, bundle.getSymbolicName(), String.format(format, args)));
+    }
+
+    private static String consumeStream(final Supplier<InputStream> streamSupplier) {
+        try (var stream = streamSupplier.get()) {
+            var writer = new StringWriter();
+            IOUtils.copy(stream, writer, StandardCharsets.UTF_8);
+            return writer.toString();
+        } catch (IOException ex) {
+            logError(ex, "Failed to consume input stream");
+            throw new IllegalStateException(ex);
+        }
+    }
+
+    private static boolean verifyOS(final String os) {
         return (os == null) || Platform.getOS().equals(os);
     }
 

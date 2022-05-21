@@ -138,10 +138,10 @@ import org.xml.sax.SAXException;
 public class IntroPage implements LocationListener {
 
     static final boolean MOCK_INTRO_PAGE = Boolean.getBoolean("knime.intro.mock");
+
     static final boolean DEBUG = EclipseUtil.isRunInDebug();
 
     private static final NodeLogger LOGGER = NodeLogger.getLogger(IntroPage.class);
-    private static final String BROWSER_ID = "org.knime.intro.page";
 
     /**
      * Singleton instance.
@@ -149,10 +149,15 @@ public class IntroPage implements LocationListener {
     public static final IntroPage INSTANCE = new IntroPage();
 
     private boolean m_freshWorkspace;
+
     private XPathFactory m_xpathFactory;
+
     private DocumentBuilderFactory m_parserFactory;
+
     private TransformerFactory m_transformerFactory;
+
     private File m_introFile;
+
     private final ReentrantLock m_lock;
 
     private final IEclipsePreferences m_prefs =
@@ -261,7 +266,13 @@ public class IntroPage implements LocationListener {
     public void show() {
         if (m_introFile != null) {
             try {
-                IWebBrowser browser = PlatformUI.getWorkbench().getBrowserSupport().createBrowser(BROWSER_ID);
+                // NB we set the AS_EDITOR style and the org.eclipse.help.ui
+                // browser id here, to force the welcome page to open in the
+                // internal browser. Otherwise it would default to the external
+                // browser in eclipse 22-03
+                int style = 1 << 5; // AS_EDITOR, see IWorkbenchBrowserSupport
+                IWebBrowser browser = PlatformUI.getWorkbench().getBrowserSupport().createBrowser(style,
+                    "org.eclipse.help.ui", null, null);
                 if (browser instanceof SystemBrowserInstance) {
                     showMissingBrowserWarning();
                 } else {
@@ -481,7 +492,7 @@ public class IntroPage implements LocationListener {
         try {
             mountSettingsList = MountSettings.loadSortedMountSettingsFromPreferences();
         } catch (BackingStoreException e) {
-            LOGGER.error(e.getMessage(),e);
+            LOGGER.error(e.getMessage(), e);
         }
 
         Set<String> idSet = new LinkedHashSet<>();

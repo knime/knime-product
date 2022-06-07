@@ -294,11 +294,11 @@ public class KNIMEApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvis
             return;
         }
         var sessionType = System.getenv("XDG_SESSION_TYPE");
-        if (Platform.OS_LINUX.equals(Platform.getOS()) && !Objects.equals(sessionType, "wayland")) {
+        if (Platform.OS_LINUX.equals(Platform.getOS()) && Objects.equals(sessionType, "wayland")) {
             var message = "We have detected that your system is running Wayland, which is known to cause issues with "
                 + "KNIME Analytics Platform. You may encounter empty dialogs and other weird behavior. For a "
                 + "smoother experience, you should consider to start KNIME Analytics Platform with Xorg. "
-                + "<a href=\"https://www.knime.com/faq#q40\">Read more</a>";
+                + "<a href=\"https://www.knime.com/faq#q41\">Read more</a>";
             var dialog = new LinkMessageDialog(shell, //
                 "KNIME Analytics Platform on Wayland", // Dialog title
                 null, // image

@@ -42,6 +42,7 @@ openFile
       <vmArgsMac>-XstartOnFirstThread
 -Xdock:icon=../Resources/knime_mac.icns
 -Dorg.eclipse.swt.internal.carbon.smallFonts
+-Dchromium.external_message_pump=true
       </vmArgsMac>
       <vmArgsWin>-Dorg.eclipse.swt.browser.IEVersion=11001
 -Dsun.awt.noerasebackground=true

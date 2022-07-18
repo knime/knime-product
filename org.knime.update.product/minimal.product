@@ -20,7 +20,6 @@ openFile
 -Dsun.java2d.d3d=false
 -Dosgi.classloader.lock=classname
 -XX:+UnlockDiagnosticVMOptions
--XX:+UseG1GC
 -Dsun.net.client.defaultReadTimeout=0
 -Dknime.xml.disable_external_entities=true
 --add-opens=java.base/java.lang=ALL-UNNAMED

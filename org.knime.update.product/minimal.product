@@ -37,6 +37,7 @@ openFile
          <argsX86_64>-Xmx2048m</argsX86_64>
       </vmArgs>
       <vmArgsLin>-Dorg.eclipse.swt.internal.gtk.disablePrinting
+-Dchromium.multi_threaded_message_loop=true
       </vmArgsLin>
       <vmArgsMac>-XstartOnFirstThread
 -Xdock:icon=../Resources/knime_mac.icns

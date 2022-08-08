@@ -230,6 +230,10 @@ public class KNIMESplashHandler extends BasicSplashHandler {
     }
 
     private List<IConfigurationElement> readSplashExtensions() {
+        // workaround for AP-15743 (extension icons on Mac distorted), this 'if' implements the workaround (AP-19356)
+        if (Platform.OS_MACOSX.equals(Platform.getOS())) {
+            return Collections.emptyList();
+        }
         // Get all splash handler extensions
         IExtension[] extensions =
                 Platform.getExtensionRegistry().getExtensionPoint(SPLASH_EXTENSION_ID).getExtensions();

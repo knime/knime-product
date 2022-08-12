@@ -49,6 +49,7 @@ import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
 import org.knime.core.node.workflow.BatchExecutor;
 import org.knime.core.node.workflow.NodeTimer;
+import org.knime.core.util.IEarlyStartup;
 import org.osgi.framework.Bundle;
 
 /**
@@ -62,6 +63,8 @@ public class KNIMEBatchApplication implements IApplication {
      */
     @Override
     public Object start(final IApplicationContext context) throws Exception {
+        IEarlyStartup.executeEarlyStartup(true);
+
         // unless the user specified this property, we set it to true here
         // (true means no icons etc will be loaded, if it is false, the
         // loading of the repository manager is likely to print many errors

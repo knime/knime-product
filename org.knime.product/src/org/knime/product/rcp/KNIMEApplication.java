@@ -66,6 +66,7 @@ import org.knime.core.node.KNIMEConstants;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.util.ViewUtils;
 import org.knime.core.util.GUIDeadlockDetector;
+import org.knime.core.util.IEarlyStartup;
 import org.knime.core.util.MutableBoolean;
 import org.knime.product.ProductPlugin;
 import org.knime.product.p2.RepositoryUpdater;
@@ -114,6 +115,8 @@ public class KNIMEApplication implements IApplication {
      */
     @Override
     public Object start(final IApplicationContext appContext) throws Exception {
+        IEarlyStartup.executeEarlyStartup(true);
+
         Display display = createDisplay();
 
         try {

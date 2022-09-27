@@ -50,7 +50,14 @@ import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
 import org.eclipse.core.runtime.ILog;
@@ -109,26 +116,64 @@ public class ShellExec extends ProvisioningAction {
             File dirFile = new File(directory);
             try {
                 Process p = Runtime.getRuntime().exec(command, null, dirFile);
-                captureOutput("Standard output", p::getInputStream);
-                captureOutput("Standard error", p::getErrorStream);
+                var stdOut = captureOutput(p::getInputStream);
+                var stdErr = captureOutput(p::getErrorStream);
                 int exitVal = p.waitFor();
+                logIfNotBlank("Standard output", getOutput(stdOut).orElse(""));
                 if (exitVal != 0) {
-                    logger.log(new Status(IStatus.ERROR, bundle
-                            .getSymbolicName(),
-                            "ShellExec command exited non-zero exit value"));
-                    return Status.CANCEL_STATUS;
+                    var shellOutput = getOutput(stdErr)//
+                            .map(ShellExec::addLongPathHintIfNecessary);
+                    var error = "ShellExec command exited non-zero exit value:\n"
+                            + shellOutput.orElse("Could not retrieve standard error.");
+                    return error(error);
+                } else {
+                    logIfNotBlank("Standard error", getOutput(stdErr).orElse(""));
                 }
             } catch (Exception e) {
-                logger.log(new Status(IStatus.ERROR, bundle.getSymbolicName(),
-                        "Exception occured", e));
-                return Status.CANCEL_STATUS;
+                return error("An exception occurred while executing the ShellExec command.", e);
             }
         }
         return Status.OK_STATUS;
     }
 
-    private static void captureOutput(final String outputType, final Supplier<InputStream> streamSupplier) {
-        new Thread(() -> logIfNotBlank(outputType, consumeStream(streamSupplier))).start();
+    // DEVOPS-1438: Special handling for the installation of Python environments which may fail on Windows
+    // if long paths are not enabled
+    private static final Pattern WINDOWS_LONG_PATHS = Pattern.compile("windows long path", Pattern.CASE_INSENSITIVE);
+
+    private static String addLongPathHintIfNecessary(final String stdError) {
+        var matcher = WINDOWS_LONG_PATHS.matcher(stdError);
+        if (matcher.find()) {
+            return "\nERROR: The installation likely failed because Windows long path support is not enabled. "
+                    + "Please see '"
+                    + "https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry"
+                    + "' for instructions on how to enable long path support.\n\n"
+                    + stdError;
+        } else {
+            return stdError;
+        }
+    }
+
+    private static Status error(final String message) {
+        return new Status(IStatus.ERROR, bundle.getSymbolicName(), message);
+    }
+
+    private static Status error(final String message, final Throwable throwable) {
+        return new Status(IStatus.ERROR, bundle.getSymbolicName(), message, throwable);
+    }
+
+    private static Optional<String> getOutput(final Future<String> outputFuture) {
+        try {
+            return Optional.of(outputFuture.get(1, TimeUnit.SECONDS));
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            return Optional.empty();
+        }
+    }
+
+    private static Future<String> captureOutput(final Supplier<InputStream> streamSupplier) {
+        final var executor = Executors.newSingleThreadExecutor();
+        var output = executor.submit(() -> consumeStream(streamSupplier));
+        executor.shutdown();
+        return output;
     }
 
     private static void logIfNotBlank(final String outputType, final String output) {

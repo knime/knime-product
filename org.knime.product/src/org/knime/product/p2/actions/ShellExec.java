@@ -140,9 +140,12 @@ public class ShellExec extends ProvisioningAction {
     // if long paths are not enabled
     private static final Pattern WINDOWS_LONG_PATHS = Pattern.compile("windows long path", Pattern.CASE_INSENSITIVE);
 
+    private static final String NO_SUCH_FILE_ERROR =
+        "Could not install packages due to an OSError: [Errno 2] No such file or directory:";
+
     private static String addLongPathHintIfNecessary(final String stdError) {
         var matcher = WINDOWS_LONG_PATHS.matcher(stdError);
-        if (matcher.find()) {
+        if (matcher.find() || stdError.contains(NO_SUCH_FILE_ERROR)) {
             return "\nERROR: The installation likely failed because Windows long path support is not enabled. "
                     + "Please see '"
                     + "https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry"

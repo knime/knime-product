@@ -16,6 +16,9 @@
       <programArgsWin>--launcher.defaultAction
 openFile
       </programArgsWin>
+      <programArgsLin>--launcher.library
+plugins/com.equo.chromium.cef.gtk.linux.x86_64_95.0.6/chromium-4638/
+      </programArgsLin>
       <vmArgs>-server
 -Dsun.java2d.d3d=false
 -Dosgi.classloader.lock=classname

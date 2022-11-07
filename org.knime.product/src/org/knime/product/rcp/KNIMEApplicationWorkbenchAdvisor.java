@@ -51,9 +51,11 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.preferences.DefaultScope;
+import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.internal.p2.ui.sdk.scheduler.AutomaticUpdateMessages;
 import org.eclipse.equinox.internal.p2.ui.sdk.scheduler.AutomaticUpdatePlugin;
 import org.eclipse.equinox.internal.p2.ui.sdk.scheduler.AutomaticUpdateScheduler;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceNode;
 import org.eclipse.jface.preference.PreferenceManager;
 import org.eclipse.swt.widgets.Display;
@@ -62,6 +64,7 @@ import org.eclipse.ui.application.IWorkbenchConfigurer;
 import org.eclipse.ui.application.IWorkbenchWindowConfigurer;
 import org.eclipse.ui.application.WorkbenchAdvisor;
 import org.eclipse.ui.application.WorkbenchWindowAdvisor;
+import org.eclipse.ui.internal.Workbench;
 import org.knime.core.node.KNIMEConstants;
 import org.knime.core.ui.util.SWTUtilities;
 import org.knime.core.util.EclipseUtil;
@@ -81,18 +84,21 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
 
     private final KNIMEOpenDocumentEventProcessor m_openDocProcessor;
     private final KNIMEOpenUrlEventProcessor m_openUrlProcessor;
+    private final IniChangedChecker m_iniChangedChecker;
 
     /**
      * Simple constructor to store the {@code KNIMEOpenDocumentEventProcessor}
      *
      * @param openDocProcessor the {@link KNIMEOpenDocumentEventProcessor} handling the opening of KNIME files
      * @param openUrlProcessor the {@link KNIMEOpenUrlEventProcessor} handling the opening of knime:// URLs
+     * @param iniChangedChecker the {@link IniChangedChecker} handling the checking of changes to knime.ini
      *
      */
     public KNIMEApplicationWorkbenchAdvisor(final KNIMEOpenDocumentEventProcessor openDocProcessor,
-        final KNIMEOpenUrlEventProcessor openUrlProcessor) {
+        final KNIMEOpenUrlEventProcessor openUrlProcessor, final IniChangedChecker iniChangedChecker) {
         m_openDocProcessor = openDocProcessor;
         m_openUrlProcessor = openUrlProcessor;
+        m_iniChangedChecker = iniChangedChecker;
     }
 
     /**
@@ -140,6 +146,24 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
             }
             changeDefaultPreferences();
         }
+    }
+
+    @Override
+    public boolean preShutdown() {
+        super.preShutdown();
+        // if run from SDK, then Workbench does not set 'PROP_EXIT_CODE' since there is no command_line
+        m_iniChangedChecker.digestIni();
+
+        // only show dialog when restart/reload and not shutdown requested...
+        final var ec = System.getProperty(Workbench.PROP_EXIT_CODE);
+        if (m_iniChangedChecker.iniDidChange()
+                && (IApplication.EXIT_RELAUNCH.toString().equals(ec)
+                        || IApplication.EXIT_RESTART.toString().equals(ec))) {
+            MessageDialog.openInformation(null, "Manual restart required",
+                 "KNIME Analytics Platform will be shut down completely to load updates to the program configuration. "
+                 + "Manually reopen the application to complete the restart.");
+        }
+        return true;
     }
 
     /**

@@ -115,9 +115,9 @@ public class KNIMEApplicationActionBarAdvisor extends ActionBarAdvisor {
 
     private IAction m_print;
 
-    // private IWorkbenchAction m_introAction;
-
     private IWorkbenchAction m_aboutAction;
+
+    private IAction m_gettingStartedAction;
 
     private IAction m_cheatSheetsAction;
 
@@ -265,6 +265,9 @@ public class KNIMEApplicationActionBarAdvisor extends ActionBarAdvisor {
          * m_introAction.setText("Show &Intro page"); register(m_introAction);
          */
 
+        m_gettingStartedAction = new OpenURLAction("getting_started", "KNIME Getting Started Guide", null,
+            "https://www.knime.com/getting-started-guide?src=knimeapp", false);
+
         m_cheatSheetsAction = new OpenURLAction("cheat_cheets", "KNIME Cheat Sheets", null,
             "https://www.knime.com/learning/cheatsheets?src=knimeapp", false);
         register(m_cheatSheetsAction);
@@ -388,7 +391,7 @@ public class KNIMEApplicationActionBarAdvisor extends ActionBarAdvisor {
         viewMenu.add(m_resetPerspective);
 
         // Help menu
-        // helpMenu.add(m_introAction);
+        helpMenu.add(m_gettingStartedAction);
         helpMenu.add(m_cheatSheetsAction);
         helpMenu.add(m_docsAction);
         helpMenu.add(m_forumAction);

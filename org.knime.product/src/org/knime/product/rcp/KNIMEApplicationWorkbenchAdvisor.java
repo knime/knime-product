@@ -160,7 +160,8 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
                 && (IApplication.EXIT_RELAUNCH.toString().equals(ec)
                         || IApplication.EXIT_RESTART.toString().equals(ec))) {
             MessageDialog.openInformation(null, "Manual restart required",
-                 "KNIME Analytics Platform has to be restarted manually due to an update.");
+                 "KNIME Analytics Platform will be shut down completely to load updates to the program configuration. "
+                 + "Manually reopen the application to complete the restart.");
         }
         return true;
     }

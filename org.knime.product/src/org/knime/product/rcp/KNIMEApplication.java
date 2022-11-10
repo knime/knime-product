@@ -113,11 +113,6 @@ public class KNIMEApplication implements IApplication {
     private static final Integer EXIT_RELAUNCH = Integer.valueOf(24);
 
     /**
-     * Feature flag for testing ini change detection.
-     */
-    private static final String FEATURE_ENABLED = "knime.detect_ini_changed";
-
-    /**
      * {@inheritDoc}
      */
     @Override
@@ -176,8 +171,8 @@ public class KNIMEApplication implements IApplication {
             // With every CEF update we'll need to check whether this is still necessary.
             System.setProperty("chromium.args", "--disable-web-security");
 
-            final var iniChangedChecker = new IniChangedChecker(
-                !EclipseUtil.isRunFromSDK() && Boolean.getBoolean(FEATURE_ENABLED) ? getIniPath() : null).digestIni();
+            final var iniChangedChecker = new IniChangedChecker(!EclipseUtil.isRunFromSDK() ? getIniPath() : null)
+                    .digestIni();
 
             int returnCode;
             if (m_checkForUpdates && checkForUpdates()) {

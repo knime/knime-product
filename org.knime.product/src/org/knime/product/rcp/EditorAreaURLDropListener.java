@@ -48,14 +48,13 @@
  */
 package org.knime.product.rcp;
 
-import static org.knime.workbench.editor2.editparts.policy.NewWorkflowContainerEditPolicy.downloadAndOpenRepoObject;
-
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DropTargetAdapter;
 import org.eclipse.swt.dnd.DropTargetEvent;
 import org.eclipse.swt.dnd.URLTransfer;
-import org.knime.workbench.core.imports.RepoObjectImport;
+import org.eclipse.swt.widgets.Display;
 import org.knime.workbench.core.imports.URIImporterUtil;
+import org.knime.workbench.editor2.editparts.policy.NewWorkflowContainerEditPolicy;
 
 /**
  * Drop target listener that listens for URLs (from the hub) being dropped onto the empty editor area. The
@@ -79,17 +78,18 @@ class EditorAreaURLDropListener extends DropTargetAdapter {
     @Override
     public void drop(final DropTargetEvent event) {
         if (event.data instanceof String) {
-            RepoObjectImport repoImport = URIImporterUtil.getRepoObjectImportFromURI((String)event.data).orElse(null);
-            if (repoImport != null) {
-                downloadAndOpenRepoObject(repoImport);
-                return;
-            }
+            // AP-19733: do this asynchronously because `getRepoObjectImportFromURI` may open a browser window for
+            //           authentication, creating a deadlock if the browser is still blocked here
+
+            // can't know whether or not the import succeeds, let's hope for the best and report success
+            Display.getDefault().asyncExec(() -> URIImporterUtil.getRepoObjectImportFromURI((String)event.data)
+                        .ifPresent(NewWorkflowContainerEditPolicy::downloadAndOpenRepoObject));
+        } else {
+            event.detail = DND.DROP_NONE;
         }
-        event.detail = DND.DROP_NONE;
     }
 
     private static boolean dropTargetIsValid(final DropTargetEvent event) {
         return URLTransfer.getInstance().isSupportedType(event.currentDataType);
     }
-
 }

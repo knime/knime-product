@@ -86,6 +86,8 @@ public class KNIMEApplication implements IApplication {
 
     private static final String KNIME_THEME_ID = "org.knime.product.theme.knime";
 
+    private static final String KNIME_WEB_UI_THEME_ID = "org.knime.ui.java.theme";
+
     private static final String JUSTUPDATED = "justUpdated";
 
     private static final String PERSPECTIVE_SYS_PROP = "perspective";
@@ -229,9 +231,12 @@ public class KNIMEApplication implements IApplication {
     private static void preventWebUIStartup(final IEclipsePreferences themeNode, final String themeConfigured) {
         // if the 'perspective' system property is explicitly set to the web ui perspective, don't change it
         // (useful to purposely start with the Web UI, e.g., for testing)
-        if (!"org.knime.ui.java.perspective".equals(System.getProperty(PERSPECTIVE_SYS_PROP))) {
+        if ("org.knime.ui.java.perspective".equals(System.getProperty(PERSPECTIVE_SYS_PROP))) {
+            // make sure to set the Web UI theme if started with the Web UI
+            themeNode.put(THEME_ID_PREFERENCE_KEY, KNIME_WEB_UI_THEME_ID);
+        } else {
             // make sure that we don't start with the Web UI theme
-            if (themeConfigured != null && themeConfigured.equals("org.knime.ui.java.theme")) {
+            if (themeConfigured != null && themeConfigured.equals(KNIME_WEB_UI_THEME_ID)) {
                 themeNode.put(THEME_ID_PREFERENCE_KEY, KNIME_THEME_ID);
             }
 

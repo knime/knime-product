@@ -3,6 +3,5 @@
   <fragments xsi:type="fragment:StringModelFragment" xmi:id="_3wyCAGY5EeuGxZ6-vP0E7Q" featurename="addons" parentElementId="xpath:/">
     <elements xsi:type="application:Addon" xmi:id="_5A60MGY5EeuGxZ6-vP0E7Q" elementId="org.knime.product.addon.0" contributionURI="bundleclass://org.knime.product/org.knime.product.rcp.addons.PerspectiveFixAddon"/>
     <elements xsi:type="application:Addon" xmi:id="_CL2kQKy7EeuqxJlmcdfSOw" elementId="org.knime.product.addon.1" contributionURI="bundleclass://org.knime.product/org.knime.product.rcp.addons.MenuFixesAddon"/>
-    <elements xsi:type="application:Addon" xmi:id="_T2WhkJoEEeye6ebXnqrN5Q" elementId="org.knime.product.addon.2" contributionURI="bundleclass://org.knime.product/org.knime.product.rcp.addons.ToolbarFixAddon"/>
   </fragments>
 </fragment:ModelFragments>

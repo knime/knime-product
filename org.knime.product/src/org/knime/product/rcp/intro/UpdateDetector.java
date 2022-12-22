@@ -68,9 +68,16 @@ import org.knime.core.eclipseUtil.UpdateChecker.UpdateInfo;
  *
  * @author Christian Albrecht, KNIME GmbH, Konstanz, Germany
  */
-final class UpdateDetector {
+public final class UpdateDetector {
 
-    static final List<UpdateInfo> checkForNewRelease() throws IOException, URISyntaxException {
+    /**
+     * Check for new releases
+     *
+     * @return List of update infos on new releases
+     * @throws IOException
+     * @throws URISyntaxException
+     */
+    public static final List<UpdateInfo> checkForNewRelease() throws IOException, URISyntaxException {
         final ProvisioningUI provUI = ProvisioningUI.getDefaultUI();
         RepositoryTracker tracker = provUI.getRepositoryTracker();
         if (tracker == null) {
@@ -91,7 +98,14 @@ final class UpdateDetector {
         return updateList;
     }
 
-    static List<String> checkForBugfixes() throws IOException, URISyntaxException {
+    /**
+     * Check for new bugfix updates
+     *
+     * @return List of bugfix updates
+     * @throws IOException
+     * @throws URISyntaxException
+     */
+    public static List<String> checkForBugfixes() throws IOException, URISyntaxException {
         final ProvisioningUI provUI = ProvisioningUI.getDefaultUI();
         RepositoryTracker tracker = provUI.getRepositoryTracker();
         if (tracker == null) {

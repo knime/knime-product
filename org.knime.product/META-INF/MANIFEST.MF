@@ -9,11 +9,12 @@ Bundle-Activator: org.knime.product.ProductPlugin
 Bundle-Vendor: KNIME AG, Zurich, Switzerland
 Bundle-Localization: plugin
 Export-Package: org.knime.product,
-  org.knime.product.customizations,
-  org.knime.product.headless,
-  org.knime.product.p2,
-  org.knime.product.profiles,
-  org.knime.product.rcp
+ org.knime.product.customizations,
+ org.knime.product.headless,
+ org.knime.product.p2,
+ org.knime.product.profiles,
+ org.knime.product.rcp,
+ org.knime.product.rcp.intro
 Require-Bundle: org.eclipse.ui;bundle-version="[3.6.1,4.0.0)",
  org.eclipse.core.runtime;bundle-version="[3.6.0,4.0.0)",
  org.eclipse.core.resources;bundle-version="[3.6.0,4.0.0)",

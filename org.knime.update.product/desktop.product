@@ -51,8 +51,7 @@ plugins/com.equo.chromium.cef.gtk.linux.x86_64_95.0.6/chromium-4638/
 --add-opens=java.base/sun.nio=ALL-UNNAMED
 --add-opens=java.desktop/javax.swing.plaf.basic=ALL-UNNAMED
 --add-opens=java.base/sun.net.www.protocol.http=ALL-UNNAMED
-         <argsX86>-Xmx512m</argsX86>
-         <argsX86_64>-Xmx2048m</argsX86_64>
+-Xmx2048m
       </vmArgs>
       <vmArgsLin>-Dorg.eclipse.swt.internal.gtk.disablePrinting
 -Dchromium.multi_threaded_message_loop=true

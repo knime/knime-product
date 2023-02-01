@@ -163,7 +163,8 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
                  "KNIME Analytics Platform will be shut down completely to load updates to the program configuration. "
                  + "Manually reopen the application to complete the restart.");
         }
-        return true;
+
+        return PreShutdown.preShutdown();
     }
 
     /**

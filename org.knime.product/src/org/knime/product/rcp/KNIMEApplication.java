@@ -158,15 +158,7 @@ public class KNIMEApplication implements IApplication {
             RepositoryUpdater.INSTANCE.addDefaultRepositories();
             RepositoryUpdater.INSTANCE.updateArtifactRepositoryURLs();
 
-            // Set the theme to the KNIME theme if no theme or the dark theme is configured
-            // The dark theme is unusable and we do not allow starting KNIME with the dark theme
-            final IEclipsePreferences themeNode = InstanceScope.INSTANCE.getNode(ThemeEngine.THEME_PLUGIN_ID);
-            final String themeConfigured = themeNode.get(THEME_ID_PREFERENCE_KEY, null);
-            if (themeConfigured == null || themeConfigured.equals(ThemeEngine.E4_DARK_THEME_ID)) {
-                themeNode.put(THEME_ID_PREFERENCE_KEY, KNIME_THEME_ID);
-            }
-
-            preventWebUIStartup(themeNode, themeConfigured);
+            updateTheme();
 
             // Required to make the CEF browser work properly (in particular the so-called 'browser functions' which are
             // used to call java-functions from js).
@@ -228,21 +220,34 @@ public class KNIMEApplication implements IApplication {
     /*
      * Prevents the Web UI from being started. Can be removed once the AP is allowed to be started with the new Web UI.
      */
-    private static void preventWebUIStartup(final IEclipsePreferences themeNode, final String themeConfigured) {
-        // if the 'perspective' system property is explicitly set to the web ui perspective, don't change it
-        // (useful to purposely start with the Web UI, e.g., for testing)
-        if ("org.knime.ui.java.perspective".equals(System.getProperty(PERSPECTIVE_SYS_PROP))) {
-            // make sure to set the Web UI theme if started with the Web UI
-            themeNode.put(THEME_ID_PREFERENCE_KEY, KNIME_WEB_UI_THEME_ID);
-        } else {
-            // make sure that we don't start with the Web UI theme
-            if (themeConfigured != null && themeConfigured.equals(KNIME_WEB_UI_THEME_ID)) {
-                themeNode.put(THEME_ID_PREFERENCE_KEY, KNIME_THEME_ID);
-            }
-
-            // make sure to start with the classic perspective (and not the Web UI perspective)
-            System.setProperty(PERSPECTIVE_SYS_PROP, "org.knime.workbench.ui.ModellerPerspective");
+    private static void updateTheme() {
+        // Set the theme to the KNIME theme if no theme or the dark theme is configured
+        // The dark theme is unusable and we do not allow starting KNIME with the dark theme
+        final IEclipsePreferences themeNode = InstanceScope.INSTANCE.getNode(ThemeEngine.THEME_PLUGIN_ID);
+        final String themeConfigured = themeNode.get(THEME_ID_PREFERENCE_KEY, null);
+        if (themeConfigured == null || themeConfigured.equals(ThemeEngine.E4_DARK_THEME_ID)) {
+            themeNode.put(THEME_ID_PREFERENCE_KEY, KNIME_THEME_ID);
         }
+
+        if (System.getProperty(PERSPECTIVE_SYS_PROP) != null) {
+            if (isStartedWithWebUI()) {
+                // make sure to set the Web UI theme if started with the Web UI
+                themeNode.put(THEME_ID_PREFERENCE_KEY, KNIME_WEB_UI_THEME_ID);
+            } else if (isStartedWithClassicUI()) {
+                // make sure that we don't start with the Web UI theme
+                if (themeConfigured != null && themeConfigured.equals(KNIME_WEB_UI_THEME_ID)) {
+                    themeNode.put(THEME_ID_PREFERENCE_KEY, KNIME_THEME_ID);
+                }
+            }
+        }
+    }
+
+    static boolean isStartedWithWebUI() {
+        return "org.knime.ui.java.perspective".equals(System.getProperty(PERSPECTIVE_SYS_PROP));
+    }
+
+    private static boolean isStartedWithClassicUI() {
+        return "org.knime.workbench.ui.ModellerPerspective".equals(System.getProperty(PERSPECTIVE_SYS_PROP));
     }
 
     private void parseApplicationArguments(final IApplicationContext context) {

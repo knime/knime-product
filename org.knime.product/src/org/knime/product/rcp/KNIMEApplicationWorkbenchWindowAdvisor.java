@@ -191,7 +191,9 @@ public class KNIMEApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvis
         toolbarManager.update(true);
 
         removeWizards();
-        showIntroPage();
+        if (!KNIMEApplication.isStartedWithWebUI()) {
+            showIntroPage();
+        }
         showStartupMessages();
         checkAnonymousUsageStatistics(workbenchWindow.getShell());
         warnLinuxWaylandUsers(workbenchWindow.getShell());

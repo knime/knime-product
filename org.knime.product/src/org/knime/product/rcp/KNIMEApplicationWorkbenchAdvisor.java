@@ -69,6 +69,7 @@ import org.knime.core.node.KNIMEConstants;
 import org.knime.core.ui.util.SWTUtilities;
 import org.knime.core.util.EclipseUtil;
 import org.knime.product.rcp.intro.IntroPage;
+import org.knime.product.rcp.shutdown.PreShutdown;
 import org.knime.product.rcp.startup.LongStartupHandler;
 import org.osgi.framework.Bundle;
 import org.osgi.service.prefs.Preferences;
@@ -106,7 +107,7 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
      */
     @Override
     public String getInitialWindowPerspectiveId() {
-        return "org.knime.workbench.ui.ModellerPerspective";
+        return "org.knime.ui.java.perspective";
     }
 
     /**

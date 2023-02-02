@@ -6,7 +6,7 @@
          <meta.schema plugin="org.knime.product" id="preShutdown" name="preShutdown"/>
       </appInfo>
       <documentation>
-         This extension point allows you to get notified right before the workben is about to shut down.
+         This extension point allows you to get notified right before the workbenh is about to shut down.
 It&apos;s called immediately before any windows have been closed.
       </documentation>
    </annotation>

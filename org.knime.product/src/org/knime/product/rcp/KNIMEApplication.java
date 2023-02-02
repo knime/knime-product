@@ -92,6 +92,10 @@ public class KNIMEApplication implements IApplication {
 
     private static final String PERSPECTIVE_SYS_PROP = "perspective";
 
+    private static final String WEB_UI_PERSPECTIVE_ID = "org.knime.ui.java.perspective";
+
+    private static final String CLASSIC_PERSPECTIVE_ID = "org.knime.workbench.ui.ModellerPerspective";
+
     private boolean m_checkForUpdates = false;
 
     /**
@@ -243,11 +247,11 @@ public class KNIMEApplication implements IApplication {
     }
 
     static boolean isStartedWithWebUI() {
-        return "org.knime.ui.java.perspective".equals(System.getProperty(PERSPECTIVE_SYS_PROP));
+        return WEB_UI_PERSPECTIVE_ID.equals(System.getProperty(PERSPECTIVE_SYS_PROP));
     }
 
     private static boolean isStartedWithClassicUI() {
-        return "org.knime.workbench.ui.ModellerPerspective".equals(System.getProperty(PERSPECTIVE_SYS_PROP));
+        return CLASSIC_PERSPECTIVE_ID.equals(System.getProperty(PERSPECTIVE_SYS_PROP));
     }
 
     private void parseApplicationArguments(final IApplicationContext context) {

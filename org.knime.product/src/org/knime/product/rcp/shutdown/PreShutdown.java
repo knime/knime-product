@@ -82,7 +82,7 @@ public interface PreShutdown {
      *
      * @noreference This method is not intended to be referenced by clients.
      */
-    public static boolean preShutdown() {
+    static boolean preShutdown() {
         var extPointId = "org.knime.product.preShutdown";
         IExtensionRegistry registry = Platform.getExtensionRegistry();
         IExtensionPoint point = registry.getExtensionPoint(extPointId);

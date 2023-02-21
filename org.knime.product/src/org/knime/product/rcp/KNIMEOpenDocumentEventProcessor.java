@@ -87,7 +87,9 @@ public class KNIMEOpenDocumentEventProcessor implements Listener {
      *
      */
     public void openFiles() {
-        if (m_filesToOpen.isEmpty()) {
+        if (!OpenKnimeUrlAction.isEventHandlingActive() || m_filesToOpen.isEmpty()) {
+            // Nothing to do or Classic UI not active, clear events
+            m_filesToOpen.clear();
             return;
         }
 

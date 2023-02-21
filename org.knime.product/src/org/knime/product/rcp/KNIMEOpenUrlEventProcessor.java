@@ -81,7 +81,9 @@ public class KNIMEOpenUrlEventProcessor implements Listener {
      * If there are URLs to open from an openURL-Event this method triggers the corresponding {@link OpenKnimeUrlAction}s
      */
     public void openUrls() {
-        if (m_urlsToOpen.isEmpty()) {
+        if (!OpenKnimeUrlAction.isEventHandlingActive() || m_urlsToOpen.isEmpty()) {
+            // Nothing to do or Classic UI not active, clear events
+            m_urlsToOpen.clear();
             return;
         }
 

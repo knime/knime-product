@@ -6,7 +6,8 @@ library "knime-pipeline@$BN"
 properties([
     pipelineTriggers([
 		// knime-tp -> knime-core -> knime-base -> knime-svg -> knime-js-core -> knime-workbench
-        upstream("knime-workbench/${env.BRANCH_NAME.replaceAll('/', '%2F')}")
+        upstream("knime-workbench/${env.BRANCH_NAME.replaceAll('/', '%2F')}" +
+            ", knime-core-ui/${env.BRANCH_NAME.replaceAll('/', '%2F')}")
     ]),
     parameters([p2Tools.getP2pruningParameter()]),
     buildDiscarder(logRotator(numToKeepStr: '5')),

@@ -17,7 +17,7 @@
 openFile
       </programArgsWin>
       <programArgsLin>--launcher.library
-plugins/com.equo.chromium.cef.gtk.linux.x86_64_95.0.11/chromium-4638/
+plugins/com.equo.chromium.cef.gtk.linux.x86_64_106.0.2/chromium-5249/
       </programArgsLin>
       <vmArgs>-server
 -Dsun.java2d.d3d=false

@@ -10,16 +10,16 @@
 
 	<groupId>org.knime</groupId>
 	<artifactId>knime-product</artifactId>
-    <version>${revision}${changelist}</version>
+	<version>${revision}${changelist}</version>
 	<packaging>pom</packaging>
 
-    <properties>
-        <revision>5.1.0</revision>
-        <changelist>-SNAPSHOT</changelist>
-        <feature-branch-extension.branchListProperty>git.branch</feature-branch-extension.branchListProperty>
-        <feature-branch-extension.appendArtifactoryProperties>false</feature-branch-extension.appendArtifactoryProperties>
+	<properties>
+		<revision>5.1.0</revision>
+		<changelist>-SNAPSHOT</changelist>
+		<feature-branch-extension.branchListProperty>git.branch</feature-branch-extension.branchListProperty>
+		<feature-branch-extension.appendArtifactoryProperties>false</feature-branch-extension.appendArtifactoryProperties>
 	<knime.sonar-env>Sonarcloud</knime.sonar-env>
-    </properties>
+	</properties>
 
 	<modules>
 		<module>org.knime.startup.macosx</module>
@@ -74,6 +74,21 @@
 			<id>knime.expressions.p2</id>
 			<layout>p2</layout>
 			<url>${knime.expressions.p2}</url>
+		</repository>
+		<repository>
+			<id>knime.ui.p2</id>
+			<layout>p2</layout>
+			<url>${knime.ui.p2}</url>
+		</repository>
+		<repository>
+			<id>knime.gateway.p2</id>
+			<layout>p2</layout>
+			<url>${knime.gateway.p2}</url>
+		</repository>
+		<repository>
+			<id>knime.cef.p2</id>
+			<layout>p2</layout>
+			<url>${knime.cef.p2}</url>
 		</repository>
 	</repositories>
 </project>

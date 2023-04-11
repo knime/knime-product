@@ -48,12 +48,15 @@
  */
 package org.knime.product.rcp;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
+import java.util.Optional;
 
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
@@ -69,7 +72,7 @@ import org.knime.workbench.explorer.view.actions.OpenKnimeUrlAction;
  */
 public class KNIMEOpenDocumentEventProcessor implements Listener {
 
-    private ArrayList<String> m_filesToOpen = new ArrayList<String>(1);
+    private Deque<String> m_filesToOpen = new ArrayDeque<>();
 
     /**
      * {@inheritDoc}
@@ -77,7 +80,7 @@ public class KNIMEOpenDocumentEventProcessor implements Listener {
     @Override
     public void handleEvent(final Event event) {
         if (event.text != null) {
-            m_filesToOpen.add(event.text);
+            m_filesToOpen.addLast(event.text);
         }
     }
 
@@ -93,42 +96,55 @@ public class KNIMEOpenDocumentEventProcessor implements Listener {
             return;
         }
 
-        List<File> archiveFileList = new ArrayList<File>(1);
-        List<String> urlFileList = new ArrayList<String>(1);
-        m_filesToOpen.forEach(file -> {
-            if (KNIMEOpenUrlEventProcessor.isKnimeUrl(file)) {
-                urlFileList.add(file);
-            } else {
-                File fileToOpen = new File(file);
-                if (fileToOpen.exists() && fileToOpen.isFile() && fileToOpen.canRead()) {
-                    if (file.endsWith(".knimeURL")) {
-                        try (BufferedReader reader = new BufferedReader(new FileReader(fileToOpen))) {
-                            String url = reader.readLine();
-                            if (KNIMEOpenUrlEventProcessor.isKnimeUrl(url)) {
-                                urlFileList.add(url);
-                            }
-                        } catch (IOException e) {
-                            // TODO issue warning?
-                        } finally {
-                            fileToOpen.delete();
-                        }
-                    } else {
-                        archiveFileList.add(fileToOpen);
-                    }
+        final List<File> archiveFileList = new ArrayList<>();
+        final List<String> urlFileList = new ArrayList<>();
+        while (!m_filesToOpen.isEmpty()) {
+            final var input = m_filesToOpen.removeFirst();
+            if (KNIMEOpenUrlEventProcessor.isKnimeUrl(input)) {
+                urlFileList.add(input);
+                continue;
+            }
+
+            final var fileToOpen = Path.of(input);
+            if (Files.isReadable(fileToOpen)) {
+                if (input.endsWith(".knimeURL")) {
+                    readAndDelete(fileToOpen).ifPresent(m_filesToOpen::add);
+                } else {
+                    archiveFileList.add(fileToOpen.toFile());
                 }
             }
-        });
-        m_filesToOpen.clear();
+        }
 
         IWorkbenchPage activePage = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
         if (!urlFileList.isEmpty()) {
-            OpenKnimeUrlAction a = new OpenKnimeUrlAction(activePage, urlFileList);
-            a.run();
+            new OpenKnimeUrlAction(activePage, urlFileList).run();
         }
 
         if (!archiveFileList.isEmpty()) {
-            OpenKNIMEArchiveFileAction a = new OpenKNIMEArchiveFileAction(activePage, archiveFileList);
-            a.run();
+            new OpenKNIMEArchiveFileAction(activePage, archiveFileList).run();
         }
+    }
+
+    /**
+     * Reads the first (and presumably only) line of the {@code *.knimeURL} file and returns it if it is a KNIME URL.
+     * The file is deleted afterwards.
+     *
+     * @param fileToOpen
+     * @return
+     */
+    private static Optional<String> readAndDelete(final Path fileToOpen) {
+        try {
+            try (final var reader = Files.newBufferedReader(fileToOpen)) {
+                final String url = reader.readLine();
+                if (KNIMEOpenUrlEventProcessor.isKnimeUrl(url)) {
+                    return Optional.of(url);
+                }
+            } finally {
+                Files.delete(fileToOpen);
+            }
+        }  catch (IOException e) { // NOSONAR
+            // TODO issue warning?
+        }
+        return Optional.empty();
     }
 }

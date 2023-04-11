@@ -48,7 +48,10 @@
  */
 package org.knime.product.rcp;
 
-import java.util.ArrayList;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -56,6 +59,7 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
+import org.knime.core.util.KnimeUrlType;
 import org.knime.workbench.explorer.view.actions.OpenKnimeUrlAction;
 
 /**
@@ -65,7 +69,7 @@ import org.knime.workbench.explorer.view.actions.OpenKnimeUrlAction;
  */
 public class KNIMEOpenUrlEventProcessor implements Listener {
 
-    private ArrayList<String> m_urlsToOpen = new ArrayList<String>(1);
+    private Deque<String> m_urlsToOpen = new ArrayDeque<>();
 
     /**
      * {@inheritDoc}
@@ -73,7 +77,7 @@ public class KNIMEOpenUrlEventProcessor implements Listener {
     @Override
     public void handleEvent(final Event event) {
         if (event.text != null) {
-            m_urlsToOpen.add(event.text);
+            m_urlsToOpen.addLast(event.text);
         }
     }
 
@@ -87,27 +91,21 @@ public class KNIMEOpenUrlEventProcessor implements Listener {
             return;
         }
 
-        List<String> urlList = m_urlsToOpen.stream().filter((url) -> {
-            return isKnimeUrl(url);
-        }).collect(Collectors.toList());
+        List<String> urlList = m_urlsToOpen.stream().filter(KNIMEOpenUrlEventProcessor::isKnimeUrl).collect(Collectors.toList());
         m_urlsToOpen.clear();
 
         IWorkbenchPage activePage = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
         if (!urlList.isEmpty()) {
-            OpenKnimeUrlAction a = new OpenKnimeUrlAction(activePage, urlList);
-            a.run();
+            new OpenKnimeUrlAction(activePage, urlList).run();
         }
     }
 
     static boolean isKnimeUrl(final String url) {
-        String protocol = "knime://";
-        int length = protocol.length();
-        if (url != null && !url.isEmpty() && url.length() > length) {
-            if (url.substring(0, length).equalsIgnoreCase(protocol)) {
-                return true;
-            }
+        try {
+            return KnimeUrlType.getType(new URI(url)).isPresent();
+        } catch (URISyntaxException e) { // NOSONAR ignore garbage here
+            return false;
         }
-        return false;
     }
 
 }

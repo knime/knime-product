@@ -1,10 +1,10 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!-- Schema file written by PDE -->
-<schema targetNamespace="org.knime.product" xmlns="http://www.w3.org/2001/XMLSchema">
+<schema targetNamespace="org.knime.product" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:product="org.knime.product">
 <annotation>
-      <appInfo>
+      <appinfo>
          <meta.schema plugin="org.knime.product" id="splashExtension" name="Splash Extensions"/>
-      </appInfo>
+      </appinfo>
       <documentation>
          Via this extension point you can add an icon for your extension to the splash screen. The icon should be provided in several resolutions because the splash screen will show smaller icons when more extensions are installed. The default icon should be 48x48 pixel (attribute &quot;icon&quot;), the smaller version should have 32x32 pixels (attribute &quot;icon32&quot;), and 24x24 pixels (attribute &quot;icon24&quot;), respectively. If only one icon is provided it will scaled to the correct size (and may look a bit ugly).
       </documentation>
@@ -12,13 +12,13 @@
 
    <element name="extension">
       <annotation>
-         <appInfo>
+         <appinfo>
             <meta.element />
-         </appInfo>
+         </appinfo>
       </annotation>
       <complexType>
          <sequence minOccurs="1" maxOccurs="unbounded">
-            <element ref="splashExtension"/>
+            <element ref="product:splashExtension"/>
          </sequence>
          <attribute name="point" type="string" use="required">
             <annotation>
@@ -39,9 +39,9 @@
                <documentation>
                   
                </documentation>
-               <appInfo>
+               <appinfo>
                   <meta.attribute translatable="true"/>
-               </appInfo>
+               </appinfo>
             </annotation>
          </attribute>
       </complexType>
@@ -49,9 +49,9 @@
 
    <element name="splashExtension">
       <annotation>
-         <appInfo>
+         <appinfo>
             <meta.element labelAttribute="id" icon="icon"/>
-         </appInfo>
+         </appinfo>
       </annotation>
       <complexType>
          <attribute name="id" type="string" use="required">
@@ -66,9 +66,9 @@
                <documentation>
                   48x48 icon
                </documentation>
-               <appInfo>
+               <appinfo>
                   <meta.attribute kind="resource"/>
-               </appInfo>
+               </appinfo>
             </annotation>
          </attribute>
          <attribute name="icon32" type="string">
@@ -76,9 +76,9 @@
                <documentation>
                   32x32 icon
                </documentation>
-               <appInfo>
+               <appinfo>
                   <meta.attribute kind="resource"/>
-               </appInfo>
+               </appinfo>
             </annotation>
          </attribute>
          <attribute name="icon24" type="string">
@@ -86,9 +86,9 @@
                <documentation>
                   24x24 icon
                </documentation>
-               <appInfo>
+               <appinfo>
                   <meta.attribute kind="resource"/>
-               </appInfo>
+               </appinfo>
             </annotation>
          </attribute>
          <attribute name="tooltip" type="string">
@@ -102,18 +102,18 @@
    </element>
 
    <annotation>
-      <appInfo>
+      <appinfo>
          <meta.section type="since"/>
-      </appInfo>
+      </appinfo>
       <documentation>
          2.0
       </documentation>
    </annotation>
 
    <annotation>
-      <appInfo>
+      <appinfo>
          <meta.section type="examples"/>
-      </appInfo>
+      </appinfo>
       <documentation>
          The following is an example of the extension point: 
 
@@ -134,9 +134,9 @@
 
 
    <annotation>
-      <appInfo>
+      <appinfo>
          <meta.section type="copyright"/>
-      </appInfo>
+      </appinfo>
       <documentation>
          KNIME AG, Zurich, Switzerland
       </documentation>

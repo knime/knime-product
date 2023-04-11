@@ -48,7 +48,6 @@
  */
 package org.knime.product.rcp.shutdown;
 
-import java.util.Iterator;
 import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.CoreException;
@@ -57,20 +56,16 @@ import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.IExtensionRegistry;
 import org.eclipse.core.runtime.Platform;
 import org.knime.core.node.NodeLogger;
+import org.knime.core.util.IPreShutdown;
 
 /**
  * Callback to get informed right before shutdown.
  *
  * @author Martin Horn, KNIME GmbH, Konstanz, Germany
  */
-public interface PreShutdown {
+public interface PreShutdown extends IPreShutdown {
 
-    /**
-     * Called immediately before the workbench is being shut down; i.e. right before any window is being closed.
-     *
-     * @return <code>true</code> to allow the workbench to proceed with shutdown, <code>false</code> to veto a
-     *         non-forced shutdown
-     */
+    @Override
     boolean onPreShutdown();
 
     /**
@@ -88,22 +83,20 @@ public interface PreShutdown {
         IExtensionPoint point = registry.getExtensionPoint(extPointId);
         assert point != null : "Invalid extension point id: " + extPointId;
 
-        Iterator<IConfigurationElement> it =
-            Stream.of(point.getExtensions()).flatMap(ext -> Stream.of(ext.getConfigurationElements())).iterator();
-        while (it.hasNext()) {
-            IConfigurationElement e = it.next();
+        final var elements = Stream.of(point.getExtensions()).flatMap(ext -> Stream.of(ext.getConfigurationElements()));
+        for (final var element : (Iterable<IConfigurationElement>) elements::iterator) {
             try {
-                if (!((PreShutdown)e.createExecutableExtension("class")).onPreShutdown()) {
+                if (!((IPreShutdown)element.createExecutableExtension("class")).onPreShutdown()) {
                     return false;
                 }
             } catch (CoreException ex) {
-                NodeLogger.getLogger(PreShutdown.class)
-                    .error("Could not create pre-shutdown object of class '" + e.getAttribute("class") + "' "
-                        + "from plug-in '" + e.getContributor().getName() + "': " + ex.getMessage(), ex);
+                NodeLogger.getLogger(PreShutdown.class).error(
+                    String.format("Could not create pre-shutdown object of class '%s' from plug-in '%s': %s",
+                        element.getAttribute("class"), element.getContributor().getName(), ex.getMessage()), ex);
             } catch (Exception ex) {
-                NodeLogger.getLogger(PreShutdown.class)
-                    .error("Pre-shutdown in '" + e.getAttribute("class") + " from plug-in '"
-                        + e.getContributor().getName() + "' has thrown an uncaught exception: " + ex.getMessage(), ex);
+                NodeLogger.getLogger(PreShutdown.class).error(
+                    String.format("Pre-shutdown in '%s' from plug-in '%s' has thrown an uncaught exception: %s",
+                        element.getAttribute("class"), element.getContributor().getName(), ex.getMessage()), ex);
             }
         }
         return true;

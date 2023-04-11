@@ -1,10 +1,10 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!-- Schema file written by PDE -->
-<schema targetNamespace="org.knime.product" xmlns="http://www.w3.org/2001/XMLSchema">
+<schema targetNamespace="org.knime.product" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:product="org.knime.product">
 <annotation>
-      <appInfo>
+      <appinfo>
          <meta.schema plugin="org.knime.product" id="profileProvider" name="profileProvider"/>
-      </appInfo>
+      </appinfo>
       <documentation>
          This extension point allows you to provide a list of profiles and their location. The profiles are processed during startup and e.g. preferences are applied as early as possible. Note that only one provider should be registered in the application. Otherwise a random provider will be used.
       </documentation>
@@ -12,13 +12,13 @@
 
    <element name="extension">
       <annotation>
-         <appInfo>
+         <appinfo>
             <meta.element />
-         </appInfo>
+         </appinfo>
       </annotation>
       <complexType>
          <sequence>
-            <element ref="profileProvider"/>
+            <element ref="product:profileProvider"/>
          </sequence>
          <attribute name="point" type="string" use="required">
             <annotation>
@@ -37,27 +37,27 @@
                <documentation>
                   The class that implements the profile provider interface. It must have a public no-args constructor and as few dependencies to other plug-ins as possible.
                </documentation>
-               <appInfo>
+               <appinfo>
                   <meta.attribute kind="java" basedOn=":org.knime.product.preferences.IProfileProvider"/>
-               </appInfo>
+               </appinfo>
             </annotation>
          </attribute>
       </complexType>
    </element>
 
    <annotation>
-      <appInfo>
+      <appinfo>
          <meta.section type="since"/>
-      </appInfo>
+      </appinfo>
       <documentation>
          3.6.0
       </documentation>
    </annotation>
 
    <annotation>
-      <appInfo>
+      <appinfo>
          <meta.section type="examples"/>
-      </appInfo>
+      </appinfo>
       <documentation>
          &lt;extension point=&quot;org.knime.product.profileProvider&quot;&gt;
     &lt;profileProvider class=&quot;org.knime.product.profiles.ExampleProfileProvider&quot; /&gt;
@@ -67,9 +67,9 @@
 
 
    <annotation>
-      <appInfo>
+      <appinfo>
          <meta.section type="implementation"/>
-      </appInfo>
+      </appinfo>
       <documentation>
          public class ExampleProfileProvider implements IProfileProvider {
     @Override
@@ -86,9 +86,9 @@
    </annotation>
 
    <annotation>
-      <appInfo>
+      <appinfo>
          <meta.section type="copyright"/>
-      </appInfo>
+      </appinfo>
       <documentation>
          KNIME AG, Zurich, Switzerland
       </documentation>

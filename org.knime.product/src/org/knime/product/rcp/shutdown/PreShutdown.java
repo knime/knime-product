@@ -60,13 +60,14 @@ import org.knime.core.util.IPreShutdown;
 
 /**
  * Callback to get informed right before shutdown.
+ * <p>
+ * Extensions only have to implement {@link IPreShutdown}, {@link PreShutdown} remains an interface for backwards
+ * compatibility.
  *
  * @author Martin Horn, KNIME GmbH, Konstanz, Germany
+ * @author Leonard Wörteler, KNIME GmbH, Konstanz, Germany
  */
 public interface PreShutdown extends IPreShutdown {
-
-    @Override
-    boolean onPreShutdown();
 
     /**
      * Helper to execute the code registered at this extension point. Must be called at the 'pre-shutdown' of the KNIME

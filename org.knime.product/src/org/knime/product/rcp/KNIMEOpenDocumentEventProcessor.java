@@ -50,6 +50,7 @@ package org.knime.product.rcp;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
@@ -60,10 +61,11 @@ import java.util.Optional;
 
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
-import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
+import org.knime.core.node.KNIMEConstants;
+import org.knime.ui.java.api.OpenWorkflow;
+import org.knime.ui.java.util.PerspectiveUtil;
 import org.knime.workbench.explorer.view.actions.OpenKNIMEArchiveFileAction;
-import org.knime.workbench.explorer.view.actions.OpenKnimeUrlAction;
 
 /**
  * {@link Listener} implementation to allow the opening of KNIME application files (*.knar or *.knwf).
@@ -74,9 +76,6 @@ public class KNIMEOpenDocumentEventProcessor implements Listener {
 
     private Deque<String> m_filesToOpen = new ArrayDeque<>();
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void handleEvent(final Event event) {
         if (event.text != null) {
@@ -90,38 +89,41 @@ public class KNIMEOpenDocumentEventProcessor implements Listener {
      *
      */
     public void openFiles() {
-        if (!OpenKnimeUrlAction.isEventHandlingActive() || m_filesToOpen.isEmpty()) {
-            // Nothing to do or Classic UI not active, clear events
-            m_filesToOpen.clear();
-            return;
-        }
-
         final List<File> archiveFileList = new ArrayList<>();
-        final List<String> urlFileList = new ArrayList<>();
+        final List<URI> urlFileList = new ArrayList<>();
         while (!m_filesToOpen.isEmpty()) {
             final var input = m_filesToOpen.removeFirst();
-            if (KNIMEOpenUrlEventProcessor.isKnimeUrl(input)) {
-                urlFileList.add(input);
+            final var uptUri = KNIMEOpenUrlEventProcessor.asKnimeUrl(input);
+            if (uptUri.isPresent()) {
+                urlFileList.add(uptUri.get());
                 continue;
             }
 
             final var fileToOpen = Path.of(input);
             if (Files.isReadable(fileToOpen)) {
                 if (input.endsWith(".knimeURL")) {
-                    readAndDelete(fileToOpen).ifPresent(m_filesToOpen::add);
+                    readAndDelete(fileToOpen).ifPresent(urlFileList::add);
                 } else {
                     archiveFileList.add(fileToOpen.toFile());
                 }
             }
         }
 
-        IWorkbenchPage activePage = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
         if (!urlFileList.isEmpty()) {
-            new OpenKnimeUrlAction(activePage, urlFileList).run();
+            KNIMEOpenUrlEventProcessor.openInUI(urlFileList);
         }
 
         if (!archiveFileList.isEmpty()) {
+            openInUI(archiveFileList);
+        }
+    }
+
+    private static void openInUI(final List<File> archiveFileList) {
+        if (PerspectiveUtil.isClassicPerspectiveActive()) {
+            final var activePage = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
             new OpenKNIMEArchiveFileAction(activePage, archiveFileList).run();
+        } else {
+            KNIMEConstants.GLOBAL_THREAD_POOL.enqueue(() -> OpenWorkflow.openArchives(archiveFileList));
         }
     }
 
@@ -132,13 +134,11 @@ public class KNIMEOpenDocumentEventProcessor implements Listener {
      * @param fileToOpen
      * @return
      */
-    private static Optional<String> readAndDelete(final Path fileToOpen) {
+    private static Optional<URI> readAndDelete(final Path fileToOpen) {
         try {
             try (final var reader = Files.newBufferedReader(fileToOpen)) {
                 final String url = reader.readLine();
-                if (KNIMEOpenUrlEventProcessor.isKnimeUrl(url)) {
-                    return Optional.of(url);
-                }
+                return KNIMEOpenUrlEventProcessor.asKnimeUrl(url);
             } finally {
                 Files.delete(fileToOpen);
             }

@@ -53,13 +53,16 @@ import java.net.URISyntaxException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
-import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
+import org.knime.core.node.KNIMEConstants;
 import org.knime.core.util.KnimeUrlType;
+import org.knime.ui.java.api.OpenWorkflow;
+import org.knime.ui.java.util.PerspectiveUtil;
 import org.knime.workbench.explorer.view.actions.OpenKnimeUrlAction;
 
 /**
@@ -85,26 +88,30 @@ public class KNIMEOpenUrlEventProcessor implements Listener {
      * If there are URLs to open from an openURL-Event this method triggers the corresponding {@link OpenKnimeUrlAction}s
      */
     public void openUrls() {
-        if (!OpenKnimeUrlAction.isEventHandlingActive() || m_urlsToOpen.isEmpty()) {
-            // Nothing to do or Classic UI not active, clear events
-            m_urlsToOpen.clear();
-            return;
-        }
-
-        List<String> urlList = m_urlsToOpen.stream().filter(KNIMEOpenUrlEventProcessor::isKnimeUrl).collect(Collectors.toList());
+        final List<URI> urlList = m_urlsToOpen.stream() //
+                .flatMap(str -> asKnimeUrl(str).stream()) //
+                .collect(Collectors.toList());
         m_urlsToOpen.clear();
 
-        IWorkbenchPage activePage = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
         if (!urlList.isEmpty()) {
-            new OpenKnimeUrlAction(activePage, urlList).run();
+            openInUI(urlList);
         }
     }
 
-    static boolean isKnimeUrl(final String url) {
+    static void openInUI(final List<URI> urlFileList) {
+        if (PerspectiveUtil.isClassicPerspectiveActive()) {
+            final var activePage = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+            new OpenKnimeUrlAction(activePage, urlFileList.stream().map(Object::toString).collect(Collectors.toList())).run();
+        } else {
+            KNIMEConstants.GLOBAL_THREAD_POOL.enqueue(() -> OpenWorkflow.openURLs(urlFileList));
+        }
+    }
+
+    static Optional<URI> asKnimeUrl(final String url) {
         try {
-            return KnimeUrlType.getType(new URI(url)).isPresent();
+            return Optional.of(new URI(url)).filter(uri -> KnimeUrlType.getType(uri).isPresent());
         } catch (URISyntaxException e) { // NOSONAR ignore garbage here
-            return false;
+            return Optional.empty();
         }
     }
 

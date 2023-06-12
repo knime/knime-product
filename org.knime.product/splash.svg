@@ -25,7 +25,7 @@
 	</text>
 	<!-- Nightly text -->
 	<text id="KNIME-Builddate" style="font-size:11px;text-align:end;text-anchor:end;fill:#6E6E6E;font-family:sans-serif" x="358" y="60.916702">
-		<tspan style="text-align:end;text-anchor:end">(Build March 01, 2023)</tspan>
+		<tspan style="text-align:end;text-anchor:end">(Build June 12, 2023)</tspan>
 	</text>
 	<!-- Logo -->
 	<g transform="matrix(0.60,0,0,0.60,75,-100)">

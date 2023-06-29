@@ -6,7 +6,7 @@
          <meta.schema plugin="org.knime.product" id="splashExtension" name="Splash Extensions"/>
       </appInfo>
       <documentation>
-         Via this extension point you can add an icon for your extension to the splash screen. The icon should be provided in several resolutions because the splash screen will show smaller icons when more extensions are installed. The default icon should be 48x48 pixel (attribute &quot;icon&quot;), the smaller version should have 32x32 pixels (attribute &quot;icon32&quot;), and 24x24 pixels (attribute &quot;icon24&quot;), respectively. If only one icon is provided it will scaled to the correct size (and may look a bit ugly).
+         Via this extension point you can add an icon for your extension to the splash screen. The icon should be provided in several resolutions because the splash screen will show smaller icons when more extensions are installed. The default icon should be 48x48 pixel (attribute &quot;icon&quot;), the smaller version should have 32x32 pixels (attribute &quot;icon32&quot;), and 24x24 pixels (attribute &quot;icon24&quot;), respectively. If only one icon is provided it will scaled to the correct size (and may look a bit ugly). The icons added via this extension point are no longer displayed since version 5.1.
       </documentation>
    </annotation>
 

@@ -3,17 +3,17 @@
 	<!-- Background -->
 	<rect height="326.89999" style="fill:#FDFEFE;stroke:#D5D4D4;stroke-width:1" width="451.89999" x="0" y="-118.6"/>
 	<!-- Copyright -->
-	<text style="text-align:center; font-size:10px;fill:#6E6E6E;font-family:sans-serif;" text-anchor="middle" width="454" x="227" y="201">© KNIME AG, Zurich, Switzerland · www.knime.com · contact@knime.com</text>
+	<text text-anchor="middle" width="454" style="text-align:center; font-size:10px;fill:#6E6E6E;font-family:sans-serif;" x="227" y="201">© KNIME AG, Zurich, Switzerland · www.knime.com · contact@knime.com</text>
 	<!-- Version text -->
-	<text id="KNIME-Version" style="font-size:14px;text-align:end;text-anchor:end;fill:#3E3A39;font-family:sans-serif;font-weight:bold" x="340" y="50">
+	<text id="KNIME-Version" style="font-size:18px;text-align:end;text-anchor:end;fill:#3E3A39;font-family:sans-serif;font-weight:bold" x="400" y="90">
 		<tspan style="text-align:end;text-anchor:end">Version 5.1.0</tspan>
 	</text>
 	<!-- Nightly text -->
-	<text id="KNIME-Builddate" style="font-size:11px;text-align:end;text-anchor:end;fill:#6E6E6E;font-family:sans-serif" x="340" y="70">
+	<text id="KNIME-Builddate" style="font-size:11px;text-align:end;text-anchor:end;fill:#6E6E6E;font-family:sans-serif" x="400" y="105">
 		<tspan style="text-align:end;text-anchor:end">(Nightly build)</tspan>
 	</text>
 	<!-- Logo -->
-	<g transform="matrix(0.50,0,0,0.50,100,-50)">
+	<g transform="matrix(0.75,0,0,0.75,38,-70)">
 		<!-- Figurative mark -->
 		<path class="yellow" d="m 91.4,22.3 -69.1,119.6 138.1,0 -69,-119.6 z m -15.7,105.4 0,-45.7 1.4,-6.3 39.5,22.8 4.8,4.4 -39.5,22.8 -6.2,2 z m 2,-54.7 1.9,-8.6 28.3,26 L 77.7,73 Z m -4.6,55.5 -8.4,2.6 8.4,-37.5 0,34.9 z m 50.3,-23.8 6.5,5.9 -36.6,11.5 30.1,-17.4 z M 80.8,61.1 83.5,53.9 115.5,93 80.8,61.1 Z m -19.6,70.6 -7.6,1.2 17.9,-47.3 -10.3,46.1 z m 70.9,-18.3 4.9,5.9 -49.9,8.2 45,-14.1 z m -47.5,-64.3 2.8,-5.8 34.2,51 -37,-45.2 z m -35.7,85.3 -6.4,0.4 27.1,-55.1 -20.7,54.7 z m 91.7,-11.7 3.6,5.3 -61.3,4.1 57.7,-9.4 z m -14.8,-30.3 -37,-55.2 2.6,-4.5 34.4,59.7 z M 65.8,77 36.5,136.7 31.3,136.7 65.8,77 Z m 16.7,59.7 66.4,-4.5 2.6,4.5 -69,0 z"/>
 		<g class="masala">
@@ -47,75 +47,6 @@
 			</g>
 		</g>
 	</g>
-</g>
-<!-- Dots -->
-<g>
-	<circle cx="17" cy="17" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="41" cy="17" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="65" cy="17" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="89" cy="17" fill="#FFD800" fill-opacity="0.5" r="7"/>
-	<circle cx="113" cy="17" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="137" cy="17" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="161" cy="17" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="185" cy="17" fill="#FFD800" fill-opacity="0.35" r="7"/>
-	<circle cx="17" cy="41" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="41" cy="41" fill="#FFD800" fill-opacity="0.5" r="7"/>
-	<circle cx="65" cy="41" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="89" cy="41" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="113" cy="41" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="137" cy="41" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="161" cy="41" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="17" cy="65" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="41" cy="65" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="65" cy="65" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="89" cy="65" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="113" cy="65" fill="#FFD800" fill-opacity="0.35" r="7"/>
-	<circle cx="17" cy="89" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="41" cy="89" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="65" cy="89" fill="#FFD800" fill-opacity="0.35" r="7"/>
-	<circle cx="89" cy="89" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="17" cy="113" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="41" cy="113" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="65" cy="113" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="17" cy="137" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="41" cy="137" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="17" cy="161" fill="#FFD800" fill-opacity="0.35" r="7"/>
-	<circle cx="41" cy="161" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="17" cy="185" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="17" cy="209" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="269" cy="17" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="293" cy="17" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="317" cy="17" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="341" cy="17" fill="#FFD800" fill-opacity="0.5" r="7"/>
-	<circle cx="365" cy="17" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="389" cy="17" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="413" cy="17" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="437" cy="17" fill="#FFD800" fill-opacity="0.35" r="7"/>
-	<circle cx="293" cy="41" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="317" cy="41" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="341" cy="41" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="365" cy="41" fill="#FFD800" fill-opacity="0.5" r="7"/>
-	<circle cx="389" cy="41" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="413" cy="41" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="437" cy="41" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="341" cy="65" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="365" cy="65" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="389" cy="65" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="413" cy="65" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="437" cy="65" fill="#FFD800" fill-opacity="0.35" r="7"/>
-	<circle cx="365" cy="89" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="389" cy="89" fill="#FFD800" fill-opacity="0.35" r="7"/>
-	<circle cx="413" cy="89" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="437" cy="89" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="389" cy="113" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="413" cy="113" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="437" cy="113" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="413" cy="137" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="437" cy="137" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="413" cy="161" fill="#FFD800" fill-opacity="0.35" r="7"/>
-	<circle cx="437" cy="161" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="437" cy="185" fill="#FFD800" fill-opacity="0.15" r="7"/>
-	<circle cx="437" cy="209" fill="#FFD800" fill-opacity="0.15" r="7"/>
 </g>
 <style type="text/css">
 	.yellow {

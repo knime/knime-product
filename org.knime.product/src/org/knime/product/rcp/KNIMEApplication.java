@@ -25,6 +25,7 @@ import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
@@ -166,7 +167,7 @@ public class KNIMEApplication implements IApplication {
             RepositoryUpdater.INSTANCE.addDefaultRepositories();
             RepositoryUpdater.INSTANCE.updateArtifactRepositoryURLs();
 
-            updateTheme();
+            runPerspectiveLogic();
 
             // Required to make the CEF browser work properly (in particular the so-called 'browser functions' which are
             // used to call java-functions from js).
@@ -223,7 +224,28 @@ public class KNIMEApplication implements IApplication {
     }
 
     /*
-     * Prevents the Web UI from being started. Can be removed once the AP is allowed to be started with the new Web UI.
+     * Logic required to properly start-up with the right perspective (classic or modern UI)
+     */
+    private static void runPerspectiveLogic() {
+        // Set default for 'perspective'-property if not set, yet (classic or modern UI).
+        var isPerspectiveSet = System.getProperty(PERSPECTIVE_SYS_PROP) != null;
+        if (!isPerspectiveSet) {
+            Location instanceLoc = Platform.getInstanceLocation();
+            var isNewWorkspace = !Files.exists(Path.of(instanceLoc.getURL().getPath(), METADATA_FOLDER));
+            // If it's a new workspace, start with Modern UI, if it's an existing workspace, start with Classic UI
+            // Why choose Classic UI for an existing workspace?
+            // Because if it exits and we get here it's a workspace created with an AP version < 5.x.
+            // Every 5.x-workspace memorizes the perspective to start with and the 'perspective'-property would be
+            // known at this point.
+            System.setProperty(PERSPECTIVE_SYS_PROP, isNewWorkspace ? WEB_UI_PERSPECTIVE_ID : CLASSIC_PERSPECTIVE_ID);
+        }
+
+        updateTheme();
+    }
+
+
+    /*
+     * Makes sure the correct theme is set depending on the selected perspective.
      */
     private static void updateTheme() {
         // Set the theme to the KNIME theme if no theme or the dark theme is configured

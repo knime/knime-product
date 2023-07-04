@@ -25,7 +25,6 @@ import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
@@ -231,7 +230,7 @@ public class KNIMEApplication implements IApplication {
         var isPerspectiveSet = System.getProperty(PERSPECTIVE_SYS_PROP) != null;
         if (!isPerspectiveSet) {
             Location instanceLoc = Platform.getInstanceLocation();
-            var isNewWorkspace = !Files.exists(Path.of(instanceLoc.getURL().getPath(), METADATA_FOLDER));
+            var isNewWorkspace = new File(instanceLoc.getURL().getPath(), METADATA_FOLDER).exists();
             // If it's a new workspace, start with Modern UI, if it's an existing workspace, start with Classic UI
             // Why choose Classic UI for an existing workspace?
             // Because if it exits and we get here it's a workspace created with an AP version < 5.x.

@@ -230,7 +230,7 @@ public class KNIMEApplication implements IApplication {
         var isPerspectiveSet = System.getProperty(PERSPECTIVE_SYS_PROP) != null;
         if (!isPerspectiveSet) {
             Location instanceLoc = Platform.getInstanceLocation();
-            var isNewWorkspace = new File(instanceLoc.getURL().getPath(), METADATA_FOLDER).exists();
+            var isNewWorkspace = !new File(instanceLoc.getURL().getPath(), METADATA_FOLDER).exists();
             // If it's a new workspace, start with Modern UI, if it's an existing workspace, start with Classic UI
             // Why choose Classic UI for an existing workspace?
             // Because if it exits and we get here it's a workspace created with an AP version < 5.x.

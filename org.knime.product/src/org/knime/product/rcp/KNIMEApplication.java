@@ -166,7 +166,7 @@ public class KNIMEApplication implements IApplication {
             RepositoryUpdater.INSTANCE.addDefaultRepositories();
             RepositoryUpdater.INSTANCE.updateArtifactRepositoryURLs();
 
-            runPerspectiveLogic();
+            updateTheme();
 
             // Required to make the CEF browser work properly (in particular the so-called 'browser functions' which are
             // used to call java-functions from js).
@@ -221,27 +221,6 @@ public class KNIMEApplication implements IApplication {
             }
         }
     }
-
-    /*
-     * Logic required to properly start-up with the right perspective (classic or modern UI)
-     */
-    private static void runPerspectiveLogic() {
-        // Set default for 'perspective'-property if not set, yet (classic or modern UI).
-        var isPerspectiveSet = System.getProperty(PERSPECTIVE_SYS_PROP) != null;
-        if (!isPerspectiveSet) {
-            Location instanceLoc = Platform.getInstanceLocation();
-            var isNewWorkspace = !new File(instanceLoc.getURL().getPath(), METADATA_FOLDER).exists();
-            // If it's a new workspace, start with Modern UI, if it's an existing workspace, start with Classic UI
-            // Why choose Classic UI for an existing workspace?
-            // Because if it exits and we get here it's a workspace created with an AP version < 5.x.
-            // Every 5.x-workspace memorizes the perspective to start with and the 'perspective'-property would be
-            // known at this point.
-            System.setProperty(PERSPECTIVE_SYS_PROP, isNewWorkspace ? WEB_UI_PERSPECTIVE_ID : CLASSIC_PERSPECTIVE_ID);
-        }
-
-        updateTheme();
-    }
-
 
     /*
      * Makes sure the correct theme is set depending on the selected perspective.

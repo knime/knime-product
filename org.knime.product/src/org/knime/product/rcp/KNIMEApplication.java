@@ -25,6 +25,7 @@ import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
@@ -76,6 +77,7 @@ import org.knime.product.p2.RepositoryUpdater;
 import org.knime.product.profiles.ProfileManager;
 import org.knime.product.rcp.startup.LongStartupHandler;
 import org.knime.product.rcp.startup.WindowsDefenderExceptionHandler;
+import org.osgi.framework.FrameworkUtil;
 
 /**
  * This class controls all aspects of the application's execution.
@@ -166,6 +168,7 @@ public class KNIMEApplication implements IApplication {
             RepositoryUpdater.INSTANCE.addDefaultRepositories();
             RepositoryUpdater.INSTANCE.updateArtifactRepositoryURLs();
 
+            fixPerspectiveSwitchProblem();
             updateTheme();
 
             // Required to make the CEF browser work properly (in particular the so-called 'browser functions' which are
@@ -218,6 +221,37 @@ public class KNIMEApplication implements IApplication {
                     NodeLogger.getLogger(KNIMEApplication.class).debug(
                         "Exception while disposing Display object: " + e.getMessage(), e);
                 }
+            }
+        }
+    }
+
+    /*
+     * If an AP 5.x is supposed to be started with the Modern UI using a workspace created by an AP < 5.x, it will
+     * switch back to the Classic UI (which is also not 100% functional) right after start-up.
+     * This fix detects those situations (AP 5.1 Modern-UI-startup with an existing workspace _not_ created with AP 5.1)
+     * and 'redirects' the start-up to the classic UI (and by that avoiding that back-and-forth switching).
+     * Bug NXT-1728.
+     */
+    private static void fixPerspectiveSwitchProblem() {
+        if (isStartedWithWebUI()) {
+            try {
+                Location instanceLoc = Platform.getInstanceLocation();
+                var workspaceLocation = new File(instanceLoc.getURL().getPath()).toPath();
+                var appStateJson =
+                    workspaceLocation.resolve(METADATA_FOLDER).resolve("knime").resolve("app_state.json");
+                var stateLocation =
+                    Platform.getStateLocation(FrameworkUtil.getBundle(KNIMEApplication.class)).toFile().toPath();
+                var workbenchXmi =
+                    stateLocation.getParent().resolve("org.eclipse.e4.workbench").resolve("workbench.xmi");
+
+                // if there is no app_state.json (i.e. most likely not a 5.x workspace) but there is a workbench.xmi
+                // (i.e. it's an existing workspace, not a newly created one)
+                if (!Files.exists(appStateJson) && Files.exists(workbenchXmi)) {
+                    // -> redirect to classic UI
+                    System.setProperty(PERSPECTIVE_SYS_PROP, CLASSIC_PERSPECTIVE_ID);
+                }
+            } catch (Exception e) {
+                // to make sure that this fix doesn't intervene with the start-up process in any way
             }
         }
     }

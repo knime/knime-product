@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="KNIME Analytics Platform" uid="org.knime.desktop.product" id="org.knime.product.KNIME_PRODUCT" application="org.knime.product.KNIME_APPLICATION" version="4.7.5.qualifier" useFeatures="true" includeLaunchers="true">
+<product name="KNIME Analytics Platform" uid="org.knime.desktop.product" id="org.knime.product.KNIME_PRODUCT" application="org.knime.product.KNIME_APPLICATION" version="4.7.6.qualifier" useFeatures="true" includeLaunchers="true">
 
    <aboutInfo>
       <image path="/org.knime.product/icons/png/knime_about.png"/>
       <text>
-         Welcome to the KNIME Analytics Platform 4.7.5
+         Welcome to the KNIME Analytics Platform 4.7.6
 Copyright by KNIME AG, Zurich, Switzerland 
 email: contact@knime.com
 

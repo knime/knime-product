@@ -1,15 +1,15 @@
 #
-#Thu Jul 20 17:47:22 CEST 2023
+#Mon Aug 07 13:34:24 CEST 2023
 units.0.instructions.configure=org.eclipse.equinox.p2.touchpoint.natives.copy(source\:${installFolder}/Info.plist,target\:${installFolder}/../Info.plist,overwrite\:true);org.eclipse.equinox.p2.touchpoint.natives.remove(path\:${installFolder}/Info.plist)
-units.0.provides.0.version=5.2.0.1689868042340
-units.0.version=5.2.0.1689868042340
+units.0.provides.0.version=5.2.0.1691408064751
+units.0.version=5.2.0.1691408064751
 units.0.filter=(osgi.os\=macosx)
 requires.0.namespace=org.eclipse.equinox.p2.iu
 requires.0.greedy=true
 units.0.update.range=[0,999]
 units.0.provides.0.namespace=org.eclipse.equinox.p2.iu
 requires.0.name=org.knime.product.macosx.configure
-requires.0.range=[5.2.0.1689868042340,5.2.0.1689868042340]
+requires.0.range=[5.2.0.1691408064751,5.2.0.1691408064751]
 requires.0.filter=(osgi.os\=macosx)
 units.0.provides.0.name=org.knime.product.macosx.configure
 units.0.update.id=org.knime.product.macosx.configure

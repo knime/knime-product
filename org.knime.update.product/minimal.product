@@ -25,6 +25,7 @@ plugins/com.equo.chromium.cef.gtk.linux.x86_64_106.0.11/
 -XX:+UnlockDiagnosticVMOptions
 -Dsun.net.client.defaultReadTimeout=0
 -Dknime.xml.disable_external_entities=true
+-Dcomm.disable_dynamic_service=true
 --add-opens=java.base/java.lang=ALL-UNNAMED
 --add-opens=java.base/java.lang.invoke=ALL-UNNAMED
 --add-opens=java.base/java.net=ALL-UNNAMED

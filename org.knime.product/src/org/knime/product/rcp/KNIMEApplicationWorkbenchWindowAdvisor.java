@@ -51,14 +51,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.IProduct;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.action.ICoolBarManager;
 import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.swt.dnd.URLTransfer;
 import org.eclipse.swt.widgets.Shell;
@@ -196,7 +194,6 @@ public class KNIMEApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvis
         }
         showStartupMessages();
         checkAnonymousUsageStatistics(workbenchWindow.getShell());
-        warnLinuxWaylandUsers(workbenchWindow.getShell());
         addGlobalNodeTimerShutdownHook();
     }
 
@@ -279,40 +276,6 @@ public class KNIMEApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvis
         boolean allow = LinkMessageDialog.openQuestion(shell, "Help improve KNIME", message);
         pStore.setValue(HeadlessPreferencesConstants.P_ASKED_ABOUT_STATISTICS, true);
         pStore.setValue(HeadlessPreferencesConstants.P_SEND_ANONYMOUS_STATISTICS, allow);
-    }
-
-    private static String SUPPRESS_WAYLAND_WARNING_KEY = "knime.suppressWaylandWarning";
-
-    /**
-     * Detects if the application is run within Wayland and warns the user that this is not yet supported and will
-     * likely cause display bugs. See https://knime-com.atlassian.net/browse/AP-17133
-     *
-     * @param shell
-     */
-    private static void warnLinuxWaylandUsers(final Shell shell) {
-        var pStore = KNIMECorePlugin.getDefault().getPreferenceStore();
-        var dontShow = pStore.getBoolean(SUPPRESS_WAYLAND_WARNING_KEY);
-        if (dontShow) { // either not set or false
-            return;
-        }
-        var sessionType = System.getenv("XDG_SESSION_TYPE");
-        if (Platform.OS_LINUX.equals(Platform.getOS()) && Objects.equals(sessionType, "wayland")) {
-            var message = "We have detected that your system is running Wayland, which is known to cause issues with "
-                + "KNIME Analytics Platform. You may encounter empty dialogs and other weird behavior. For a "
-                + "smoother experience, you should consider to start KNIME Analytics Platform with Xorg. "
-                + "<a href=\"https://www.knime.com/faq#q41\">Read more</a>";
-            var dialog = new LinkMessageDialog(shell, //
-                "KNIME Analytics Platform on Wayland", // Dialog title
-                null, // image
-                message, // message
-                MessageDialog.WARNING, // kind
-                new String[]{"Don't show again", "Continue"}, // button labels
-                1); // default button
-            var code = dialog.open();
-            if (code == 0) { // the user pressed the "don't show again" button
-                pStore.setValue(SUPPRESS_WAYLAND_WARNING_KEY, true);
-            }
-        }
     }
 
     /**

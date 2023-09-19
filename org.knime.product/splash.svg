@@ -3,14 +3,14 @@
 	<!-- Background -->
 	<rect height="326.89999" style="fill:#FDFEFE;stroke:#D5D4D4;stroke-width:1" width="451.89999" x="0" y="-118.6"/>
 	<!-- Copyright -->
-	<text text-anchor="middle" width="454" style="text-align:center; font-size:10px;fill:#6E6E6E;font-family:sans-serif;" x="227" y="201">© KNIME AG, Zurich, Switzerland · www.knime.com · contact@knime.com</text>
+	<text style="text-align:center; font-size:10px;fill:#6E6E6E;font-family:sans-serif;" text-anchor="middle" width="454" x="227" y="201">© KNIME AG, Zurich, Switzerland · www.knime.com · contact@knime.com</text>
 	<!-- Version text -->
 	<text id="KNIME-Version" style="font-size:18px;text-align:end;text-anchor:end;fill:#3E3A39;font-family:sans-serif;font-weight:bold" x="400" y="90">
-		<tspan style="text-align:end;text-anchor:end">Version 5.1.0</tspan>
+		<tspan style="text-align:end;text-anchor:end">Version 5.1.1</tspan>
 	</text>
 	<!-- Nightly text -->
 	<text id="KNIME-Builddate" style="font-size:11px;text-align:end;text-anchor:end;fill:#6E6E6E;font-family:sans-serif" x="400" y="105">
-		<tspan style="text-align:end;text-anchor:end">(Nightly build)</tspan>
+		<tspan style="text-align:end;text-anchor:end">(Build September 14, 2023)</tspan>
 	</text>
 	<!-- Logo -->
 	<g transform="matrix(0.75,0,0,0.75,38,-70)">

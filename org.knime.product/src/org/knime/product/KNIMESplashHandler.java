@@ -44,9 +44,17 @@
  */
 package org.knime.product;
 
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.ImageData;
+import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.graphics.Transform;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Link;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.splash.BasicSplashHandler;
 
@@ -66,17 +74,19 @@ public class KNIMESplashHandler extends BasicSplashHandler {
 
     private static final RGB KNIME_GRAY = new RGB(0x7d, 0x7d, 0x7d);
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void init(final Shell splash) {
         // Store the shell
         super.init(splash);
+
         setForeground(KNIME_GRAY);
         splash.setLayout(null);
         // Force shell to inherit the splash background
         splash.setBackgroundMode(SWT.INHERIT_DEFAULT);
+
+        // workaround for AP-21237
+        fixMacOSBackgroundFlipBug(splash);
+
         initProgressBar();
         doEventLoop();
     }
@@ -92,5 +102,55 @@ public class KNIMESplashHandler extends BasicSplashHandler {
         if (!splash.getDisplay().readAndDispatch()) {
             splash.getDisplay().sleep();
         }
+    }
+
+    private static void fixMacOSBackgroundFlipBug(final Shell splash) {
+        if (Platform.OS_MACOSX.equals(Platform.getOS()) && isFlipBugPresent(Display.getDefault(), splash)) {
+            final var display = Display.getDefault();
+            final var srcImage = splash.getBackgroundImage();
+            splash.setBackgroundImage(flip(display, srcImage));
+        }
+    }
+
+    private static Image flip(final Display display, final Image srcImage) {
+        final var bounds = srcImage.getBounds();
+        final var width = bounds.width;
+        final var height = bounds.height;
+        final var target = new Image(display, width, height);
+        final var gc = new GC(target);
+        gc.setAdvanced(true);
+        gc.setAntialias(SWT.ON);
+        gc.setInterpolation(SWT.HIGH);
+        final var t = new Transform(display);
+        t.setElements(1, 0, 0, -1, 0, 0);
+        gc.setTransform(t);
+        gc.drawImage(srcImage, 0, -height, bounds.width, bounds.height, 0, 0, width, height);
+        gc.dispose();
+        srcImage.dispose();
+        return target;
+    }
+
+    /**
+     * Empirically checks if the macOS Sonoma 14.0 background image flip bug is present or not.
+     * See <a href="https://github.com/eclipse-platform/eclipse.platform.swt/issues/772">
+     * https://github.com/eclipse-platform/eclipse.platform.swt/issues/772</a>.
+     *
+     * @param display current display
+     * @param splash used as parent for test control
+     * @return {@code true} if the flip bug is present, {@code false} otherwise
+     */
+    private static boolean isFlipBugPresent(final Display display, final Shell splash) {
+        final var white = display.getSystemColor(SWT.COLOR_WHITE);
+        final var black = display.getSystemColor(SWT.COLOR_BLACK);
+        final var palette = new PaletteData(white.getRGB(), black.getRGB());
+        final var data = new ImageData(1, 2, 1, palette);
+        data.setPixel(0, 1, 1);
+        // any Control object is enough, since the Splash screen is also a Control (and this is where the bug occurs)
+        final var control = new Link(splash, SWT.NONE);
+        control.setBackgroundImage(new Image(display, data));
+        final var backgroundData = control.getBackgroundImage().getImageData();
+        final var top = backgroundData.getPixel(0, 1);
+        control.dispose();
+        return top == 0;
     }
 }

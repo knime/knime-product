@@ -121,10 +121,17 @@ public class KNIMESplashHandler extends BasicSplashHandler {
         gc.setAdvanced(true);
         gc.setAntialias(SWT.ON);
         gc.setInterpolation(SWT.HIGH);
+
+        // flip down
         final var t = new Transform(display);
         t.setElements(1, 0, 0, -1, 0, 0);
+        // move up
+        t.translate(0, -height);
+
         gc.setTransform(t);
-        gc.drawImage(srcImage, 0, -height, bounds.width, bounds.height, 0, 0, width, height);
+        t.dispose();
+
+        gc.drawImage(srcImage, 0, 0, bounds.width, bounds.height, 0, 0, width, height);
         gc.dispose();
         srcImage.dispose();
         return target;

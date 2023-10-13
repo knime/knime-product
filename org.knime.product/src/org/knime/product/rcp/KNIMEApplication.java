@@ -19,6 +19,7 @@ package org.knime.product.rcp;
 import java.awt.EventQueue;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -31,6 +32,7 @@ import java.util.Properties;
 
 import javax.swing.SwingUtilities;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -68,6 +70,7 @@ import org.knime.core.node.KNIMEConstants;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.extension.NodeFactoryExtensionManager;
 import org.knime.core.node.util.ViewUtils;
+import org.knime.core.node.workflow.BatchExecutor;
 import org.knime.core.util.EclipseUtil;
 import org.knime.core.util.GUIDeadlockDetector;
 import org.knime.core.util.IEarlyStartup;
@@ -289,23 +292,29 @@ public class KNIMEApplication implements IApplication {
         return CLASSIC_PERSPECTIVE_ID.equals(System.getProperty(PERSPECTIVE_SYS_PROP));
     }
 
-    private void parseApplicationArguments(final IApplicationContext context) {
-        Object args =
-                context.getArguments()
-                        .get(IApplicationContext.APPLICATION_ARGS);
-        if (args instanceof String[]) {
-            String[] stringArgs = (String[])args;
-            for (int i = 0; i < stringArgs.length; i++) {
-                if ("-checkForUpdates".equals(stringArgs[i])) {
-                    m_checkForUpdates = true;
-                }
+    private void parseApplicationArguments(final IApplicationContext context)
+        throws FileNotFoundException, CoreException {
+        Object args = context.getArguments().get(IApplicationContext.APPLICATION_ARGS);
+        if (args == null) {
+            return;
+        }
+        if (!(args instanceof String[])) {
+            System.err.println("Unable to cast class " + args.getClass().getName()
+                + " to string array, toString() returns " + args.toString());
+            return;
+        }
+        String[] stringArgs = (String[])args;
+        for (var i = 0; i < stringArgs.length; i++) {
+            if ("-checkForUpdates".equals(stringArgs[i])) {
+                m_checkForUpdates = true;
             }
-        } else if (args != null) {
-            System.err
-                    .println("Unable to cast class "
-                            + args.getClass().getName()
-                            + " to string array, toString() returns "
-                            + args.toString());
+            if ("-preferences".equals(stringArgs[i])) {
+                if (stringArgs.length == (i + 1)) {
+                    throw new IllegalArgumentException("Missing path argument for -preferences");
+                }
+                i++; // get next argument
+                BatchExecutor.setPreferences(new File(stringArgs[i]));
+            }
         }
     }
 

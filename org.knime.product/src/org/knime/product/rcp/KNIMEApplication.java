@@ -68,7 +68,7 @@ import org.eclipse.ui.internal.ide.ChooseWorkspaceDialog;
 import org.eclipse.ui.internal.ide.IDEWorkbenchMessages;
 import org.knime.core.node.KNIMEConstants;
 import org.knime.core.node.NodeLogger;
-import org.knime.core.node.extension.NodeFactoryExtensionManager;
+import org.knime.core.node.extension.NodeSpecCollectionProvider;
 import org.knime.core.node.util.ViewUtils;
 import org.knime.core.node.workflow.BatchExecutor;
 import org.knime.core.util.EclipseUtil;
@@ -157,7 +157,7 @@ public class KNIMEApplication implements IApplication {
             // Load node factories asynchronously because the process is very slow, has to happen after the workspace
             // has been selected because the `NodeLogger` class may be loaded, which needs a workspace to log to.
             // This also initializes KNIMEConstants as early as possible in order to avoid deadlocks during startup.
-            KNIMEConstants.GLOBAL_THREAD_POOL.submit(NodeFactoryExtensionManager::getInstance);
+            KNIMEConstants.GLOBAL_THREAD_POOL.submit(NodeSpecCollectionProvider::getInstance);
 
             //needs to be called in order to initialize the deprecated KNIMEConstants.KNIME16X16 property
             //need to be lazily (later) invoked, otherwise it will hang on MacOS

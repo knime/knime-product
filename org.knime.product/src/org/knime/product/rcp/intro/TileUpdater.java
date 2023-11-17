@@ -82,7 +82,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class TileUpdater extends AbstractUpdater {
 
     private static final NodeLogger LOGGER = NodeLogger.getLogger(TileUpdater.class);
-    private static final String WELCOME_PAGE_ENDPOINT = "https://www.knime.com/welcome-ap";
+    private static final String WELCOME_PAGE_ENDPOINT = "https://tips-and-tricks.knime.com/welcome-ap";
 
     private static JSONCategory[] TILE_CATEGORIES;
 

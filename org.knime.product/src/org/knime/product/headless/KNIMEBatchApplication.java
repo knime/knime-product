@@ -50,6 +50,7 @@ import org.eclipse.equinox.app.IApplicationContext;
 import org.knime.core.node.workflow.BatchExecutor;
 import org.knime.core.node.workflow.NodeTimer;
 import org.knime.core.util.IEarlyStartup;
+import org.knime.product.rcp.StatusLoggerHelper;
 import org.osgi.framework.Bundle;
 
 /**
@@ -72,6 +73,9 @@ public class KNIMEBatchApplication implements IApplication {
         if (System.getProperty("java.awt.headless") == null) {
             System.setProperty("java.awt.headless", "true");
         }
+
+        // silence Log4j2's StatusLogger used for internal framework logging
+        StatusLoggerHelper.disableStatusLogger();
 
         // load the ui plugin to read the preferences
         Platform.getBundle("org.knime.workbench.core").start(Bundle.START_TRANSIENT);

@@ -131,6 +131,9 @@ public class KNIMEApplication implements IApplication {
     public Object start(final IApplicationContext appContext) throws Exception {
         IEarlyStartup.executeEarlyStartup(true);
 
+        // silence Log4j2's StatusLogger used for internal framework logging
+        StatusLoggerHelper.disableStatusLogger();
+
         Display display = createDisplay();
 
         try {

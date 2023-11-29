@@ -57,8 +57,10 @@ import org.eclipse.equinox.internal.p2.ui.sdk.scheduler.AutomaticUpdatePlugin;
 import org.eclipse.equinox.internal.p2.ui.sdk.scheduler.AutomaticUpdateScheduler;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceNode;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceManager;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.application.IWorkbenchConfigurer;
 import org.eclipse.ui.application.IWorkbenchWindowConfigurer;
@@ -71,7 +73,9 @@ import org.knime.core.util.EclipseUtil;
 import org.knime.product.rcp.intro.IntroPage;
 import org.knime.product.rcp.shutdown.PreShutdown;
 import org.knime.product.rcp.startup.LongStartupHandler;
-import org.osgi.framework.Bundle;
+import org.knime.workbench.core.KNIMECorePlugin;
+import org.knime.workbench.core.preferences.HeadlessPreferencesConstants;
+import org.knime.workbench.core.util.LinkMessageDialog;
 import org.osgi.service.prefs.Preferences;
 
 /**
@@ -102,9 +106,6 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
         m_iniChangedChecker = iniChangedChecker;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public String getInitialWindowPerspectiveId() {
         return "org.knime.ui.java.perspective";
@@ -126,17 +127,11 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
         configurer.setSaveAndRestore(true);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public WorkbenchWindowAdvisor createWorkbenchWindowAdvisor(final IWorkbenchWindowConfigurer configurer) {
         return new KNIMEApplicationWorkbenchWindowAdvisor(configurer);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void preStartup() {
         super.preStartup();
@@ -168,9 +163,6 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
         return PreShutdown.preShutdown();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void eventLoopIdle(final Display display) {
         m_openDocProcessor.openFiles();
@@ -178,9 +170,6 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
         super.eventLoopIdle(display);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void postStartup() {
         super.postStartup();
@@ -225,22 +214,42 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
         SWTUtilities.markKNIMEShell();
 
         LongStartupHandler.getInstance().onStartupConcluded();
+
+        checkAnonymousUsageStatistics(SWTUtilities.getKNIMEWorkbenchShell());
     }
 
     /**
-     * {@inheritDoc}
+     * Asks the user to send anonymous usage statistics to KNIME on a new workspace instance.
      */
+    private static void checkAnonymousUsageStatistics(final Shell shell) {
+        IPreferenceStore pStore = KNIMECorePlugin.getDefault().getPreferenceStore();
+        final var alreadyAsked = pStore.getBoolean(HeadlessPreferencesConstants.P_ASKED_ABOUT_STATISTICS);
+        //pStore.setDefault(HeadlessPreferencesConstants.P_SEND_ANONYMOUS_STATISTICS, false);
+        if (alreadyAsked) {
+            return;
+        }
+        final var message = "Help us to further improve KNIME Analytics Platform by sending us anonymous usage data. "
+            + "The data collected is used for recommendations of the new built-in Workflow Coach. "
+            + "Click <a href=\"https://www.knime.com/faq#usage_data\">here</a> to find out what is being transmitted. "
+            + "You can also change this setting in the KNIME preferences later.\n\n"
+            + "Do you allow KNIME to collect and send anonymous usage data? "
+            + "This will also enable the Workflow Coach.";
+        final var allow = LinkMessageDialog.openQuestion(shell, "Help improve KNIME", message);
+        pStore.setValue(HeadlessPreferencesConstants.P_ASKED_ABOUT_STATISTICS, true);
+        pStore.setValue(HeadlessPreferencesConstants.P_SEND_ANONYMOUS_STATISTICS, allow);
+    }
+
     @Override
     public void postShutdown() {
         super.postShutdown();
 
-        if (ResourcesPlugin.getWorkspace() != null) {
+        final var workspace = ResourcesPlugin.getWorkspace();
+        if (workspace != null) {
             try {
-                ResourcesPlugin.getWorkspace().save(true, null);
+                workspace.save(true, null);
             } catch (CoreException ex) {
-                Bundle myself = Platform.getBundle("org.knime.product");
-                Status error = new Status(IStatus.ERROR, "org.knime.product", "Error while saving workspace", ex);
-                Platform.getLog(myself).log(error);
+                Platform.getLog(Platform.getBundle("org.knime.product")) //
+                    .log(new Status(IStatus.ERROR, "org.knime.product", "Error while saving workspace", ex));
             }
         }
     }

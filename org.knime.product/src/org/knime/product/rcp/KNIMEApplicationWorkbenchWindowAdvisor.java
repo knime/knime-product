@@ -57,9 +57,7 @@ import org.eclipse.core.runtime.IProduct;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.action.ICoolBarManager;
 import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.swt.dnd.URLTransfer;
-import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchListener;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -81,9 +79,6 @@ import org.knime.core.node.NodeLogger;
 import org.knime.core.node.workflow.NodeTimer;
 import org.knime.core.util.EclipseUtil;
 import org.knime.product.rcp.intro.IntroPage;
-import org.knime.workbench.core.KNIMECorePlugin;
-import org.knime.workbench.core.preferences.HeadlessPreferencesConstants;
-import org.knime.workbench.core.util.LinkMessageDialog;
 import org.knime.workbench.ui.startup.StartupMessage;
 
 /**
@@ -184,8 +179,8 @@ public class KNIMEApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvis
             "org.eclipse.search.searchActionSet");
 
         ICoolBarManager toolbarManager = ((WorkbenchWindow)workbenchWindow).getCoolBarManager2();
-        Stream.of(toolbarManager.getItems()).filter(item -> toRemove.contains(item.getId()))
-            .forEach(item -> toolbarManager.remove(item));
+        Stream.of(toolbarManager.getItems()).filter(item -> toRemove.contains(item.getId())) //
+            .forEach(toolbarManager::remove);
         toolbarManager.update(true);
 
         removeWizards();
@@ -193,7 +188,6 @@ public class KNIMEApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvis
             showIntroPage();
         }
         showStartupMessages();
-        checkAnonymousUsageStatistics(workbenchWindow.getShell());
         addGlobalNodeTimerShutdownHook();
     }
 
@@ -255,27 +249,6 @@ public class KNIMEApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvis
                 NodeLogger.getLogger(getClass()).error("Could not open startup messages view: " + ex.getMessage(), ex);
             }
         }
-    }
-
-    /**
-     * Asks the user to send anonymous usage statistics to KNIME on a new workspace instance.
-     */
-    private static void checkAnonymousUsageStatistics(final Shell shell) {
-        IPreferenceStore pStore = KNIMECorePlugin.getDefault().getPreferenceStore();
-        boolean alreadyAsked = pStore.getBoolean(HeadlessPreferencesConstants.P_ASKED_ABOUT_STATISTICS);
-        //pStore.setDefault(HeadlessPreferencesConstants.P_SEND_ANONYMOUS_STATISTICS, false);
-        if (alreadyAsked) {
-            return;
-        }
-        String message = "Help us to further improve KNIME Analytics Platform by sending us anonymous usage data. "
-            + "The data collected is used for recommendations of the new built-in Workflow Coach. "
-            + "Click <a href=\"https://www.knime.com/faq#usage_data\">here</a> to find out what is being transmitted. "
-            + "You can also change this setting in the KNIME preferences later.\n\n"
-            + "Do you allow KNIME to collect and send anonymous usage data? "
-            + "This will also enable the Workflow Coach.";
-        boolean allow = LinkMessageDialog.openQuestion(shell, "Help improve KNIME", message);
-        pStore.setValue(HeadlessPreferencesConstants.P_ASKED_ABOUT_STATISTICS, true);
-        pStore.setValue(HeadlessPreferencesConstants.P_SEND_ANONYMOUS_STATISTICS, allow);
     }
 
     /**

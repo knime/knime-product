@@ -48,9 +48,8 @@
  */
 package org.knime.product.rcp.startup;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -70,7 +69,7 @@ final class ConfigAreaFlag {
 
     static Optional<Path> getPathFromLocation(final Location location) {
         // code copied from ConfigurationAreaChecker#getConfigurationLocationPath
-        final URL configURL = location.getURL();
+        final var configURL = location.getURL();
         if (configURL != null) {
             String path = configURL.getPath();
             if (Platform.OS_WIN32.equals(Platform.getOS()) && path.matches("^/[a-zA-Z]:/.*")) {
@@ -93,9 +92,9 @@ final class ConfigAreaFlag {
 
     boolean isFlagSet() {
         try {
-            final Path path = getConfigPath();
+            final var path = getConfigPath();
             if (Files.exists(path)) {
-                try (final BufferedReader reader = Files.newBufferedReader(path)) {
+                try (final var reader = Files.newBufferedReader(path)) {
                     return Boolean.parseBoolean(reader.readLine());
                 }
             }
@@ -107,11 +106,11 @@ final class ConfigAreaFlag {
 
     void setFlag(final boolean value) {
         try {
-            final Path path = getConfigPath();
+            final var path = getConfigPath();
             if (!Files.exists(path)) {
                 Files.createDirectories(path.getParent());
             }
-            final byte[] bytes = Boolean.toString(value).getBytes();
+            final byte[] bytes = Boolean.toString(value).getBytes(StandardCharsets.UTF_8);
             Files.write(path, bytes);
         } catch (final IOException e) {
             m_logger.queueError(String.format("Error when writing %s settings to configuration area.", m_key), e);
@@ -120,7 +119,7 @@ final class ConfigAreaFlag {
 
     private Path getConfigPath() throws IOException {
         // code mostly copied from org.knime.core.internal.ConfigurationAreaChecker#getConfigurationLocationPath
-        final Location configLocation = Platform.getConfigurationLocation();
+        final var configLocation = Platform.getConfigurationLocation();
         if (configLocation == null) {
             throw new IOException("No configuration area set.");
         }

@@ -137,8 +137,9 @@ public final class WindowsDefenderExceptionHandler {
             // look up the Eclipse configuration area to determine if we should even check for Windows Defender
             // run the PowerShell command Get-MpComputerStatus to determine if Windows Defender is enabled
             // run the PowerShell command Get-MpPreference to check if an exception to Defender has already been set
-            if (Platform.OS_WIN32.equals(Platform.getOS()) && System.getProperty("os.name").equals("Windows 10")
-                && !flag.isFlagSet() && isDefenderEnabled() && !isExceptionSet()) {
+            final var isWin10 = Platform.OS_WIN32.equals(Platform.getOS())
+                    && System.getProperty("os.name").equals("Windows 10");
+            if (isWin10 && !flag.isFlagSet() && isDefenderEnabled() && !isExceptionSet()) {
 
                 // only if we went through all the checks above will we show the dialog
                 final WindowsDefenderDetectedDialog dialog = new WindowsDefenderDetectedDialog(display, m_logger);

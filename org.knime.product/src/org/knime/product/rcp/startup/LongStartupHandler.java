@@ -133,7 +133,7 @@ public final class LongStartupHandler {
             m_showWarn = true;
             display.timerExec(STARTUP_TIME_THRESHOLD_MILLIS, () -> {
                 if (!m_startupConcluded) {
-                    final LongStartupDetectedDialog dialog = new LongStartupDetectedDialog(display, m_logger);
+                    final var dialog = new LongStartupDetectedDialog(display, m_logger);
                     long timestampOnOpen = System.currentTimeMillis();
                     dialog.open();
                     // while waiting for the dialog to close, we should not log startup time

@@ -70,7 +70,6 @@ import org.eclipse.ui.internal.Workbench;
 import org.knime.core.node.KNIMEConstants;
 import org.knime.core.ui.util.SWTUtilities;
 import org.knime.core.util.EclipseUtil;
-import org.knime.product.rcp.intro.IntroPage;
 import org.knime.product.rcp.shutdown.PreShutdown;
 import org.knime.product.rcp.startup.LongStartupHandler;
 import org.knime.workbench.core.KNIMECorePlugin;
@@ -137,7 +136,7 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
         super.preStartup();
 
         if (!EclipseUtil.isRunFromSDK()) {
-            if (IntroPage.INSTANCE.isFreshWorkspace()) {
+            if (KNIMEApplication.isStartedWithFreshWorkspace()) {
                 KNIMEConstants.GLOBAL_THREAD_POOL.enqueue(new ExampleWorkflowExtractor());
             }
             changeDefaultPreferences();

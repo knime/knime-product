@@ -70,6 +70,6 @@ public class IntroPageAction extends Action {
      */
     @Override
     public void run() {
-        IntroPage.INSTANCE.show();
+        IntroPage.getInstance().show();
     }
 }

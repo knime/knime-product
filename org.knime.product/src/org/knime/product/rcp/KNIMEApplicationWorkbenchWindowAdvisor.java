@@ -138,6 +138,9 @@ public class KNIMEApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvis
     }
 
     private static void showIntroPage() {
+        if (KNIMEApplication.isStartedWithWebUI()) {
+            return;
+        }
         String showWPString = System.getProperty("knime.show_welcome_page");
         boolean showWelcomePage;
         if (showWPString == null) { // not specified, then only show it in a real product
@@ -146,8 +149,8 @@ public class KNIMEApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvis
             showWelcomePage = Boolean.parseBoolean(showWPString);
         }
         if (showWelcomePage) {
-            IntroPage.INSTANCE.show();
-            if (IntroPage.INSTANCE.isFreshWorkspace()) {
+            IntroPage.getInstance().show();
+            if (KNIMEApplication.isStartedWithFreshWorkspace()) {
                 PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell().setMaximized(true);
             }
         }
@@ -184,9 +187,7 @@ public class KNIMEApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvis
         toolbarManager.update(true);
 
         removeWizards();
-        if (!KNIMEApplication.isStartedWithWebUI()) {
-            showIntroPage();
-        }
+        showIntroPage();
         showStartupMessages();
         addGlobalNodeTimerShutdownHook();
     }

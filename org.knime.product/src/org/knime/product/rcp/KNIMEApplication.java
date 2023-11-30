@@ -33,6 +33,7 @@ import java.util.Properties;
 import javax.swing.SwingUtilities;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -78,8 +79,10 @@ import org.knime.core.util.MutableBoolean;
 import org.knime.product.ProductPlugin;
 import org.knime.product.p2.RepositoryUpdater;
 import org.knime.product.profiles.ProfileManager;
+import org.knime.product.rcp.intro.IntroPage;
 import org.knime.product.rcp.startup.LongStartupHandler;
 import org.knime.product.rcp.startup.WindowsDefenderExceptionHandler;
+import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
 
 /**
@@ -123,6 +126,8 @@ public class KNIMEApplication implements IApplication {
      * restart the workbench.
      */
     private static final Integer EXIT_RELAUNCH = Integer.valueOf(24);
+
+    private static Boolean isFreshWorkspace;
 
     /**
      * {@inheritDoc}
@@ -285,6 +290,23 @@ public class KNIMEApplication implements IApplication {
                 }
             }
         }
+    }
+
+    /**
+     * @return whether the AP has been started with a fresh workspace (i.e. a folder used for the first time as a AP
+     *         workspace)
+     */
+    public static boolean isStartedWithFreshWorkspace() {
+        if (isFreshWorkspace == null) {
+            isFreshWorkspace = !Files.exists(getWorkbenchStateFile());
+        }
+        return isFreshWorkspace.booleanValue();
+    }
+
+    private static Path getWorkbenchStateFile() {
+        Bundle myself = FrameworkUtil.getBundle(IntroPage.class);
+        IPath path = Platform.getStateLocation(myself);
+        return path.toFile().toPath().getParent().resolve("org.eclipse.e4.workbench").resolve("workbench.xmi");
     }
 
     static boolean isStartedWithWebUI() {

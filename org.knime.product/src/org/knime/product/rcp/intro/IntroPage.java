@@ -47,6 +47,8 @@
  */
 package org.knime.product.rcp.intro;
 
+import static org.knime.product.rcp.KNIMEApplication.isStartedWithFreshWorkspace;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -56,7 +58,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -76,7 +77,6 @@ import javax.xml.xpath.XPathFactory;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
@@ -135,7 +135,7 @@ import org.xml.sax.SAXException;
  * @since 2.10
  */
 @SuppressWarnings("restriction")
-public class IntroPage implements LocationListener {
+public final class IntroPage implements LocationListener {
 
     static final boolean MOCK_INTRO_PAGE = Boolean.getBoolean("knime.intro.mock");
 
@@ -144,11 +144,22 @@ public class IntroPage implements LocationListener {
     private static final NodeLogger LOGGER = NodeLogger.getLogger(IntroPage.class);
 
     /**
-     * Singleton instance.
+     *
+     * Returns the singleton instance and lazily creates it if there is not instance, yet.
+     *
+     * Creating the instance for the first time will call the 'tips-and-tricks'-endpoint (in order to send
+     * instrumentation-data and receive the tile-updates for the welcome page).
+     *
+     * @return the singleton instance
      */
-    public static final IntroPage INSTANCE = new IntroPage();
+    public static IntroPage getInstance() {
+        if (instance == null) {
+            instance = new IntroPage();
+        }
+        return instance;
+    }
 
-    private boolean m_freshWorkspace;
+    private static IntroPage instance;
 
     private XPathFactory m_xpathFactory;
 
@@ -163,16 +174,7 @@ public class IntroPage implements LocationListener {
     private final IEclipsePreferences m_prefs =
         InstanceScope.INSTANCE.getNode(FrameworkUtil.getBundle(getClass()).getSymbolicName());
 
-    static Path getWorkbenchStateFile() {
-        Bundle myself = FrameworkUtil.getBundle(IntroPage.class);
-        IPath path = Platform.getStateLocation(myself);
-        return path.toFile().toPath().getParent().resolve("org.eclipse.e4.workbench").resolve("workbench.xmi");
-    }
-
     private IntroPage() {
-        // in fresh workspaces, workbench.xmi does not exist yet
-        m_freshWorkspace = !Files.exists(getWorkbenchStateFile());
-
         // workaround for a bug in XPathFinderFactory on MacOS X
         final ClassLoader previousClassLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
@@ -193,7 +195,7 @@ public class IntroPage implements LocationListener {
             String introFile = "intro4.0/intro.xhtml";
             m_introFile = copyTemplate(introFile, refresh);
 
-            BaseInjector baseInjector = new BaseInjector(m_introFile, m_lock, m_prefs, m_freshWorkspace,
+            BaseInjector baseInjector = new BaseInjector(m_introFile, m_lock, m_prefs, isStartedWithFreshWorkspace(),
                 m_parserFactory, m_xpathFactory, m_transformerFactory);
             baseInjector.run();
 
@@ -209,7 +211,7 @@ public class IntroPage implements LocationListener {
         try {
             Map<String, String> customizationInfo = getBrandingInfo();
             KNIMEConstants.GLOBAL_THREAD_POOL
-                .submit(new TileUpdater(m_introFile, m_lock, m_freshWorkspace, customizationInfo));
+                .submit(new TileUpdater(m_introFile, m_lock, isStartedWithFreshWorkspace(), customizationInfo));
             KNIMEConstants.GLOBAL_THREAD_POOL.submit(new ReleaseMessageUpdater(m_introFile, m_lock));
         } catch (InterruptedException ex) {
             // should not happen
@@ -321,15 +323,6 @@ public class IntroPage implements LocationListener {
             browser.removeLocationListener(this);
             browser.addLocationListener(this);
         }
-    }
-
-    /**
-     * Returns whether we have a fresh or already used workspace.
-     *
-     * @return <code>true</code> if we started with a fresh workspace, <code>false</code> otherwise
-     */
-    public boolean isFreshWorkspace() {
-        return m_freshWorkspace;
     }
 
     /**

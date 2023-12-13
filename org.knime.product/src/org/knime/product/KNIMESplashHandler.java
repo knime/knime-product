@@ -55,6 +55,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtension;
 import org.eclipse.core.runtime.IStatus;
@@ -64,11 +65,13 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.osgi.service.datalocation.Location;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.graphics.Transform;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
@@ -188,6 +191,10 @@ public class KNIMESplashHandler extends BasicSplashHandler {
         splash.setLayout(null);
         // Force shell to inherit the splash background
         splash.setBackgroundMode(SWT.INHERIT_DEFAULT);
+        // workaround for AP-21237
+        if (isFlipBugPresent()) {
+            fixMacOSBackgroundFlipBug(splash);
+        }
         List<IConfigurationElement> splashExtensions = readSplashExtensions();
 
         // If no splash extensions were loaded abort the splash handler
@@ -428,5 +435,42 @@ public class KNIMESplashHandler extends BasicSplashHandler {
         for (Image image : m_images) {
             image.dispose();
         }
+    }
+
+    /**
+     * Check for (likely) presence of flip bug based on the currently known affected versions (>=14.0).
+     *
+     * @return {@code true} if the flip bug is likely present, {@code false} otherwise
+     */
+    private static boolean isFlipBugPresent() {
+        return Platform.OS_MACOSX.equals(Platform.getOS())
+            && (SystemUtils.OS_VERSION != null && SystemUtils.OS_VERSION.startsWith("14."));
+    }
+
+    private static void fixMacOSBackgroundFlipBug(final Shell splash) {
+        final var flippedImage = flip(splash.getDisplay(), splash.getBackgroundImage());
+        splash.setBackgroundImage(flippedImage);
+        // we need to make sure the resource (i.e. image) we allocated gets disposed
+        splash.addDisposeListener(e -> flippedImage.dispose());
+    }
+
+    private static Image flip(final Display display, final Image srcImage) {
+        final var bounds = srcImage.getBounds();
+        final var width = bounds.width;
+        final var height = bounds.height;
+        final var target = new Image(display, width, height);
+        final var gc = new GC(target);
+        gc.setAdvanced(true);
+        gc.setAntialias(SWT.ON);
+        gc.setInterpolation(SWT.HIGH);
+        // flip down
+        final var t = new Transform(display);
+        t.setElements(1, 0, 0, -1, 0, 0);
+        gc.setTransform(t);
+        // draw moved up
+        gc.drawImage(srcImage, 0, -height);
+        gc.dispose();
+        t.dispose();
+        return target;
     }
 }

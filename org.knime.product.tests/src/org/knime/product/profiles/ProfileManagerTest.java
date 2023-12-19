@@ -48,12 +48,13 @@
  */
 package org.knime.product.profiles;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
@@ -71,7 +72,7 @@ public class ProfileManagerTest {
      * Sets up the test environment.
      */
     @BeforeClass
-    public static void appliyProfiles() {
+    public static void applyProfiles() {
         ProfileManager.getInstance().applyProfiles();
     }
 
@@ -83,6 +84,9 @@ public class ProfileManagerTest {
      */
     @Test
     public void testAppliedPreferences() throws Exception {
+        assertThat("Unexpected value for successful profile download for local profile",
+            ProfileManager.getInstance().downloadWasSuccessful(), is(Optional.empty()));
+
         IEclipsePreferences productPrefs = DefaultScope.INSTANCE.getNode("org.knime.product");
         assertThat("Unexpected preferences value for 'test-pref'", productPrefs.get("test-pref", ""), is("custom"));
 

@@ -115,6 +115,8 @@ public class ProfileManager {
 
     private final List<Runnable> m_collectedLogs = new ArrayList<>(2);
 
+    private Boolean m_profileDownloadSuccessful;
+
     /**
      * Returns the singleton instance.
      *
@@ -165,6 +167,7 @@ public class ProfileManager {
      * supplementary files to instance's configuration area.
      */
     public void applyProfiles() {
+        m_profileDownloadSuccessful = null;
         List<Path> localProfiles = fetchProfileContents();
         try {
             applyPreferences(localProfiles);
@@ -397,7 +400,9 @@ public class ProfileManager {
                     }
                 }
             }
+            m_profileDownloadSuccessful = true;
         } catch (IOException | URISyntaxException ex) {
+            m_profileDownloadSuccessful = false;
             String msg = "Could not download profiles from " + profileLocation + ": " + ex.getMessage() + ". "
                 + (Files.isDirectory(profileDir) ? "Will use existing but potentially outdated profiles."
                     : "No profiles will be applied.");
@@ -445,5 +450,16 @@ public class ProfileManager {
      */
     public List<String> getRequestProfiles() {
         return unmodifiableList(m_provider.getRequestedProfiles());
+    }
+
+    /**
+     * Returns whether profiles have been successfully downloaded from the remote location. If {@link #applyProfiles()}
+     * hasn't been called yet or the profile source is not a remote server, an empty optional will be returned.
+     *
+     * @return <code>true</code> if profile download was successful, <code>false</code> if it failed, or an empty
+     *         optional
+     */
+    public Optional<Boolean> downloadWasSuccessful() {
+        return Optional.ofNullable(m_profileDownloadSuccessful);
     }
 }

@@ -149,10 +149,20 @@ public class KNIMEApplication implements IApplication {
             KNIMEOpenUrlEventProcessor openUrlProcessor = new KNIMEOpenUrlEventProcessor();
             display.addListener(SWT.OpenUrl, openUrlProcessor);
 
+            // Before AP-21449, it was forbidden to use the NodeLogger before logging had been initialized, which would
+            // also mean the instance location had to be set. This would forbid all early startup extensions that ran
+            // before the KNIMEApplication started to use the NodeLogger.
+            // This debug log line is intentionally in place before the logging is initialized
+            // to make sure that our buffering is working as intended and not accidentally setting workspace locations
+            // that users don't expect. If we would ever break our buffering, we should hear from (internal) nightly
+            // users quickly.
+            NodeLogger.getLogger(KNIMEApplication.class).debug("Checking for instance location");
             if (!checkInstanceLocation()) {
+                NodeLogger.getLogger(KNIMEApplication.class).debug("Instance location not set");
                 appContext.applicationRunning();
                 return EXIT_OK;
             }
+            NodeLogger.getLogger(KNIMEApplication.class).debug("Instance location set");
 
             final boolean defenderDialogShown = WindowsDefenderExceptionHandler.getInstance()
                 .checkForAndAddExceptionToWindowsDefender("startup-dialog-noshow", display);

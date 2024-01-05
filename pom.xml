@@ -80,5 +80,10 @@
 			<layout>p2</layout>
 			<url>${knime.filehandling.core.p2}</url>
 		</repository>
+		<repository>
+			<id>knime.gateway.p2</id>
+			<layout>p2</layout>
+			<url>${knime.gateway.p2}</url>
+		</repository>
 	</repositories>
 </project>

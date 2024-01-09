@@ -53,6 +53,7 @@ plugins/com.equo.chromium.cef.gtk.linux.x86_64_106.0.19/
 --add-opens=java.desktop/javax.swing.plaf.basic=ALL-UNNAMED
 --add-opens=java.base/sun.net.www.protocol.http=ALL-UNNAMED
 --add-opens=java.base/sun.net.www.protocol.https=ALL-UNNAMED
+--add-opens=java.base/java.util.regex=ALL-UNNAMED
 -Xmx2048m
       </vmArgs>
       <vmArgsLin>-Dorg.eclipse.swt.internal.gtk.disablePrinting

@@ -71,11 +71,6 @@
 			<url>${knime.svg.p2}</url>
 		</repository>
 		<repository>
-			<id>knime.expressions.p2</id>
-			<layout>p2</layout>
-			<url>${knime.expressions.p2}</url>
-		</repository>
-		<repository>
 			<id>knime.filehandling.core.p2</id>
 			<layout>p2</layout>
 			<url>${knime.filehandling.core.p2}</url>

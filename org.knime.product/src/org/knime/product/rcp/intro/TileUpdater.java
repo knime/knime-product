@@ -67,6 +67,7 @@ import org.eclipse.core.runtime.Platform;
 import org.knime.core.node.KNIMEConstants;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.util.HubStatistics;
+import org.knime.core.util.ThreadLocalHTTPAuthenticator;
 import org.knime.product.rcp.intro.json.JSONCategory;
 import org.knime.product.rcp.intro.json.JSONTile;
 import org.knime.product.rcp.intro.json.OfflineJsonCollector;
@@ -119,7 +120,7 @@ public class TileUpdater extends AbstractUpdater {
             return;
         }
         if (TILE_CATEGORIES == null || IntroPage.MOCK_INTRO_PAGE) {
-            try {
+            try (final var c = ThreadLocalHTTPAuthenticator.suppressAuthenticationPopups()) {
                 HttpURLConnection conn = (HttpURLConnection)m_tileURL.openConnection();
                 conn.setReadTimeout(5000);
                 conn.setConnectTimeout(2000);

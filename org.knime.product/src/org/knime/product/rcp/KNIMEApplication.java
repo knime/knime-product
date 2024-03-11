@@ -192,13 +192,6 @@ public class KNIMEApplication implements IApplication {
             fixPerspectiveSwitchProblem();
             updateTheme();
 
-            // Required to make the CEF browser work properly (in particular the so-called 'browser functions' which are
-            // used to call java-functions from js).
-            // With every CEF update we'll need to check whether this is still necessary.
-            if (System.getProperty("chromium.args") == null) {
-                System.setProperty("chromium.args", "--disable-web-security");
-            }
-
             final var iniChangedChecker = new IniChangedChecker(!EclipseUtil.isRunFromSDK() ? getIniPath() : null)
                     .digestIni();
 

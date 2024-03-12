@@ -88,6 +88,7 @@ final class IniChangedChecker {
         m_log = Platform.getLog(Platform.getBundle("org.knime.product"));
         try {
             // md5 is enough in our case
+            // NOFLUID non-sensitive usage
             m_digester = MessageDigest.getInstance("MD5");
         } catch (NoSuchAlgorithmException e) {
             // effectively disable ini-change-detection feature

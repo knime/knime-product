@@ -54,9 +54,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.json.JSONObject;
 import org.knime.core.eclipseUtil.UpdateChecker.UpdateInfo;
 import org.knime.core.node.NodeLogger;
+
+import jakarta.json.Json;
 
 /**
  *
@@ -133,17 +134,18 @@ class ReleaseMessageUpdater extends AbstractUpdater {
             String action = updatePossible ? "intro://invokeUpdate/" : "https://www.knime.com/downloads?src=knimeapp";
             String buttonText = updatePossible ? "Update now" : "Download now";
             createUpdateBanner(icon, title, tileContent, action, buttonText);
-        }
+    }
 
-    private void createUpdateBanner(final String icon, final String title, final String tileContent, final String action,
-        final String buttonText) {
-        JSONObject updateTile = new JSONObject();
-        updateTile.put("icon", icon);
-        updateTile.put("title", title);
-        updateTile.put("tileContent", tileContent);
-        updateTile.put("buttonAction", action);
-        updateTile.put("buttonText", buttonText);
-        executeUpdateInBrowser("displayUpdateTile(" + updateTile + ");");
+    private void createUpdateBanner(final String icon, final String title, final String tileContent,
+        final String action, final String buttonText) {
+        final var jsonObject = Json.createObjectBuilder() //
+            .add("icon", icon) //
+            .add("title", title) //
+            .add("tileContent", tileContent) //
+            .add("buttonAction", action) //
+            .add("buttonText", buttonText) //
+            .build();
+        executeUpdateInBrowser("displayUpdateTile(" + jsonObject.toString() + ");");
     }
 
 }

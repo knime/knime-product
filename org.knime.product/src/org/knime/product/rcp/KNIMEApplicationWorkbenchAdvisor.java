@@ -44,7 +44,6 @@
  */
 package org.knime.product.rcp;
 
-import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
@@ -58,7 +57,6 @@ import org.eclipse.equinox.internal.p2.ui.sdk.scheduler.AutomaticUpdateScheduler
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceNode;
 import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.jface.preference.PreferenceManager;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
@@ -67,6 +65,7 @@ import org.eclipse.ui.application.IWorkbenchWindowConfigurer;
 import org.eclipse.ui.application.WorkbenchAdvisor;
 import org.eclipse.ui.application.WorkbenchWindowAdvisor;
 import org.eclipse.ui.internal.Workbench;
+import org.knime.core.eclipseUtil.EclipseProxyServiceInitializer;
 import org.knime.core.node.KNIMEConstants;
 import org.knime.core.ui.util.SWTUtilities;
 import org.knime.core.util.EclipseUtil;
@@ -172,14 +171,13 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
     @Override
     public void postStartup() {
         super.postStartup();
-        // initialize org.eclipse.core.net so that the Authenticator
-        // for the Update Manager is set and it asks the user for a password
-        // if the Update Site is password protected
-        IProxyService.class.getName();
-        // showIntroPage();
+
+        // Initialize the proxy service from org.eclipse.core.net so that any updates sites
+        // behind an authenticated proxy can be reached (the service supplies configuration)
+        EclipseProxyServiceInitializer.ensureInitialized();
 
         // Remove preference pages we don't want to expose to our users
-        PreferenceManager preferenceRoot = PlatformUI.getWorkbench().getPreferenceManager();
+        final var preferenceRoot = PlatformUI.getWorkbench().getPreferenceManager();
 
         // root preference pages
         preferenceRoot.remove("org.eclipse.ant.ui.AntPreferencePage");

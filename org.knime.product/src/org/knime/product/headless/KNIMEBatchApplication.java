@@ -47,9 +47,9 @@ package org.knime.product.headless;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
+import org.knime.core.internal.CorePlugin;
 import org.knime.core.node.workflow.BatchExecutor;
 import org.knime.core.node.workflow.NodeTimer;
-import org.knime.core.util.IEarlyStartup;
 import org.knime.product.rcp.StatusLoggerHelper;
 import org.osgi.framework.Bundle;
 
@@ -64,7 +64,8 @@ public class KNIMEBatchApplication implements IApplication {
      */
     @Override
     public Object start(final IApplicationContext context) throws Exception {
-        IEarlyStartup.executeEarlyStartup(true);
+        // Starting the Core plugin initializes `IEarlyStartup` and runs the `EARLIEST` and `AFTER_WORKSPACE_SET` stage.
+        CorePlugin.getInstance();
 
         // unless the user specified this property, we set it to true here
         // (true means no icons etc will be loaded, if it is false, the

@@ -59,14 +59,8 @@ import org.osgi.framework.Bundle;
  * @author Bernd Wiswedel, University of Konstanz
  */
 public class KNIMEBatchApplication implements IApplication {
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Object start(final IApplicationContext context) throws Exception {
-        // Starting the Core plugin initializes `IEarlyStartup` and runs the `EARLIEST` and `AFTER_WORKSPACE_SET` stage.
-        CorePlugin.getInstance();
 
+    static {
         // unless the user specified this property, we set it to true here
         // (true means no icons etc will be loaded, if it is false, the
         // loading of the repository manager is likely to print many errors
@@ -74,6 +68,15 @@ public class KNIMEBatchApplication implements IApplication {
         if (System.getProperty("java.awt.headless") == null) {
             System.setProperty("java.awt.headless", "true");
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Object start(final IApplicationContext context) throws Exception {
+        // Starting the Core plugin initializes `IEarlyStartup` and runs the `EARLIEST` and `AFTER_WORKSPACE_SET` stage.
+        CorePlugin.getInstance();
 
         // silence Log4j2's StatusLogger used for internal framework logging
         StatusLoggerHelper.disableStatusLogger();

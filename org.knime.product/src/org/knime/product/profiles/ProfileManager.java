@@ -53,6 +53,7 @@ import static java.util.Collections.unmodifiableList;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Reader;
+import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.net.URI;
@@ -171,7 +172,7 @@ public class ProfileManager {
         List<Path> localProfiles = fetchProfileContents();
         try {
             applyPreferences(localProfiles);
-        } catch (IOException ex) {
+        } catch (IOException | NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException ex) {
             m_collectedLogs.add(() -> NodeLogger.getLogger(ProfileManager.class)
                 .error("Could not apply preferences from profiles: " + ex.getMessage(), ex));
         }
@@ -181,8 +182,13 @@ public class ProfileManager {
 
 
     @SuppressWarnings("restriction")
-    private void applyPreferences(final List<Path> profiles) throws IOException {
-        if (DefaultPreferences.pluginCustomizationFile != null) {
+    private void applyPreferences(final List<Path> profiles) throws IOException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+
+        // This field was made private in a recent eclipse upgrade so we need to use reflection ot access it
+        Field pluginCustomizationFileField = DefaultPreferences.class.getDeclaredField("pluginCustomizationFile");
+        pluginCustomizationFileField.setAccessible(true);
+
+        if ((String)pluginCustomizationFileField.get(null) != null) {
             return; // plugin customizations are already explicitly provided by someone else
         }
 
@@ -229,7 +235,7 @@ public class ProfileManager {
         try (OutputStream out = Files.newOutputStream(pluginCustFile)) {
             combinedProperties.store(out, "");
         }
-        DefaultPreferences.pluginCustomizationFile = pluginCustFile.toAbsolutePath().toString();
+        pluginCustomizationFileField.set(null, pluginCustFile.toAbsolutePath().toString());
     }
 
     private void replaceVariables(final Properties props, final Path profileLocation) throws IOException {

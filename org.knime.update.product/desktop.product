@@ -42,6 +42,7 @@ plugins/com.equo.chromium.cef.gtk.linux.x86_64_116.0.8/
 -XX:CompileCommand=exclude,javax/swing/text/GlyphView,getBreakSpot
 -Dknime.xml.disable_external_entities=true
 -Dcomm.disable_dynamic_service=true
+-Dp2.trustedAuthorities=https://update.knime.com
 --add-opens=java.base/java.lang=ALL-UNNAMED
 --add-opens=java.base/java.lang.invoke=ALL-UNNAMED
 --add-opens=java.base/java.net=ALL-UNNAMED

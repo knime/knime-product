@@ -19,3 +19,14 @@ https://update.knime.com/analytics-platform/5.3,add,enabled,KNIME Analytics Plat
 https://update.knime.com/partner/5.3,add,enabled,KNIME Partner Extensions
 https://update.knime.com/community-contributions/trusted/5.3,add,enabled,KNIME Community Extensions (Trusted)
 https://update.knime.com/community-contributions/5.3,add,disabled,KNIME Community Extensions (Experimental)
+
+# remove birt update sites
+https://download.eclipse.org/birt/updates/release/latest,force-remove
+http://download.eclipse.org/birt/update-site/latest,force-remove
+http://download.eclipse.org/modeling/emf/validation/updates/releases,force-remove
+http://download.eclipse.org/modeling/gmp/gmf-notation/updates/releases,force-remove
+https://download.eclipse.org/birt/update-site/latest,force-remove
+https://download.eclipse.org/egit/updates,force-remove
+https://download.eclipse.org/modeling/emf/emf/builds,force-remove
+https://download.eclipse.org/modeling/gmp/gmf-runtime/updates/releases,force-remove
+https://download.eclipse.org/tools/gef/classic/releases/latest,force-remove

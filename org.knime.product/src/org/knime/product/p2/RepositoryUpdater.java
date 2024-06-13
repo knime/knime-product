@@ -178,7 +178,9 @@ public class RepositoryUpdater implements ProvisioningListener {
 
                 // Only make any modification if this is the first time. We store the information and if the user
                 // has re-added or removed an entry himself, we don't try it a second time
-                if ("remove".equals(parts[1]) && !preferences.getBoolean(oldPrefName + "-removed", false)
+                if ("force-remove".equals(parts[1]) && repoManager.contains(uri)) {
+                    repoManager.removeRepository(uri);
+                } else if ("remove".equals(parts[1]) && !preferences.getBoolean(oldPrefName + "-removed", false)
                     && !preferences.getBoolean(newPrefName + "-removed", false)) {
                     repoManager.removeRepository(uri);
                     preferences.putBoolean(newPrefName + "-removed", true);

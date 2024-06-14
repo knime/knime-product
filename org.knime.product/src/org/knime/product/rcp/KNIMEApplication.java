@@ -73,7 +73,6 @@ import org.knime.core.node.NodeLogger;
 import org.knime.core.node.extension.NodeSpecCollectionProvider;
 import org.knime.core.node.util.ViewUtils;
 import org.knime.core.node.workflow.BatchExecutor;
-import org.knime.core.util.EclipseUtil;
 import org.knime.core.util.GUIDeadlockDetector;
 import org.knime.core.util.MutableBoolean;
 import org.knime.product.ProductPlugin;
@@ -194,8 +193,6 @@ public class KNIMEApplication implements IApplication {
             fixPerspectiveSwitchProblem();
             updateTheme();
 
-            final var iniChangedChecker = new IniChangedChecker(!EclipseUtil.isRunFromSDK() ? getIniPath() : null)
-                    .digestIni();
 
             int returnCode;
             if (m_checkForUpdates && checkForUpdates()) {
@@ -204,18 +201,11 @@ public class KNIMEApplication implements IApplication {
                 startDeadlockDetectors(display);
 
                 // create the workbench with this advisor and run it until it exits
-                // N.B. createWorkbench remembers the advisor, and also registers the workbench globally so that all UI
-                // plug-ins can find it using PlatformUI.getWorkbench() or AbstractUIPlugin.getWorkbench()
-                returnCode = PlatformUI.createAndRunWorkbench(display, getWorkbenchAdvisor(openDocProcessor,
-                    openUrlProcessor, iniChangedChecker));
-            }
-
-            // If the knime.ini did change, we should not restart since it is not re-read at all and critical
-            // changes might not be applied, e.g. a jvm change
-            if (returnCode == PlatformUI.RETURN_RESTART && iniChangedChecker.iniDidChange()) {
-                // The user is notified of the required action using the preShutdown hook in the workbench advisor,
-                // where it is possible to show a dialog, since the workbench/display are not yet closed/disposed.
-                return EXIT_OK;
+                // N.B. createWorkbench remembers the advisor, and also registers
+                // the workbench globally so that all UI plug-ins can find it using
+                // PlatformUI.getWorkbench() or AbstractUIPlugin.getWorkbench()
+                returnCode =
+                    PlatformUI.createAndRunWorkbench(display, getWorkbenchAdvisor(openDocProcessor, openUrlProcessor));
             }
 
             // the workbench doesn't support relaunch yet (bug 61809) so
@@ -349,8 +339,8 @@ public class KNIMEApplication implements IApplication {
     }
 
     private static WorkbenchAdvisor getWorkbenchAdvisor(final KNIMEOpenDocumentEventProcessor openDocProcessor,
-        final KNIMEOpenUrlEventProcessor openUrlProcessor, final IniChangedChecker iniChangedChecker) {
-        return new KNIMEApplicationWorkbenchAdvisor(openDocProcessor, openUrlProcessor, iniChangedChecker);
+        final KNIMEOpenUrlEventProcessor openUrlProcessor) {
+        return new KNIMEApplicationWorkbenchAdvisor(openDocProcessor, openUrlProcessor);
     }
 
     /**
@@ -803,14 +793,5 @@ public class KNIMEApplication implements IApplication {
                 EventQueue.invokeLater(r);
             }
         };
-    }
-
-    private static Path getIniPath() {
-        final var launcherPath = Path.of(System.getProperty("eclipse.launcher"));
-        if (Platform.OS_MACOSX.equals(Platform.getOS())) {
-            return launcherPath.getParent().resolveSibling("Eclipse").resolve("knime.ini");
-        } else {
-            return launcherPath.resolveSibling("knime.ini");
-        }
     }
 }

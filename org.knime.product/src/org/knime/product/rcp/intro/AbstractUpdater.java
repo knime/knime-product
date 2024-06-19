@@ -60,7 +60,9 @@ import org.knime.core.node.NodeLogger;
  *
  * @author Daniel Bogenrieder, KNIME AG, Zurich, Switzerland
  * @since 4.1
+  * @deprecated will be removed as soon as the classic UI is discontinued
  */
+@Deprecated(forRemoval = true)
 abstract class AbstractUpdater extends AbstractIntroPageModifier implements Runnable {
 
     private final NodeLogger LOGGER = NodeLogger.getLogger(getClass());

@@ -51,20 +51,13 @@ package org.knime.product.rcp.intro;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.net.URLEncoder;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.apache.commons.lang3.StringUtils;
-import org.eclipse.core.runtime.Platform;
-import org.knime.core.node.KNIMEConstants;
 import org.knime.core.node.NodeLogger;
-import org.knime.core.util.HubStatistics;
 import org.knime.product.rcp.intro.json.JSONCategory;
 import org.knime.product.rcp.intro.json.JSONTile;
 import org.knime.product.rcp.intro.json.OfflineJsonCollector;
@@ -76,11 +69,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  *
  * @author Christian Albrecht, KNIME GmbH, Konstanz, Germany
  * @since 4.1
+ * @deprecated will be removed as soon as the classic UI is discontinued
  */
+@Deprecated(forRemoval = true)
 public class TileUpdater extends AbstractUpdater {
 
     private static final NodeLogger LOGGER = NodeLogger.getLogger(TileUpdater.class);
-    private static final String WELCOME_PAGE_ENDPOINT = "https://tips-and-tricks.knime.com/welcome-ap";
 
     /**
      * holds either remotely supplied or offline content
@@ -88,10 +82,12 @@ public class TileUpdater extends AbstractUpdater {
     private static JSONCategory[] TILE_CATEGORIES;
 
     private final boolean m_isFreshWorkspace;
-    private final URL m_tileURL;
+
     private final ObjectMapper m_mapper;
+
     private final OfflineJsonCollector m_offlineCollector;
 
+    private final String m_companyName;
 
     /**
      * @param introPageFile the intro page file in the temporary directory
@@ -105,8 +101,9 @@ public class TileUpdater extends AbstractUpdater {
         m_isFreshWorkspace = isFreshWorkspace;
         m_mapper = new ObjectMapper();
         m_offlineCollector = new OfflineJsonCollector();
-        m_tileURL = buildTileURL(customizationInfo);
+        m_companyName = extractCompanyName(customizationInfo);
     }
+
 
     /**
      * {@inheritDoc}
@@ -116,11 +113,8 @@ public class TileUpdater extends AbstractUpdater {
         if (IntroPage.MOCK_INTRO_PAGE) {
             Thread.sleep(1500);
         }
-        if (m_tileURL == null) {
-            return;
-        }
         if (TILE_CATEGORIES == null || IntroPage.MOCK_INTRO_PAGE) {
-            TILE_CATEGORIES = ProductHints.getInstance().getCategories().orElse(null);
+            TILE_CATEGORIES = WelcomeAPEndpoint.getInstance().getCategories(false, m_companyName).orElse(null);
         }
     }
 
@@ -176,80 +170,25 @@ public class TileUpdater extends AbstractUpdater {
         return m_mapper.writeValueAsString(tileArray);
     }
 
-    private URL buildTileURL(final Map<String, String> customizationInfo) {
-        StringBuilder builder = new StringBuilder(WELCOME_PAGE_ENDPOINT);
-        builder.append("?knid=" + KNIMEConstants.getKNID());
-        builder.append("&version=" + KNIMEConstants.VERSION);
-        builder.append("&os=" + Platform.getOS());
-        builder.append("&osname=" + KNIMEConstants.getOSVariant());
-        builder.append("&arch=" + Platform.getOSArch());
-
-        // customization if present
-        if (customizationInfo.containsKey("companyName")) {
-            //Add the customizers name to the URL
-            String companyName = customizationInfo.get("companyName");
-            if (StringUtils.isNoneEmpty(companyName)) {
-                try {
-                    builder.append("&brand=" + URLEncoder.encode(companyName, "UTF-8"));
-                } catch (UnsupportedEncodingException e) {
-                    /* don't append customizer info */
-                    LOGGER.warn("Could not add brand information to welcome page URL: " + e.getMessage(), e);
-                }
-            }
-        }
-
-        // details
-        builder.append("&details=");
-        builder.append(buildAPUsage());
-        builder.append(",");
-        builder.append(buildHubUsage());
-
-        try {
-            return new URL(builder.toString().replace(" ", "%20"));
-        } catch (MalformedURLException e) {
-            LOGGER.error("Could not construct welcome page URL: " + e.getMessage(), e);
-            return null;
-        }
-    }
-
-    private static String buildHubUsage() {
-        String hubUsage = "hubUsage:";
-        Optional<ZonedDateTime> lastLogin = Optional.empty();
-        Optional<ZonedDateTime> lastUpload = Optional.empty();
-        try {
-            lastLogin = HubStatistics.getLastLogin();
-            lastUpload = HubStatistics.getLastUpload();
-        } catch (Exception e) {
-            LOGGER.info("Hub statistics could not be fetched: " + e.getMessage(), e);
-        }
-
-        if (lastUpload.isPresent()) {
-            hubUsage += "contributer";
-        } else if (lastLogin.isPresent()) {
-            hubUsage += "user";
-        } else {
-            hubUsage += "none";
-        }
-        return hubUsage;
-    }
-
-    private String buildAPUsage() {
-        // simple distinction between first and recurring users
-        String apUsage = "apUsage:";
-        if (m_isFreshWorkspace) {
-            apUsage += "first";
-        } else {
-            apUsage += "recurring";
-        }
-        return apUsage;
-    }
-
-
     private void hideElement(final String id) {
         executeUpdateInBrowser("hideElement('" + id + "');");
     }
 
     private void updateTiles(final String tiles) {
         executeUpdateInBrowser("updateTile(" + tiles + ");");
+    }
+
+    private String extractCompanyName(Map<String, String> customizationInfo) {
+        return Optional.ofNullable(customizationInfo.get("companyName")) //
+                .filter(name -> !name.isBlank()) //
+                .map(name -> {
+                    try {
+                        return URLEncoder.encode(name, "UTF-8");
+                    } catch (UnsupportedEncodingException e) {
+                        LOGGER.warn("Could not add brand information to welcome page URL: " + e.getMessage(), e);
+                        return null;
+                    }
+                }) //
+                .orElse(null);
     }
 }

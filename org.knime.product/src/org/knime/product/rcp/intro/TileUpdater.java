@@ -51,12 +51,10 @@ package org.knime.product.rcp.intro;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -67,8 +65,6 @@ import org.eclipse.core.runtime.Platform;
 import org.knime.core.node.KNIMEConstants;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.util.HubStatistics;
-import org.knime.core.util.ThreadLocalHTTPAuthenticator;
-import org.knime.core.util.proxy.URLConnectionFactory;
 import org.knime.product.rcp.intro.json.JSONCategory;
 import org.knime.product.rcp.intro.json.JSONTile;
 import org.knime.product.rcp.intro.json.OfflineJsonCollector;
@@ -86,6 +82,9 @@ public class TileUpdater extends AbstractUpdater {
     private static final NodeLogger LOGGER = NodeLogger.getLogger(TileUpdater.class);
     private static final String WELCOME_PAGE_ENDPOINT = "https://tips-and-tricks.knime.com/welcome-ap";
 
+    /**
+     * holds either remotely supplied or offline content
+     */
     private static JSONCategory[] TILE_CATEGORIES;
 
     private final boolean m_isFreshWorkspace;
@@ -121,25 +120,7 @@ public class TileUpdater extends AbstractUpdater {
             return;
         }
         if (TILE_CATEGORIES == null || IntroPage.MOCK_INTRO_PAGE) {
-            try (final var c = ThreadLocalHTTPAuthenticator.suppressAuthenticationPopups()) {
-                HttpURLConnection conn = (HttpURLConnection)URLConnectionFactory.getConnection(m_tileURL);
-                conn.setReadTimeout(5000);
-                conn.setConnectTimeout(2000);
-                conn.connect();
-
-                final ClassLoader cl = Thread.currentThread().getContextClassLoader();
-                Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
-                try {
-                    TILE_CATEGORIES = m_mapper.readValue(conn.getInputStream(), JSONCategory[].class);
-                    Arrays.sort(TILE_CATEGORIES, (c1, c2) -> c1.getId().compareTo(c2.getId()));
-                } finally {
-                    Thread.currentThread().setContextClassLoader(cl);
-                    conn.disconnect();
-                }
-            } catch (Exception e) {
-                // offline or server not reachable
-                LOGGER.info("Failed to load welcome page content, using offline tiles.");
-            }
+            TILE_CATEGORIES = ProductHints.getInstance().getCategories().orElse(null);
         }
     }
 

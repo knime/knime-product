@@ -1,1 +1,0 @@
-knime-hidpi.exe --launcher.ini knime.ini

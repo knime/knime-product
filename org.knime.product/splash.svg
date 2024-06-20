@@ -10,7 +10,7 @@
 	</text>
 	<!-- Nightly text -->
 	<text id="KNIME-Builddate" style="font-size:11px;text-align:end;text-anchor:end;fill:#6E6E6E;font-family:sans-serif" x="400" y="105">
-		<tspan style="text-align:end;text-anchor:end">(Nightly build)</tspan>
+		<tspan style="text-align:end;text-anchor:end">(Build July 10, 2024)</tspan>
 	</text>
 	<!-- Logo -->
 	<g transform="matrix(0.75,0,0,0.75,38,-70)">

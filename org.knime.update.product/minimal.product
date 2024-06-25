@@ -26,6 +26,7 @@ plugins/com.equo.chromium.cef.gtk.linux.x86_64_116.0.8/
 -Dsun.net.client.defaultReadTimeout=0
 -Dknime.xml.disable_external_entities=true
 -Dcomm.disable_dynamic_service=true
+-Dorg.eclipse.ecf.provider.filetransfer.excludeContributors=org.eclipse.ecf.provider.filetransfer.httpclientjava
 --add-opens=java.base/java.lang=ALL-UNNAMED
 --add-opens=java.base/java.lang.invoke=ALL-UNNAMED
 --add-opens=java.base/java.net=ALL-UNNAMED

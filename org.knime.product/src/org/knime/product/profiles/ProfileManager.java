@@ -54,8 +54,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.lang.reflect.Field;
-import java.net.InetSocketAddress;
-import java.net.ProxySelector;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -82,13 +80,13 @@ import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpHost;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultRedirectStrategy;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.eclipse.core.internal.preferences.DefaultPreferences;
 import org.eclipse.core.runtime.CoreException;
@@ -99,6 +97,8 @@ import org.eclipse.core.runtime.Platform;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.util.KNIMEServerHostnameVerifier;
 import org.knime.core.util.PathUtils;
+import org.knime.core.util.proxy.GlobalProxyConfig;
+import org.knime.core.util.proxy.search.GlobalProxySearch;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
 
@@ -323,14 +323,6 @@ public class ProfileManager {
             m_collectedLogs
                 .add(() -> NodeLogger.getLogger(ProfileManager.class).info("Downloading profiles from " + profileUri));
 
-            // proxies
-            HttpHost proxy = ProxySelector.getDefault().select(profileUri).stream()
-                    .filter(p -> p != null && p.address() != null)
-                    .findFirst()
-                    .map(p -> ((InetSocketAddress) p.address()))
-                    .map(p -> new HttpHost(p.getHostString(), p.getPort()))
-                    .orElse(null);
-
             // timeout; we cannot access KNIMEConstants here because that would access preferences
             int timeout = 2000;
             String to = System.getProperty("knime.url.timeout", Integer.toString(timeout));
@@ -342,15 +334,20 @@ public class ProfileManager {
             }
             RequestConfig requestConfig = RequestConfig.custom()
                     .setConnectTimeout(timeout)
-                    .setProxy(proxy)
                     .setConnectionRequestTimeout(timeout)
                     .build();
-
-
-            try (CloseableHttpClient client = HttpClients.custom()
+            HttpClientBuilder clientBuilder = HttpClients.custom()
                     .setDefaultRequestConfig(requestConfig)
                     .setSSLHostnameVerifier(KNIMEServerHostnameVerifier.getInstance())
-                    .setRedirectStrategy(new DefaultRedirectStrategy()).build()) {
+                    .setRedirectStrategy(new DefaultRedirectStrategy());
+            GlobalProxySearch.getCurrentFor(profileUri)
+                    .map(GlobalProxyConfig::forApacheHttpClient)
+                    .ifPresent(cfg -> {
+                        clientBuilder.setProxy(cfg.getFirst());
+                        clientBuilder.setDefaultCredentialsProvider(cfg.getSecond());
+                    });
+
+            try (CloseableHttpClient client = clientBuilder.build()) {
                 HttpGet get = new HttpGet(profileUri);
 
                 if (newRequestedProfiles.isEmpty() && Files.isDirectory(profileDir)) {

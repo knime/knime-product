@@ -226,6 +226,10 @@ public class KNIMEApplication implements IApplication {
                         "Exception while disposing Display object: " + e.getMessage(), e);
                 }
             }
+            Location instanceLoc = Platform.getInstanceLocation();
+            if (instanceLoc != null) {
+                instanceLoc.release();
+            }
         }
     }
 

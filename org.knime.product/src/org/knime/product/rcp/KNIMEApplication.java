@@ -67,13 +67,13 @@ import org.eclipse.ui.application.WorkbenchAdvisor;
 import org.eclipse.ui.internal.ide.ChooseWorkspaceData;
 import org.eclipse.ui.internal.ide.ChooseWorkspaceDialog;
 import org.eclipse.ui.internal.ide.IDEWorkbenchMessages;
-import org.knime.core.internal.CorePlugin;
 import org.knime.core.node.KNIMEConstants;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.extension.NodeSpecCollectionProvider;
 import org.knime.core.node.util.ViewUtils;
 import org.knime.core.node.workflow.BatchExecutor;
 import org.knime.core.util.GUIDeadlockDetector;
+import org.knime.core.util.IEarlyStartup;
 import org.knime.core.util.MutableBoolean;
 import org.knime.product.ProductPlugin;
 import org.knime.product.p2.RepositoryUpdater;
@@ -133,9 +133,9 @@ public class KNIMEApplication implements IApplication {
      */
     @Override
     public Object start(final IApplicationContext appContext) throws Exception {
-        // Starting the Core plugin initializes `IEarlyStartup` and runs the `EARLIEST` stage. If the workspace is
-        // provided on the commandline (via `-data`), the `AFTER_WORKSPACE_SET` stage is also run.
-        CorePlugin.getInstance();
+        ProfileManager.getInstance().applyProfiles();
+        // also starts core plugin
+        IEarlyStartup.EarlyStartupState.initialize(FrameworkUtil.getBundle(getClass()).getBundleContext());
 
         // silence Log4j2's StatusLogger used for internal framework logging
         StatusLoggerHelper.disableStatusLogger();
@@ -170,8 +170,6 @@ public class KNIMEApplication implements IApplication {
             LongStartupHandler.getInstance().onStartupCommenced("startup-dialog-noshow", !defenderDialogShown, display);
 
             ViewUtils.setLookAndFeel();
-
-            ProfileManager.getInstance().applyProfiles();
 
             // Load node factories asynchronously because the process is very slow, has to happen after the workspace
             // has been selected because the `NodeLogger` class may be loaded, which needs a workspace to log to.

@@ -327,7 +327,8 @@ public class ProfileManager {
             HttpHost proxy = ProxySelector.getDefault().select(profileUri).stream()
                     .filter(p -> p != null && p.address() != null)
                     .findFirst()
-                    .map(p -> new HttpHost(((InetSocketAddress) p.address()).getAddress()))
+                    .map(p -> ((InetSocketAddress) p.address()))
+                    .map(p -> new HttpHost(p.getHostString(), p.getPort()))
                     .orElse(null);
 
             // timeout; we cannot access KNIMEConstants here because that would access preferences

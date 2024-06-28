@@ -727,6 +727,10 @@ license terms applicable to such Node, including when such Node is
 propagated with or for interoperation with KNIME.
    </license>
 
+   <requires>
+      <import feature="org.eclipse.ecf.filetransfer.feature" version="3.14.1900.v20240628-knime" match="greaterOrEqual"/>
+   </requires>
+
    <plugin
          id="org.knime.product"
          download-size="0"

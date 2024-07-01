@@ -75,7 +75,7 @@ public class KNIMEBatchApplication implements IApplication {
      */
     @Override
     public Object start(final IApplicationContext context) throws Exception {
-        // Starting the Core plugin initializes `IEarlyStartup` and runs the `EARLIEST` and `AFTER_WORKSPACE_SET` stage.
+        // Starting the Core plugin initializes `IEarlyStartup` and runs the `EARLIEST` and `AFTER_PROFILES_SET` stage.
         CorePlugin.getInstance();
 
         // silence Log4j2's StatusLogger used for internal framework logging

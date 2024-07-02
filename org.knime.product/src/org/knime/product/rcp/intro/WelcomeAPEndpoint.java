@@ -18,7 +18,6 @@ import org.knime.core.util.EclipseUtil;
 import org.knime.core.util.HubStatistics;
 import org.knime.core.util.ThreadLocalHTTPAuthenticator;
 import org.knime.core.util.proxy.URLConnectionFactory;
-import org.knime.product.rcp.KNIMEApplication;
 import org.knime.product.rcp.intro.json.JSONCategory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -91,7 +90,7 @@ public final class WelcomeAPEndpoint {
                 .addParameter("os", Platform.getOS()) //
                 .addParameter("osname", KNIMEConstants.getOSVariant()) //
                 .addParameter("arch", Platform.getOSArch()) //
-                .addParameter("details", buildAPUsage() + "," + buildHubUsage());
+                .addParameter("details", buildAPUsage() + "," + HubUsage.requestParameter());
             if (calledFromWebUI) {
                 urlBuilder.addParameter("ui", "modern");
             }
@@ -104,6 +103,12 @@ public final class WelcomeAPEndpoint {
             connection.setConnectTimeout(2000);
             connection.connect();
             try (var response = connection.getInputStream()) {
+                // these dates have now been reported to instrumentation via the request
+                HubStatistics.getLastLogin().ifPresent(
+                    ld -> HubStatistics.storeKnimeHubStat(HubStatistics.LAST_SENT_KNIME_HUB_LOGIN, ld.toString()));
+                HubStatistics.getLastUpload().ifPresent(
+                    ud -> HubStatistics.storeKnimeHubStat(HubStatistics.LAST_SENT_KNIME_HUB_UPLOAD, ud.toString()));
+
                 return Optional.of(parseResponse(response));
             } finally {
                 connection.disconnect();
@@ -129,7 +134,7 @@ public final class WelcomeAPEndpoint {
     private static String buildAPUsage() {
         // simple distinction between first and recurring users
         var apUsage = "apUsage:";
-        if (KNIMEApplication.isStartedWithFreshWorkspace()) {
+        if (KNIMEConstants.isUIDNew()){
             apUsage += "first";
         } else {
             apUsage += "recurring";
@@ -137,25 +142,51 @@ public final class WelcomeAPEndpoint {
         return apUsage;
     }
 
-    private static String buildHubUsage() {
-        var hubUsage = "hubUsage:";
-        Optional<ZonedDateTime> lastLogin = Optional.empty();
-        Optional<ZonedDateTime> lastUpload = Optional.empty();
-        try {
-            lastLogin = HubStatistics.getLastLogin();
-            lastUpload = HubStatistics.getLastUpload();
-        } catch (Exception e) { // NOSONAR
-            NodeLogger.getLogger(WelcomeAPEndpoint.class).info("Hub statistics could not be fetched: " + e.getMessage(),
-                e);
+    enum HubUsage {
+            /**
+             * No interaction with any KNIME hub during the previous session (from selecting workspace to switching
+             * workspace or shutting down AP) in the current workspace
+             */
+            NONE("none"),
+            /** A login to a KNIME hub has happened during the last time using the current workspace */
+            USER("user"),
+            /** An upload to a KNIME hub has happened during the last time using the current workspace */
+            CONTRIBUTOR("contributer");
+
+        final String id;
+
+        HubUsage(final String identifier) {
+            id = identifier;
         }
 
-        if (lastUpload.isPresent()) {
-            hubUsage += "contributer";
-        } else if (lastLogin.isPresent()) {
-            hubUsage += "user";
-        } else {
-            hubUsage += "none";
+        static HubUsage current() {
+            Optional<ZonedDateTime> lastLogin = Optional.empty();
+            Optional<ZonedDateTime> lastUpload = Optional.empty();
+            Optional<ZonedDateTime> lastSentLogin = Optional.empty();
+            Optional<ZonedDateTime> lastSentUpload = Optional.empty();
+
+            try {
+                lastLogin = HubStatistics.getLastLogin();
+                lastUpload = HubStatistics.getLastUpload();
+                lastSentLogin = HubStatistics.getLastSentLogin();
+                lastSentUpload = HubStatistics.getLastSentUpload();
+            } catch (Exception e) { // NOSONAR
+                NodeLogger.getLogger(WelcomeAPEndpoint.class)
+                    .info("Hub statistics could not be fetched: " + e.getMessage(), e);
+            }
+
+            if (lastUpload.isPresent() && !lastUpload.equals(lastSentUpload)) {
+                return CONTRIBUTOR;
+            } else if (lastLogin.isPresent() && !lastLogin.equals(lastSentLogin)) {
+                return USER;
+            }
+
+            return NONE;
         }
-        return hubUsage;
+
+        static String requestParameter() {
+            return "hubUsage:" + HubUsage.current().id;
+        }
     }
+
 }

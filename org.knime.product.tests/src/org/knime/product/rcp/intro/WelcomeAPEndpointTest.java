@@ -52,8 +52,9 @@ import static org.junit.Assert.assertEquals;
 
 import java.time.ZonedDateTime;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.knime.core.util.HubStatistics;
 import org.knime.product.rcp.intro.WelcomeAPEndpoint.HubUsage;
 
@@ -64,62 +65,81 @@ import org.knime.product.rcp.intro.WelcomeAPEndpoint.HubUsage;
 public class WelcomeAPEndpointTest {
 
     /** reset the hub statistics */
-    @Before
+    @BeforeEach
     public void setUp() {
+        // reset community hub statistics
         HubStatistics.storeKnimeHubStat(HubStatistics.LAST_KNIME_HUB_LOGIN, "");
         HubStatistics.storeKnimeHubStat(HubStatistics.LAST_KNIME_HUB_UPLOAD, "");
         HubStatistics.storeKnimeHubStat(HubStatistics.LAST_SENT_KNIME_HUB_LOGIN, "");
         HubStatistics.storeKnimeHubStat(HubStatistics.LAST_SENT_KNIME_HUB_UPLOAD, "");
+
+        // reset non-community hub statistics
+        HubStatistics.storeKnimeHubStat(HubStatistics.LAST_KNIME_NON_COMMUNITY_HUB_LOGIN, "");
+        HubStatistics.storeKnimeHubStat(HubStatistics.LAST_KNIME_NON_COMMUNITY_HUB_UPLOAD, "");
+        HubStatistics.storeKnimeHubStat(HubStatistics.LAST_SENT_KNIME_NON_COMMUNITY_HUB_LOGIN, "");
+        HubStatistics.storeKnimeHubStat(HubStatistics.LAST_SENT_KNIME_NON_COMMUNITY_HUB_UPLOAD, "");
     }
 
     /**
      * Test method for hub usage reporting to instrumentation based on {@link HubStatistics}.
+     * @param scope of the hub usage (community or non-community)
      */
-    @Test
-    public void testHubUsageLogin() {
+    @ParameterizedTest
+    @EnumSource(HubUsage.Scope.class)
+    public void testHubUsageLogin(final HubUsage.Scope scope) {
+        final var loginField = scope == HubUsage.Scope.COMMUNITY ? HubStatistics.LAST_KNIME_HUB_LOGIN
+            : HubStatistics.LAST_KNIME_NON_COMMUNITY_HUB_LOGIN;
+        final var sentLoginField = scope == HubUsage.Scope.COMMUNITY ? HubStatistics.LAST_SENT_KNIME_HUB_LOGIN
+            : HubStatistics.LAST_SENT_KNIME_NON_COMMUNITY_HUB_LOGIN;
+
         // no last date is set -> NONE
-        assertEquals(HubUsage.NONE, HubUsage.current());
+        assertEquals(HubUsage.NONE, HubUsage.current(scope));
 
         // last login is set but hasn't been sent -> USER
-        HubStatistics.storeKnimeHubStat(HubStatistics.LAST_KNIME_HUB_LOGIN, ZonedDateTime.now().toString());
-        assertEquals(HubUsage.USER, HubUsage.current());
+        HubStatistics.storeKnimeHubStat(loginField, ZonedDateTime.now().toString());
+        assertEquals(HubUsage.USER, HubUsage.current(scope));
 
         // last login is set but was not in last session but longer ago (it has been reported before) -> NONE
-        HubStatistics.storeKnimeHubStat(HubStatistics.LAST_SENT_KNIME_HUB_LOGIN,
-            HubStatistics.getLastLogin().get().toString());
-        assertEquals(HubUsage.NONE, HubUsage.current());
+        HubStatistics.storeKnimeHubStat(sentLoginField, scope.m_lastLogin.get().get().toString());
+        assertEquals(HubUsage.NONE, HubUsage.current(scope));
 
         // nothing changed -> NONE
-        assertEquals(HubUsage.NONE, HubUsage.current());
+        assertEquals(HubUsage.NONE, HubUsage.current(scope));
 
         // newer login date -> USER
-        HubStatistics.storeKnimeHubStat(HubStatistics.LAST_KNIME_HUB_LOGIN, ZonedDateTime.now().toString());
-        assertEquals(HubUsage.USER, HubUsage.current());
+        HubStatistics.storeKnimeHubStat(loginField, ZonedDateTime.now().toString());
+        assertEquals(HubUsage.USER, HubUsage.current(scope));
     }
 
     /**
      * Test method for hub usage reporting to instrumentation based on {@link HubStatistics}.
+     * @param scope of the hub usage (community or non-community)
      */
-    @Test
-    public void testHubUsageUpload() {
+    @ParameterizedTest
+    @EnumSource(HubUsage.Scope.class)
+    public void testHubUsageUpload(final HubUsage.Scope scope) {
+        final var uploadField = scope == HubUsage.Scope.COMMUNITY ? HubStatistics.LAST_KNIME_HUB_UPLOAD
+            : HubStatistics.LAST_KNIME_NON_COMMUNITY_HUB_UPLOAD;
+        final var sentUploadField = scope == HubUsage.Scope.COMMUNITY ? HubStatistics.LAST_SENT_KNIME_HUB_UPLOAD
+            : HubStatistics.LAST_SENT_KNIME_NON_COMMUNITY_HUB_UPLOAD;
+
         // no last date is set -> NONE
-        assertEquals(HubUsage.NONE, HubUsage.current());
+        assertEquals(HubUsage.NONE, HubUsage.current(scope));
 
         // last upload is set but hasn't been sent -> CONTRIBUTOR
-        HubStatistics.storeKnimeHubStat(HubStatistics.LAST_KNIME_HUB_UPLOAD, ZonedDateTime.now().toString());
-        assertEquals(HubUsage.CONTRIBUTOR, HubUsage.current());
+        HubStatistics.storeKnimeHubStat(uploadField, ZonedDateTime.now().toString());
+        assertEquals(HubUsage.CONTRIBUTOR, HubUsage.current(scope));
 
         // last upload is set but was not in last session but longer ago (it has been reported before) -> NONE
-        HubStatistics.storeKnimeHubStat(HubStatistics.LAST_SENT_KNIME_HUB_UPLOAD,
-            HubStatistics.getLastUpload().get().toString());
-        assertEquals(HubUsage.NONE, HubUsage.current());
+        HubStatistics.storeKnimeHubStat(sentUploadField, scope.m_lastUpload.get().get().toString());
+        assertEquals(HubUsage.NONE, HubUsage.current(scope));
 
         // nothing changed -> NONE
-        assertEquals(HubUsage.NONE, HubUsage.current());
+        assertEquals(HubUsage.NONE, HubUsage.current(scope));
 
         // newer upload date -> CONTRIBUTOR
-        HubStatistics.storeKnimeHubStat(HubStatistics.LAST_KNIME_HUB_UPLOAD, ZonedDateTime.now().toString());
-        assertEquals(HubUsage.CONTRIBUTOR, HubUsage.current());
+        HubStatistics.storeKnimeHubStat(uploadField, ZonedDateTime.now().toString());
+        assertEquals(HubUsage.CONTRIBUTOR, HubUsage.current(scope));
     }
 
 }

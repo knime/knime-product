@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.function.Supplier;
 
 import org.apache.http.client.utils.URIBuilder;
 import org.eclipse.core.runtime.Platform;
@@ -90,7 +91,8 @@ public final class WelcomeAPEndpoint {
                 .addParameter("os", Platform.getOS()) //
                 .addParameter("osname", KNIMEConstants.getOSVariant()) //
                 .addParameter("arch", Platform.getOSArch()) //
-                .addParameter("details", buildAPUsage() + "," + HubUsage.requestParameter());
+                .addParameter("details", buildAPUsage() + "," + HubUsage.requestParameter(HubUsage.Scope.COMMUNITY)
+                    + "," + HubUsage.requestParameter(HubUsage.Scope.NON_COMMUNITY));
             if (calledFromWebUI) {
                 urlBuilder.addParameter("ui", "modern");
             }
@@ -104,10 +106,14 @@ public final class WelcomeAPEndpoint {
             connection.connect();
             try (var response = connection.getInputStream()) {
                 // these dates have now been reported to instrumentation via the request
-                HubStatistics.getLastLogin().ifPresent(
-                    ld -> HubStatistics.storeKnimeHubStat(HubStatistics.LAST_SENT_KNIME_HUB_LOGIN, ld.toString()));
-                HubStatistics.getLastUpload().ifPresent(
-                    ud -> HubStatistics.storeKnimeHubStat(HubStatistics.LAST_SENT_KNIME_HUB_UPLOAD, ud.toString()));
+                HubStatistics.getLastLogin().ifPresent(ld -> HubStatistics//
+                    .storeKnimeHubStat(HubStatistics.LAST_SENT_KNIME_HUB_LOGIN, ld.toString()));
+                HubStatistics.getLastUpload().ifPresent(ud -> HubStatistics//
+                    .storeKnimeHubStat(HubStatistics.LAST_SENT_KNIME_HUB_UPLOAD, ud.toString()));
+                HubStatistics.getLastNonCommunityLogin().ifPresent(ld -> HubStatistics
+                    .storeKnimeHubStat(HubStatistics.LAST_SENT_KNIME_NON_COMMUNITY_HUB_LOGIN, ld.toString()));
+                HubStatistics.getLastNonCommunityUpload().ifPresent(ud -> HubStatistics
+                    .storeKnimeHubStat(HubStatistics.LAST_SENT_KNIME_NON_COMMUNITY_HUB_UPLOAD, ud.toString()));
 
                 return Optional.of(parseResponse(response));
             } finally {
@@ -153,23 +159,54 @@ public final class WelcomeAPEndpoint {
             /** An upload to a KNIME hub has happened during the last time using the current workspace */
             CONTRIBUTOR("contributer");
 
+        enum Scope {
+                /** Compute the hub usage for the KNIME Community Hub. */
+                COMMUNITY("hubUsage", //
+                    HubStatistics::getLastLogin, HubStatistics::getLastUpload, //
+                    HubStatistics::getLastSentLogin, HubStatistics::getLastSentUpload),
+                /** Compute the hub usage for all other KNIME Hub instances. */
+                NON_COMMUNITY("bhubUsage", //
+                    HubStatistics::getLastNonCommunityLogin, HubStatistics::getLastNonCommunityUpload, //
+                    HubStatistics::getLastSentNonCommunityLogin, HubStatistics::getLastSentNonCommunityUpload);
+
+            final String m_parameterName;
+
+            final Supplier<Optional<ZonedDateTime>> m_lastLogin;
+
+            final Supplier<Optional<ZonedDateTime>> m_lastUpload;
+
+            final Supplier<Optional<ZonedDateTime>> m_lastSentLogin;
+
+            final Supplier<Optional<ZonedDateTime>> m_lastSentUpload;
+
+            Scope(final String parameterName, final Supplier<Optional<ZonedDateTime>> lastLogin, final Supplier<Optional<ZonedDateTime>> lastUpload,
+                final Supplier<Optional<ZonedDateTime>> lastSentLogin,
+                final Supplier<Optional<ZonedDateTime>> lastSentUpload) {
+                m_parameterName = parameterName;
+                m_lastLogin = lastLogin;
+                m_lastUpload = lastUpload;
+                m_lastSentLogin = lastSentLogin;
+                m_lastSentUpload = lastSentUpload;
+            }
+        }
+
         final String id;
 
         HubUsage(final String identifier) {
             id = identifier;
         }
 
-        static HubUsage current() {
+        static HubUsage current(final Scope scope) {
             Optional<ZonedDateTime> lastLogin = Optional.empty();
             Optional<ZonedDateTime> lastUpload = Optional.empty();
             Optional<ZonedDateTime> lastSentLogin = Optional.empty();
             Optional<ZonedDateTime> lastSentUpload = Optional.empty();
 
             try {
-                lastLogin = HubStatistics.getLastLogin();
-                lastUpload = HubStatistics.getLastUpload();
-                lastSentLogin = HubStatistics.getLastSentLogin();
-                lastSentUpload = HubStatistics.getLastSentUpload();
+                lastLogin = scope.m_lastLogin.get();
+                lastUpload = scope.m_lastUpload.get();
+                lastSentLogin = scope.m_lastSentLogin.get();
+                lastSentUpload = scope.m_lastSentUpload.get();
             } catch (Exception e) { // NOSONAR
                 NodeLogger.getLogger(WelcomeAPEndpoint.class)
                     .info("Hub statistics could not be fetched: " + e.getMessage(), e);
@@ -184,8 +221,8 @@ public final class WelcomeAPEndpoint {
             return NONE;
         }
 
-        static String requestParameter() {
-            return "hubUsage:" + HubUsage.current().id;
+        static String requestParameter(final Scope scope) {
+            return scope.m_parameterName + ":" + HubUsage.current(scope).id;
         }
     }
 

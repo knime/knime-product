@@ -19,6 +19,7 @@ import org.knime.core.util.EclipseUtil;
 import org.knime.core.util.HubStatistics;
 import org.knime.core.util.ThreadLocalHTTPAuthenticator;
 import org.knime.core.util.proxy.URLConnectionFactory;
+import org.knime.product.rcp.KNIMEApplication;
 import org.knime.product.rcp.intro.json.JSONCategory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -105,16 +106,7 @@ public final class WelcomeAPEndpoint {
             connection.setConnectTimeout(2000);
             connection.connect();
             try (var response = connection.getInputStream()) {
-                // these dates have now been reported to instrumentation via the request
-                HubStatistics.getLastLogin().ifPresent(ld -> HubStatistics//
-                    .storeKnimeHubStat(HubStatistics.LAST_SENT_KNIME_HUB_LOGIN, ld.toString()));
-                HubStatistics.getLastUpload().ifPresent(ud -> HubStatistics//
-                    .storeKnimeHubStat(HubStatistics.LAST_SENT_KNIME_HUB_UPLOAD, ud.toString()));
-                HubStatistics.getLastNonCommunityLogin().ifPresent(ld -> HubStatistics
-                    .storeKnimeHubStat(HubStatistics.LAST_SENT_KNIME_NON_COMMUNITY_HUB_LOGIN, ld.toString()));
-                HubStatistics.getLastNonCommunityUpload().ifPresent(ud -> HubStatistics
-                    .storeKnimeHubStat(HubStatistics.LAST_SENT_KNIME_NON_COMMUNITY_HUB_UPLOAD, ud.toString()));
-
+                HubUsage.dataSent();
                 return Optional.of(parseResponse(response));
             } finally {
                 connection.disconnect();
@@ -149,6 +141,11 @@ public final class WelcomeAPEndpoint {
     }
 
     enum HubUsage {
+            /**
+             * AP was started in a new workspace, so while technically interaction with any Hub was {@link #NONE}, we
+             * still want to differentiate the case where there was no previous session because the workspace is fresh.
+             */
+            NEW("missing"),
             /**
              * No interaction with any KNIME hub during the previous session (from selecting workspace to switching
              * workspace or shutting down AP) in the current workspace
@@ -196,6 +193,18 @@ public final class WelcomeAPEndpoint {
             id = identifier;
         }
 
+        /** Signal that hub usage for the given scope have now been reported to instrumentation */
+        private static void dataSent() {
+            HubStatistics.getLastLogin().ifPresent(ld -> HubStatistics//
+                .storeKnimeHubStat(HubStatistics.LAST_SENT_KNIME_HUB_LOGIN, ld.toString()));
+            HubStatistics.getLastUpload().ifPresent(ud -> HubStatistics//
+                .storeKnimeHubStat(HubStatistics.LAST_SENT_KNIME_HUB_UPLOAD, ud.toString()));
+            HubStatistics.getLastNonCommunityLogin().ifPresent(ld -> HubStatistics
+                .storeKnimeHubStat(HubStatistics.LAST_SENT_KNIME_NON_COMMUNITY_HUB_LOGIN, ld.toString()));
+            HubStatistics.getLastNonCommunityUpload().ifPresent(ud -> HubStatistics
+                .storeKnimeHubStat(HubStatistics.LAST_SENT_KNIME_NON_COMMUNITY_HUB_UPLOAD, ud.toString()));
+        }
+
         static HubUsage current(final Scope scope) {
             Optional<ZonedDateTime> lastLogin = Optional.empty();
             Optional<ZonedDateTime> lastUpload = Optional.empty();
@@ -216,6 +225,8 @@ public final class WelcomeAPEndpoint {
                 return CONTRIBUTOR;
             } else if (lastLogin.isPresent() && !lastLogin.equals(lastSentLogin)) {
                 return USER;
+            } else if (KNIMEApplication.isStartedWithFreshWorkspace()) {
+                return NEW;
             }
 
             return NONE;

@@ -92,19 +92,19 @@ public class WelcomeAPEndpointTest {
         final var sentLoginField = scope == HubUsage.Scope.COMMUNITY ? HubStatistics.LAST_SENT_KNIME_HUB_LOGIN
             : HubStatistics.LAST_SENT_KNIME_NON_COMMUNITY_HUB_LOGIN;
 
-        // no last date is set -> NONE
-        assertEquals(HubUsage.NONE, HubUsage.current(scope));
+        // no last date is set and fresh (temporary testing) workspace -> NEW
+        assertEquals(HubUsage.NEW, HubUsage.current(scope));
 
         // last login is set but hasn't been sent -> USER
         HubStatistics.storeKnimeHubStat(loginField, ZonedDateTime.now().toString());
         assertEquals(HubUsage.USER, HubUsage.current(scope));
 
-        // last login is set but was not in last session but longer ago (it has been reported before) -> NONE
+        // last login is set but was not in last session but longer ago (it has been reported before) -> NEW
         HubStatistics.storeKnimeHubStat(sentLoginField, scope.m_lastLogin.get().get().toString());
-        assertEquals(HubUsage.NONE, HubUsage.current(scope));
+        assertEquals(HubUsage.NEW, HubUsage.current(scope));
 
-        // nothing changed -> NONE
-        assertEquals(HubUsage.NONE, HubUsage.current(scope));
+        // nothing changed -> NEW
+        assertEquals(HubUsage.NEW, HubUsage.current(scope));
 
         // newer login date -> USER
         HubStatistics.storeKnimeHubStat(loginField, ZonedDateTime.now().toString());
@@ -123,19 +123,19 @@ public class WelcomeAPEndpointTest {
         final var sentUploadField = scope == HubUsage.Scope.COMMUNITY ? HubStatistics.LAST_SENT_KNIME_HUB_UPLOAD
             : HubStatistics.LAST_SENT_KNIME_NON_COMMUNITY_HUB_UPLOAD;
 
-        // no last date is set -> NONE
-        assertEquals(HubUsage.NONE, HubUsage.current(scope));
+        // no last date is set and fresh (temporary testing) workspace -> NEW
+        assertEquals(HubUsage.NEW, HubUsage.current(scope));
 
         // last upload is set but hasn't been sent -> CONTRIBUTOR
         HubStatistics.storeKnimeHubStat(uploadField, ZonedDateTime.now().toString());
         assertEquals(HubUsage.CONTRIBUTOR, HubUsage.current(scope));
 
-        // last upload is set but was not in last session but longer ago (it has been reported before) -> NONE
+        // last upload is set but was not in last session but longer ago (it has been reported before) -> NEW
         HubStatistics.storeKnimeHubStat(sentUploadField, scope.m_lastUpload.get().get().toString());
-        assertEquals(HubUsage.NONE, HubUsage.current(scope));
+        assertEquals(HubUsage.NEW, HubUsage.current(scope));
 
-        // nothing changed -> NONE
-        assertEquals(HubUsage.NONE, HubUsage.current(scope));
+        // nothing changed -> NEW
+        assertEquals(HubUsage.NEW, HubUsage.current(scope));
 
         // newer upload date -> CONTRIBUTOR
         HubStatistics.storeKnimeHubStat(uploadField, ZonedDateTime.now().toString());

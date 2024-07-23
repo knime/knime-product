@@ -4,8 +4,8 @@ Bundle-Name: Testcase for org.knime.product
 Bundle-SymbolicName: org.knime.product.tests;singleton:=true
 Bundle-Version: 5.4.0.qualifier
 Bundle-ClassPath: product-test.jar
-Fragment-Host: org.knime.product;bundle-version="[5.3.0,6.0.0)"
-Require-Bundle: org.knime.testing;bundle-version="[5.3.0,6.0.0)",
+Fragment-Host: org.knime.product;bundle-version="[5.4.0,6.0.0)"
+Require-Bundle: org.knime.testing;bundle-version="[5.4.0,6.0.0)",
  junit-jupiter-api;bundle-version="[5.10.2,6.0.0)",
  junit-jupiter-params;bundle-version="[5.10.2,6.0.0)",
  org.junit;bundle-version="[4.13.2,5.0.0)"

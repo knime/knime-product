@@ -83,6 +83,7 @@ import org.osgi.service.prefs.Preferences;
 public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
 
     private final KNIMEOpenDocumentEventProcessor m_openDocProcessor;
+
     private final KNIMEOpenUrlEventProcessor m_openUrlProcessor;
 
     /**
@@ -194,6 +195,15 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
         LongStartupHandler.getInstance().onStartupConcluded();
 
         checkAnonymousUsageStatistics(SWTUtilities.getKNIMEWorkbenchShell());
+        if (KNIMEApplication.isUITestingMode()) {
+            // when running in Xvfb, maximizing is not enough, we need to
+            // manually resize the application window to fit the display
+            var shell = SWTUtilities.getKNIMEWorkbenchShell();
+            var area = shell.getDisplay().getPrimaryMonitor().getClientArea();
+            shell.setSize(area.width, area.height);
+            shell.setMaximized(true);
+            System.out.println( "[UI Testing Mode]: maximizing window to: width = " + area.width + "; height = " + area.height); // NOSONAR
+        }
     }
 
     /**
@@ -203,7 +213,7 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
         IPreferenceStore pStore = KNIMECorePlugin.getDefault().getPreferenceStore();
         final var alreadyAsked = pStore.getBoolean(HeadlessPreferencesConstants.P_ASKED_ABOUT_STATISTICS);
         //pStore.setDefault(HeadlessPreferencesConstants.P_SEND_ANONYMOUS_STATISTICS, false);
-        if (alreadyAsked) {
+        if (alreadyAsked || KNIMEApplication.isUITestingMode()) {
             return;
         }
         final var message = "Help us to further improve KNIME Analytics Platform by sending us anonymous usage data. "
@@ -231,7 +241,6 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
             }
         }
     }
-
 
     private static void changeDefaultPreferences() {
         // enable automatic check for updates every day at 11:00

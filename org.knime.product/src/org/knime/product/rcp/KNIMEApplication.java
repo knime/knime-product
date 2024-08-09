@@ -351,6 +351,16 @@ public class KNIMEApplication implements IApplication {
     }
 
     /**
+     * Checks if we are in the UI Testing mode, which will ensure AP starts in full screen and we do not ask for user
+     * data collection.
+     *
+     * @return if we are in the UI Testing Mode
+     */
+    protected static boolean isUITestingMode() {
+        return "true".equals(System.getenv("KNIME_UI_TESTING_MODE"));
+    }
+
+    /**
      * Creates the display used by the application.
      *
      * @return the display used by the application

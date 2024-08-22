@@ -1,7 +1,7 @@
 #!groovy
 def BN = (BRANCH_NAME == 'master' || BRANCH_NAME.startsWith('releases/')) ? BRANCH_NAME : 'releases/2024-12'
 
-library "knime-pipeline@$BN"
+library "knime-pipeline@todo/DEVOPS-2151-workflow-tests-default-mac-os-arm"
 
 properties([
     pipelineTriggers([
@@ -17,10 +17,10 @@ properties([
 try {
     knimetools.defaultTychoBuild('org.knime.update.product')
 
-    stage('Sonarqube analysis') {
-        env.lastStage = env.STAGE_NAME
-        workflowTests.runSonar([])
-    }
+    // stage('Sonarqube analysis') {
+    //     env.lastStage = env.STAGE_NAME
+    //     workflowTests.runSonar([])
+    // }
 } catch (ex) {
     currentBuild.result = 'FAILURE'
     throw ex

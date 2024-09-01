@@ -2,7 +2,7 @@
 <feature
       id="org.knime.features.product"
       label="KNIME Analytics Platform Product"
-      version="5.3.1.qualifier"
+      version="5.3.2.qualifier"
       provider-name="KNIME AG, Zurich, Switzerland">
 
    <description>

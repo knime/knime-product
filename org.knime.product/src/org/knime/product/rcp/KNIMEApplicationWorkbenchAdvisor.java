@@ -50,9 +50,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.preferences.DefaultScope;
-import org.eclipse.equinox.internal.p2.ui.sdk.scheduler.AutomaticUpdateMessages;
 import org.eclipse.equinox.internal.p2.ui.sdk.scheduler.AutomaticUpdatePlugin;
-import org.eclipse.equinox.internal.p2.ui.sdk.scheduler.AutomaticUpdateScheduler;
 import org.eclipse.jface.preference.IPreferenceNode;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.swt.widgets.Display;
@@ -186,6 +184,11 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
         generalPage.remove("org.eclipse.ui.preferencePages.Perspectives");
         generalPage.remove("org.eclipse.ui.trace.tracingPage");
 
+        // Pages below the 'Install/Update' preference page
+        IPreferenceNode installUpdatePage =
+            preferenceRoot.find("org.eclipse.equinox.internal.p2.ui.sdk.ProvisioningPreferencePage");
+        installUpdatePage.remove("org.eclipse.equinox.internal.p2.ui.sdk.scheduler.AutomaticUpdatesPreferencePage");
+
         // Pages below General -> Appearance
         IPreferenceNode views = generalPage.findSubNode("org.eclipse.ui.preferencePages.Views");
         views.remove("org.eclipse.ui.preferencePages.Decorators");
@@ -243,12 +246,9 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
     }
 
     private static void changeDefaultPreferences() {
-        // enable automatic check for updates every day at 11:00
+        // disable automatic update check, we have our own 'org.knime.core.eclipseUtil.UpdateChecker'
         final Preferences node = DefaultScope.INSTANCE.getNode(AutomaticUpdatePlugin.PLUGIN_ID);
         node.putBoolean(org.eclipse.equinox.internal.p2.ui.sdk.scheduler.PreferenceConstants.PREF_AUTO_UPDATE_ENABLED,
-            true);
-        node.put(org.eclipse.equinox.internal.p2.ui.sdk.scheduler.PreferenceConstants.PREF_AUTO_UPDATE_SCHEDULE,
-            org.eclipse.equinox.internal.p2.ui.sdk.scheduler.PreferenceConstants.PREF_UPDATE_ON_FUZZY_SCHEDULE);
-        node.put(AutomaticUpdateScheduler.P_FUZZY_RECURRENCE, AutomaticUpdateMessages.SchedulerStartup_OnceADay);
+            false);
     }
 }

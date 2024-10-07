@@ -6,12 +6,5 @@
       <startup
             class="org.knime.startup.macosx.StartupHelper"></startup>
    </extension>
-   <extension
-         point="org.knime.core.EarlyStartup">
-      <provider
-            callBeforeKNIMEApplicationStart="false"
-            class="org.knime.startup.macosx.MenuBarAppNameFix">
-      </provider>
-   </extension>
 
 </plugin>

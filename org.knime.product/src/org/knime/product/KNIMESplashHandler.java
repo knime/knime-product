@@ -44,11 +44,21 @@
  */
 package org.knime.product;
 
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.graphics.Transform;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.splash.BasicSplashHandler;
+import org.osgi.framework.Version;
 
 /**
  * This is the dynamic splash screen for KNIME that customizes the text above the progress bar. This implementation of
@@ -77,8 +87,86 @@ public class KNIMESplashHandler extends BasicSplashHandler {
         splash.setLayout(null);
         // Force shell to inherit the splash background
         splash.setBackgroundMode(SWT.INHERIT_DEFAULT);
+        // workaround for AP-23264: old friend splash screen upside down on macOS 15 (Sequoia)
+        if (needsFlip()) {
+            flipBackgroundImage(splash);
+        }
         initProgressBar();
         doEventLoop();
+    }
+
+    private static boolean needsFlip() {
+        /* Eclipse 4.31 flips on macOS 14 or later
+         * (https://github.com/eclipse-platform/eclipse.platform.ui/commit/477da97df613dfb0ba190876387c4407b03355c8),
+         * but macOS 15 fixed the underlying bug, so now we end up with a flipped splash screen again.
+         * Can be removed once we update to Eclipse 2024-09 (Eclipse 4.33) or later,
+         * where their fix only applies to Sonoma
+         * (https://github.com/eclipse-platform/eclipse.platform.ui/commit/26102edfcafec5c8c42949989be6833699790740).
+         */
+        // best effort, we bail if there are any problems
+
+        final var ev = getEclipsePlatformVersion();
+        // affected: Eclipse 4.31 and 4.32, not affected Eclipse 4.33
+        final var incl = new Version(4, 31, 0);
+        final var excl = new Version(4, 33, 0);
+        // determine if we are using an affected Eclipse version, if not, we don't need to check the macOS version
+        if (!(ev == null || (ev.compareTo(incl) >= 0 && ev.compareTo(excl) < 0))) {
+            return false;
+        }
+
+        final var prop = System.getProperty("os.version");
+        if (prop == null) {
+            // don't know which OS version we are on (strange...), so we assume we don't need to flip
+            return false;
+        }
+        try {
+            // "fix" includes macOS 15 and above too, incorrectly, so we have to correct these
+            return Integer.parseInt(prop.split("\\.")[0]) >= 15;
+        } catch (final NumberFormatException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Gets the current Eclipse platform version, e.g. "4.31.100.v20240229-0520".
+     * @return Current Eclipse version or {@code null} if there was any problem determining it
+     */
+    private static Version getEclipsePlatformVersion() {
+        final var product = "org.eclipse.platform.ide";
+        return Optional //
+            .ofNullable(Platform.getExtensionRegistry().getExtensionPoint("org.eclipse.core.runtime.products")) //
+            .map(xp -> Arrays.stream(xp.getExtensions())) //
+            .map(exts -> exts.filter(ext -> product.equals(ext.getUniqueIdentifier()))).flatMap(Stream::findFirst) //
+            .map(ext -> ext.getContributor()) //
+            .map(contrib -> Platform.getBundle(contrib.getName())) //
+            .map(bundle -> bundle.getVersion()).orElse(null); //
+    }
+
+    private static void flipBackgroundImage(final Shell splash) {
+        final var flippedImage = flip(splash.getDisplay(), splash.getBackgroundImage());
+        splash.setBackgroundImage(flippedImage);
+        // we need to make sure the resource (i.e. image) we allocated gets disposed
+        splash.addDisposeListener(e -> flippedImage.dispose());
+    }
+
+    private static Image flip(final Display display, final Image srcImage) {
+        final var bounds = srcImage.getBounds();
+        final var width = bounds.width;
+        final var height = bounds.height;
+        final var target = new Image(display, width, height);
+        final var gc = new GC(target);
+        gc.setAdvanced(true);
+        gc.setAntialias(SWT.ON);
+        gc.setInterpolation(SWT.HIGH);
+        // flip down
+        final var t = new Transform(display);
+        t.setElements(1, 0, 0, -1, 0, 0);
+        gc.setTransform(t);
+        // draw moved up
+        gc.drawImage(srcImage, 0, -height);
+        gc.dispose();
+        t.dispose();
+        return target;
     }
 
     private void initProgressBar() {

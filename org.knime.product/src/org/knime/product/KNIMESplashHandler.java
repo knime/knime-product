@@ -45,8 +45,12 @@
 package org.knime.product;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.graphics.Transform;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.splash.BasicSplashHandler;
 
@@ -77,8 +81,58 @@ public class KNIMESplashHandler extends BasicSplashHandler {
         splash.setLayout(null);
         // Force shell to inherit the splash background
         splash.setBackgroundMode(SWT.INHERIT_DEFAULT);
+        // workaround for AP-23264: old friend splash screen upside down on macOS 15 (Sequoia)
+        if (needsFlip()) {
+            flipBackgroundImage(splash);
+        }
         initProgressBar();
         doEventLoop();
+    }
+
+    private static boolean needsFlip() {
+        /* Eclipse 4.31 flips on macOS 14 or later
+         * (https://github.com/eclipse-platform/eclipse.platform.ui/commit/477da97df613dfb0ba190876387c4407b03355c8),
+         * but macOS 15 fixed the underlying bug, so now we end up with a flipped splash screen again.
+         */
+        // best effort, we bail if there are any problems
+        final var prop = System.getProperty("os.version");
+        if (prop == null) {
+            // don't know which OS version we are on (strange...), so we assume we don't need to flip
+            return false;
+        }
+        try {
+            // "fix" includes macOS 15 and above too, incorrectly, so we have to correct these
+            return Integer.parseInt(prop.split("\\.")[0]) >= 15;
+        } catch (final NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private static void flipBackgroundImage(final Shell splash) {
+        final var flippedImage = flip(splash.getDisplay(), splash.getBackgroundImage());
+        splash.setBackgroundImage(flippedImage);
+        // we need to make sure the resource (i.e. image) we allocated gets disposed
+        splash.addDisposeListener(e -> flippedImage.dispose());
+    }
+
+    private static Image flip(final Display display, final Image srcImage) {
+        final var bounds = srcImage.getBounds();
+        final var width = bounds.width;
+        final var height = bounds.height;
+        final var target = new Image(display, width, height);
+        final var gc = new GC(target);
+        gc.setAdvanced(true);
+        gc.setAntialias(SWT.ON);
+        gc.setInterpolation(SWT.HIGH);
+        // flip down
+        final var t = new Transform(display);
+        t.setElements(1, 0, 0, -1, 0, 0);
+        gc.setTransform(t);
+        // draw moved up
+        gc.drawImage(srcImage, 0, -height);
+        gc.dispose();
+        t.dispose();
+        return target;
     }
 
     private void initProgressBar() {

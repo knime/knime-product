@@ -63,8 +63,6 @@ plugins/com.equo.chromium.cef.gtk.linux.x86_64_124.0.6/
       <vmArgsMac>-XstartOnFirstThread
 -Xdock:icon=../Resources/knime_mac.icns
 -Dorg.eclipse.swt.internal.carbon.smallFonts
--Djavax.net.ssl.trustStore=NONE
--Djavax.net.ssl.trustStoreType=KeychainStore
       </vmArgsMac>
       <vmArgsWin>-Dorg.eclipse.swt.browser.IEVersion=11001
 -Dsun.awt.noerasebackground=true

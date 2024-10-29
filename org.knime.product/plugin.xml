@@ -228,4 +228,10 @@
             pattern="org.eclipse.team.ui/.*View">
       </activityPatternBinding>
    </extension>
+   <extension
+         point="org.knime.product.preShutdown">
+      <preShutdown
+            class="org.knime.product.rcp.shutdown.WaitForExplorerJob">
+      </preShutdown>
+   </extension>
 </plugin>

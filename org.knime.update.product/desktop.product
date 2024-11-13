@@ -67,8 +67,6 @@ plugins/com.equo.chromium.cef.gtk.linux.x86_64_116.0.18/
       <vmArgsWin>-Dorg.eclipse.swt.browser.IEVersion=11001
 -Dsun.awt.noerasebackground=true
 -Dequinox.statechange.timeout=30000
--Djavax.net.ssl.trustStore=NONE
--Djavax.net.ssl.trustStoreType=WINDOWS-ROOT
       </vmArgsWin>
    </launcherArgs>
 

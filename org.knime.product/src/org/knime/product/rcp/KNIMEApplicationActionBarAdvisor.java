@@ -51,6 +51,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.IConfigurationElement;
@@ -89,6 +90,9 @@ import org.knime.core.node.KNIMEConstants;
 import org.knime.product.customizations.CustomizedContactSupportAction;
 import org.knime.product.customizations.CustomizedDocAction;
 import org.knime.product.rcp.intro.IntroPageAction;
+import org.knime.workbench.editor2.exportmenu.ExportMenu;
+import org.knime.workbench.editor2.svgexport.SVGExportAction;
+import org.knime.workbench.editor2.workflowsummaryexport.ExportWorkflowSummaryAction;
 import org.knime.workbench.explorer.view.actions.export.WorkflowExportApplicationAction;
 import org.knime.workbench.explorer.view.actions.imports.WorkflowImportApplicationAction;
 import org.knime.workbench.ui.p2.actions.InvokeInstallSiteAction;
@@ -162,6 +166,12 @@ public class KNIMEApplicationActionBarAdvisor extends ActionBarAdvisor {
     private IAction m_exportWorkflowAction;
 
     private IAction m_importWorkflowAction;
+
+    private IAction m_exportWorkflowSummaryAction;
+
+    private Optional<SVGExportAction> m_svgExportActionOptional;
+
+    private IAction m_exportWorkflowSVGAction;
 
     private IContributionItem m_showViewShortlistContributionItem;
 
@@ -307,6 +317,16 @@ public class KNIMEApplicationActionBarAdvisor extends ActionBarAdvisor {
         register(m_exportWorkflowAction);
         m_importWorkflowAction = new WorkflowImportApplicationAction();
         register(m_importWorkflowAction);
+
+        m_exportWorkflowSummaryAction = new ExportWorkflowSummaryAction();
+        register(m_exportWorkflowSummaryAction);
+        m_svgExportActionOptional = SVGExportAction.create();
+        m_exportWorkflowSVGAction = null;
+        if (m_svgExportActionOptional.isPresent()) {
+            m_exportWorkflowSVGAction = m_svgExportActionOptional.get();
+            register(m_exportWorkflowSVGAction);
+        }
+
     }
 
     /**
@@ -331,6 +351,7 @@ public class KNIMEApplicationActionBarAdvisor extends ActionBarAdvisor {
                 new MenuManager("&View", IWorkbenchActionConstants.M_VIEW);
         MenuManager helpMenu =
                 new MenuManager("&Help", IWorkbenchActionConstants.M_HELP);
+        MenuManager exportMenu = new ExportMenu().getExportMenuManager();
 
         // 1. File menu
         menuBar.add(fileMenu);
@@ -355,6 +376,11 @@ public class KNIMEApplicationActionBarAdvisor extends ActionBarAdvisor {
         fileMenu.add(m_print);
         fileMenu.add(m_importWorkflowAction);
         fileMenu.add(m_exportWorkflowAction);
+        exportMenu.add(m_exportWorkflowSummaryAction);
+        if (m_svgExportActionOptional.isPresent()) {
+            exportMenu.add(m_exportWorkflowSVGAction);
+        }
+        fileMenu.add(exportMenu);
         fileMenu.add(new GroupMarker("ExportWorkflow"));
         fileMenu.add(new Separator());
         fileMenu.add(m_changeWorkspaceAction);

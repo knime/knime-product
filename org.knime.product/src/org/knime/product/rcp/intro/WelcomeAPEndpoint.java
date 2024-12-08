@@ -13,11 +13,14 @@ import java.util.function.Supplier;
 
 import org.apache.http.client.utils.URIBuilder;
 import org.eclipse.core.runtime.Platform;
+import org.knime.core.customization.ui.UICustomization;
+import org.knime.core.internal.CorePlugin;
 import org.knime.core.node.KNIMEConstants;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.util.EclipseUtil;
 import org.knime.core.util.HubStatistics;
 import org.knime.core.util.ThreadLocalHTTPAuthenticator;
+import org.knime.core.util.User;
 import org.knime.core.util.proxy.URLConnectionFactory;
 import org.knime.product.rcp.KNIMEApplication;
 import org.knime.product.rcp.intro.json.JSONCategory;
@@ -28,6 +31,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * Interact with the "Welcome AP" endpoint.
  */
 public final class WelcomeAPEndpoint {
+
     private static final String ENDPOINT = "https://tips-and-tricks.knime.com/welcome-ap";
 
     private static WelcomeAPEndpoint instance;
@@ -85,8 +89,20 @@ public final class WelcomeAPEndpoint {
         if (EclipseUtil.isRunFromSDK()) {
             return Optional.empty();
         }
+        Optional<UICustomization> uiCustomizationOptional =
+                CorePlugin.getInstance().getCustomizationService().map(s -> s.getCustomization().ui());
+        String endpointURL;
+        if (uiCustomizationOptional.map(UICustomization::getWelcomeAPEndpointURLType).orElse(
+            UICustomization.WelcomeAPEndPointURLType.DEFAULT) != UICustomization.WelcomeAPEndPointURLType.DEFAULT) {
+            endpointURL = uiCustomizationOptional.get().getWelcomeAPEndpointURL().orElse(ENDPOINT);
+        } else {
+            endpointURL = ENDPOINT;
+        }
+        if (endpointURL == null) { // set as NONE in customization profile, no tiles needed/wanted
+            return Optional.empty();
+        }
         try (final var suppression = ThreadLocalHTTPAuthenticator.suppressAuthenticationPopups()) {
-            var urlBuilder = new URIBuilder(ENDPOINT) //
+            var urlBuilder = new URIBuilder(endpointURL) //
                 .addParameter("knid", KNIMEConstants.getKNID()) //
                 .addParameter("version", KNIMEConstants.VERSION) //
                 .addParameter("os", Platform.getOS()) //
@@ -94,6 +110,12 @@ public final class WelcomeAPEndpoint {
                 .addParameter("arch", Platform.getOSArch()) //
                 .addParameter("details", buildAPUsage() + "," + HubUsage.requestParameter(HubUsage.Scope.COMMUNITY)
                     + "," + HubUsage.requestParameter(HubUsage.Scope.NON_COMMUNITY));
+            if (urlBuilder.getQueryParams().stream().anyMatch(p -> p.getName().equals("user"))) {
+                // only relevant for B-Hub endpoints
+                // the public KNIME endpoint does not need this, see ENDPOINT field above (no query parameters)
+                String userid = readUsername();
+                urlBuilder.setParameter("user", userid);
+            }
             if (calledFromWebUI) {
                 urlBuilder.addParameter("ui", "modern");
             }
@@ -116,6 +138,23 @@ public final class WelcomeAPEndpoint {
             NodeLogger.getLogger(WelcomeAPEndpoint.class).error("Calling welcome page endpoint failed", e);
             return Optional.empty();
         }
+    }
+
+    /**
+     * Determines the current user's user name (slightly more robust than just using System.getProperty("user.name")).
+     * Used for custom endpoint, e.g. via B-Hub, where admins want to collect the user ids of users starting KNIME AP.
+     * For the open source, standard KNIME distribution this is not relevant.
+     * @return The user name.
+     */
+    private static String readUsername() {
+        String userid;
+        try {
+            userid = User.getUsername();
+        } catch (Exception ex) {
+            NodeLogger.getLogger(WelcomeAPEndpoint.class).warn("Could not determine user name", ex);
+            userid = System.getProperty("user.name");
+        }
+        return userid;
     }
 
     private static JSONCategory[] parseResponse(final InputStream response) throws IOException {

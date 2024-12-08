@@ -5,19 +5,29 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.utils.URIBuilder;
 import org.eclipse.core.runtime.Platform;
+import org.knime.core.customization.ui.UICustomization;
+import org.knime.core.customization.ui.UICustomization.WelcomeAPEndPointURLType;
+import org.knime.core.internal.CorePlugin;
 import org.knime.core.node.KNIMEConstants;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.util.EclipseUtil;
 import org.knime.core.util.HubStatistics;
 import org.knime.core.util.ThreadLocalHTTPAuthenticator;
+import org.knime.core.util.User;
 import org.knime.core.util.proxy.URLConnectionFactory;
 import org.knime.product.rcp.KNIMEApplication;
 import org.knime.product.rcp.intro.json.JSONCategory;
@@ -28,6 +38,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * Interact with the "Welcome AP" endpoint.
  */
 public final class WelcomeAPEndpoint {
+
     private static final String ENDPOINT = "https://tips-and-tricks.knime.com/welcome-ap";
 
     private static WelcomeAPEndpoint instance;
@@ -36,6 +47,7 @@ public final class WelcomeAPEndpoint {
 
     /**
      * Singleton to be accessible from classic UI or early lifecycle stages of web UI.
+     *
      * @return the singleton instance
      */
     public static WelcomeAPEndpoint getInstance() {
@@ -81,41 +93,82 @@ public final class WelcomeAPEndpoint {
      * @param companyName Customisation information from AP instance, nullable. Already URL-encoded.
      * @return The home page tile contents, grouped into categories.
      */
-    private static Optional<JSONCategory[]> request(final boolean calledFromWebUI, final String companyName) {
+    private static Optional<JSONCategory[]> request(final boolean calledFromWebUI, final String companyName) { // NOSONAR
         if (EclipseUtil.isRunFromSDK()) {
             return Optional.empty();
         }
-        try (final var suppression = ThreadLocalHTTPAuthenticator.suppressAuthenticationPopups()) {
-            var urlBuilder = new URIBuilder(ENDPOINT) //
-                .addParameter("knid", KNIMEConstants.getKNID()) //
-                .addParameter("version", KNIMEConstants.VERSION) //
-                .addParameter("os", Platform.getOS()) //
-                .addParameter("osname", KNIMEConstants.getOSVariant()) //
-                .addParameter("arch", Platform.getOSArch()) //
-                .addParameter("details", buildAPUsage() + "," + HubUsage.requestParameter(HubUsage.Scope.COMMUNITY)
-                    + "," + HubUsage.requestParameter(HubUsage.Scope.NON_COMMUNITY));
-            if (calledFromWebUI) {
-                urlBuilder.addParameter("ui", "modern");
+        Optional<UICustomization> uiCustomizationOptional =
+            CorePlugin.getInstance().getCustomizationService().map(s -> s.getCustomization().ui());
+
+        final Map<String, List<JSONCategory>> endpointToCategoriesMaps = new LinkedHashMap<>();
+        uiCustomizationOptional.flatMap(UICustomization::getWelcomeAPEndpointURL)
+            .ifPresent(ep -> endpointToCategoriesMaps.put(ep, new ArrayList<>()));
+        endpointToCategoriesMaps.put(ENDPOINT, new ArrayList<>());
+        for (Map.Entry<String, List<JSONCategory>> entry : endpointToCategoriesMaps.entrySet()) {
+            final String endpointURL = replaceUserFieldInEndpointURLIfPresent(entry.getKey());
+            try (final var suppression = ThreadLocalHTTPAuthenticator.suppressAuthenticationPopups()) {
+                var urlBuilder = new URIBuilder(endpointURL) //
+                    .addParameter("knid", KNIMEConstants.getKNID()) //
+                    .addParameter("version", KNIMEConstants.VERSION) //
+                    .addParameter("os", Platform.getOS()) //
+                    .addParameter("osname", KNIMEConstants.getOSVariant()) //
+                    .addParameter("arch", Platform.getOSArch()) //
+                    .addParameter("details", buildAPUsage() + "," + HubUsage.requestParameter(HubUsage.Scope.COMMUNITY)
+                        + "," + HubUsage.requestParameter(HubUsage.Scope.NON_COMMUNITY));
+                if (calledFromWebUI) {
+                    urlBuilder.addParameter("ui", "modern");
+                }
+                if (companyName != null) {
+                    urlBuilder.addParameter("brand", companyName);
+                }
+                var url = urlBuilder.build().toURL();
+                var connection = (HttpURLConnection)URLConnectionFactory.getConnection(url);
+                connection.setReadTimeout(5000);
+                connection.setConnectTimeout(2000);
+                connection.connect();
+                try (var response = connection.getInputStream()) {
+                    entry.getValue().addAll(Arrays.asList(parseResponse(response)));
+                } finally {
+                    connection.disconnect();
+                }
+                if (ENDPOINT.equals(endpointURL)) {
+                    HubUsage.dataSent();
+                }
+            } catch (URISyntaxException | IOException e) {
+                NodeLogger.getLogger(WelcomeAPEndpoint.class)
+                    .error(String.format("Calling welcome page endpoint failed%s:%s",
+                        ENDPOINT.equals(endpointURL) ? "" : (" (" + endpointURL + ")"), e.getMessage()), e);
             }
-            if (companyName != null) {
-                urlBuilder.addParameter("brand", companyName);
-            }
-            var url = urlBuilder.build().toURL();
-            var connection = (HttpURLConnection)URLConnectionFactory.getConnection(url);
-            connection.setReadTimeout(5000);
-            connection.setConnectTimeout(2000);
-            connection.connect();
-            try (var response = connection.getInputStream()) {
-                HubUsage.dataSent();
-                return Optional.of(parseResponse(response));
-            } finally {
-                connection.disconnect();
-            }
-        } catch (URISyntaxException | IOException e) {
-            // URISyntaxException should never happen -- URL is hardcoded
-            NodeLogger.getLogger(WelcomeAPEndpoint.class).error("Calling welcome page endpoint failed", e);
-            return Optional.empty();
         }
+        if (uiCustomizationOptional //
+                .map(UICustomization::getWelcomeAPEndpointURLType) //
+                .stream() //
+                .anyMatch(type -> type != WelcomeAPEndPointURLType.NONE)) {
+            return endpointToCategoriesMaps.values().stream().findFirst().map(l -> l.toArray(JSONCategory[]::new));
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * For user-defined endpoints, replace the placeholder "{user}" with the actual user name. In most cases (99.9%+)
+     * this method does nothing as the default endpoint in the public KNIME distribution is used
+     * (see {@link #ENDPOINT}). Custom Business-Hubs might deliver AP customizations with custom endpoints having place
+     * holders for the user name. The user name is determined by {@link User#getUsername()}.
+     *
+     * @return The modified endpoint URL in case it contains the placeholder "{user}". Otherwise the input is returned.
+     */
+    private static String replaceUserFieldInEndpointURLIfPresent(final String rawEndpointURLAsString) {
+        if (rawEndpointURLAsString.contains("{user}")) {
+            String userid;
+            try {
+                userid = User.getUsername();
+            } catch (Exception ex) {
+                NodeLogger.getLogger(WelcomeAPEndpoint.class).warn("Could not determine user name", ex);
+                userid = System.getProperty("user.name");
+            }
+            return StringUtils.replace(rawEndpointURLAsString, "{user}", userid);
+        }
+        return rawEndpointURLAsString;
     }
 
     private static JSONCategory[] parseResponse(final InputStream response) throws IOException {
@@ -132,7 +185,7 @@ public final class WelcomeAPEndpoint {
     private static String buildAPUsage() {
         // simple distinction between first and recurring users
         var apUsage = "apUsage:";
-        if (KNIMEConstants.isUIDNew()){
+        if (KNIMEConstants.isUIDNew()) {
             apUsage += "first";
         } else {
             apUsage += "recurring";

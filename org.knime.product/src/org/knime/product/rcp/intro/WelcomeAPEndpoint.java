@@ -51,11 +51,6 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -85,7 +80,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public final class WelcomeAPEndpoint {
 
-    private static final String ENDPOINT = "https://tips-and-tricks.knime.com/welcome-ap";
+    private static final String KNIME_COM_ENDPOINT = "https://tips-and-tricks.knime.com/welcome-ap";
 
     private static WelcomeAPEndpoint instance;
 
@@ -121,86 +116,93 @@ public final class WelcomeAPEndpoint {
      * @param companyName Customisation information from AP instance, nullable. Already URL-encoded.
      * @return the home/welcome page content categories or an empty optional if run from the SDK
      */
-    @SuppressWarnings({"java:S2142", "java:S1166"})
     public Optional<JSONCategory[]> getCategories(final boolean calledFromWebUI, final String companyName) {
         if (m_future == null) {
-            m_future = CompletableFuture.supplyAsync(() -> WelcomeAPEndpoint.request(calledFromWebUI, companyName));
+            m_future =
+                CompletableFuture.supplyAsync(() -> WelcomeAPEndpoint.requestCategories(calledFromWebUI, companyName));
         }
         try {
             return m_future.get();
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException | ExecutionException e) { // NOSONAR (exception handled in requestCategories)
             return Optional.empty();
         }
     }
 
     /**
-     * Perform request to endpoint.
+     * Negotiate which endpoints to hit and of which to return results from.
      *
      * @param calledFromWebUI Whether the call is made from the Web UI.
      * @param companyName Customisation information from AP instance, nullable. Already URL-encoded.
      * @return The home page tile contents, grouped into categories.
      */
-    private static Optional<JSONCategory[]> request(final boolean calledFromWebUI, final String companyName) {
+    private static Optional<JSONCategory[]> requestCategories(final boolean calledFromWebUI, final String companyName) {
         if (EclipseUtil.isRunFromSDK()) {
             return Optional.empty();
         }
-        Optional<UICustomization> uiCustomizationOptional =
-            CorePlugin.getInstance().getCustomizationService().map(s -> s.getCustomization().ui());
+        var customization = CorePlugin.getInstance().getCustomizationService() //
+            .map(s -> s.getCustomization().ui());
 
-        final Map<String, List<JSONCategory>> endpointToCategoriesMaps = new LinkedHashMap<>();
-        uiCustomizationOptional.flatMap(UICustomization::getWelcomeAPEndpointURL)
-            .ifPresent(ep -> endpointToCategoriesMaps.put(ep, new ArrayList<>()));
-        endpointToCategoriesMaps.put(ENDPOINT, new ArrayList<>());
-        for (Map.Entry<String, List<JSONCategory>> entry : endpointToCategoriesMaps.entrySet()) {
-            final String endpointURL = replaceUserFieldInEndpointURLIfPresent(entry.getKey());
-            try (final var suppression = ThreadLocalHTTPAuthenticator.suppressAuthenticationPopups()) {
-                var urlBuilder = new URIBuilder(endpointURL) //
-                    .addParameter("knid", KNIMEConstants.getKNID()) //
-                    .addParameter("version", KNIMEConstants.VERSION) //
-                    .addParameter("os", Platform.getOS()) //
-                    .addParameter("osname", KNIMEConstants.getOSVariant()) //
-                    .addParameter("arch", Platform.getOSArch()) //
-                    .addParameter("details", buildAPUsage() + "," + HubUsage.requestParameter(HubUsage.Scope.COMMUNITY)
-                        + "," + HubUsage.requestParameter(HubUsage.Scope.NON_COMMUNITY));
-                if (calledFromWebUI) {
-                    urlBuilder.addParameter("ui", "modern");
-                }
-                if (companyName != null) {
-                    urlBuilder.addParameter("brand", companyName);
-                }
-                var url = urlBuilder.build().toURL();
-                var connection = (HttpURLConnection)URLConnectionFactory.getConnection(url);
-                connection.setReadTimeout(5000);
-                connection.setConnectTimeout(2000);
-                connection.connect();
-                try (var response = connection.getInputStream()) {
-                    entry.getValue().addAll(Arrays.asList(parseResponse(response)));
-                } finally {
-                    connection.disconnect();
-                }
-                if (ENDPOINT.equals(endpointURL)) {
+        Optional<String> customEndpoint = customization.flatMap(UICustomization::getWelcomeAPEndpointURL);
+
+        var responseFromCustomEndpoint = customEndpoint //
+            .map(WelcomeAPEndpoint::replaceUserFieldInEndpointURLIfPresent) //
+            .flatMap(endpoint -> performRequest(endpoint, calledFromWebUI, companyName));
+        // always request KNIME endpoint for tracking, even though we might not use the response
+        var responseFromKnimeEndpoint = performRequest(KNIME_COM_ENDPOINT, calledFromWebUI, companyName); // NOSONAR
+
+        var customUrlType = customization.map(UICustomization::getWelcomeAPEndpointURLType);
+        if (customUrlType.stream().anyMatch(type -> type == WelcomeAPEndPointURLType.NONE)) {
+            return Optional.empty();
+        } else if (responseFromCustomEndpoint.isPresent()) {
+            return responseFromCustomEndpoint;
+        } else {
+            return responseFromKnimeEndpoint;
+        }
+    }
+
+    private static Optional<JSONCategory[]> performRequest(String endpointUrl, final boolean calledFromWebUI,
+        final String companyName) {
+        try (final var suppression = ThreadLocalHTTPAuthenticator.suppressAuthenticationPopups()) {
+            var urlBuilder = new URIBuilder(endpointUrl) //
+                .addParameter("knid", KNIMEConstants.getKNID()) //
+                .addParameter("version", KNIMEConstants.VERSION) //
+                .addParameter("os", Platform.getOS()) //
+                .addParameter("osname", KNIMEConstants.getOSVariant()) //
+                .addParameter("arch", Platform.getOSArch()) //
+                .addParameter("details", buildAPUsage() + "," + HubUsage.requestParameter(HubUsage.Scope.COMMUNITY)
+                    + "," + HubUsage.requestParameter(HubUsage.Scope.NON_COMMUNITY));
+            if (calledFromWebUI) {
+                urlBuilder.addParameter("ui", "modern");
+            }
+            if (companyName != null) {
+                urlBuilder.addParameter("brand", companyName);
+            }
+            var url = urlBuilder.build().toURL();
+            var connection = (HttpURLConnection)URLConnectionFactory.getConnection(url);
+            connection.setReadTimeout(5000);
+            connection.setConnectTimeout(2000);
+            connection.connect();
+            try (var response = connection.getInputStream()) {
+                if (KNIME_COM_ENDPOINT.equals(endpointUrl)) {
                     HubUsage.dataSent();
                 }
-            } catch (URISyntaxException | IOException e) {
-                NodeLogger.getLogger(WelcomeAPEndpoint.class)
-                    .error(String.format("Calling welcome page endpoint failed%s:%s",
-                        ENDPOINT.equals(endpointURL) ? "" : (" (" + endpointURL + ")"), e.getMessage()), e);
+                return Optional.of(parseResponse(response));
+            } finally {
+                connection.disconnect();
             }
+        } catch (URISyntaxException | IOException e) {
+            NodeLogger.getLogger(WelcomeAPEndpoint.class)
+                .error(String.format("Calling welcome page endpoint failed%s:%s",
+                    KNIME_COM_ENDPOINT.equals(endpointUrl) ? "" : (" (" + endpointUrl + ")"), e.getMessage()), e);
+            return Optional.empty();
         }
-        if (uiCustomizationOptional //
-            .map(UICustomization::getWelcomeAPEndpointURLType) //
-            .stream() //
-            .anyMatch(type -> type != WelcomeAPEndPointURLType.NONE)) {
-            return endpointToCategoriesMaps.values().stream().findFirst().map(l -> l.toArray(JSONCategory[]::new));
-        }
-        return Optional.empty();
     }
 
     /**
      * For user-defined endpoints, replace the placeholder "{user}" with the actual user name. In most cases (99.9%+)
      * this method does nothing as the default endpoint in the public KNIME distribution is used (see
-     * {@link #ENDPOINT}). Custom Business-Hubs might deliver AP customizations with custom endpoints having place
-     * holders for the user name. The user name is determined by {@link User#getUsername()}.
+     * {@link #KNIME_COM_ENDPOINT}). Custom Business-Hubs might deliver AP customizations with custom endpoints having
+     * place holders for the user name. The user name is determined by {@link User#getUsername()}.
      *
      * @return The modified endpoint URL in case it contains the placeholder "{user}". Otherwise the input is returned.
      */

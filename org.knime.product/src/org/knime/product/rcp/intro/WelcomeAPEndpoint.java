@@ -60,8 +60,6 @@ import java.util.function.Supplier;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.utils.URIBuilder;
 import org.eclipse.core.runtime.Platform;
-import org.knime.core.customization.ui.UICustomization;
-import org.knime.core.customization.ui.UICustomization.WelcomeAPEndPointURLType;
 import org.knime.core.internal.CorePlugin;
 import org.knime.core.node.KNIMEConstants;
 import org.knime.core.node.NodeLogger;
@@ -139,28 +137,27 @@ public final class WelcomeAPEndpoint {
         if (EclipseUtil.isRunFromSDK()) {
             return Optional.empty();
         }
-        var customization = CorePlugin.getInstance().getCustomizationService() //
-            .map(s -> s.getCustomization().ui());
+        var uiCustomization = CorePlugin.getInstance().getCustomizationService() //
+            .map(s -> s.getCustomization().ui()).orElse(null);
+        if (uiCustomization == null) {
+            NodeLogger.getLogger(WelcomeAPEndpoint.class).info("No UI customizations available");
+            return Optional.empty();
+        }
 
-        Optional<String> customEndpoint = customization.flatMap(UICustomization::getWelcomeAPEndpointURL);
-
-        var responseFromCustomEndpoint = customEndpoint //
-            .map(WelcomeAPEndpoint::replaceUserFieldInEndpointURLIfPresent) //
-            .flatMap(endpoint -> performRequest(endpoint, calledFromWebUI, companyName));
         // always request KNIME endpoint for tracking, even though we might not use the response
         var responseFromKnimeEndpoint = performRequest(KNIME_COM_ENDPOINT, calledFromWebUI, companyName);
 
-        var customUrlType = customization.map(UICustomization::getWelcomeAPEndpointURLType);
-        if (customUrlType.stream().anyMatch(type -> type == WelcomeAPEndPointURLType.NONE)) {
+        if (uiCustomization.isHideWelcomeAPTiles()) {
             return Optional.empty();
-        } else if (responseFromCustomEndpoint.isPresent()) {
-            return responseFromCustomEndpoint;
-        } else {
-            return responseFromKnimeEndpoint;
         }
+
+        var responseFromCustomEndpoint = uiCustomization.getWelcomeAPEndpointURL() //
+            .map(WelcomeAPEndpoint::replaceUserFieldInEndpointURLIfPresent) //
+            .flatMap(endpoint -> performRequest(endpoint, calledFromWebUI, companyName));
+        return responseFromCustomEndpoint.isPresent() ? responseFromCustomEndpoint : responseFromKnimeEndpoint;
     }
 
-    private static Optional<JSONCategory[]> performRequest(String endpointUrl, final boolean calledFromWebUI,
+    private static Optional<JSONCategory[]> performRequest(final String endpointUrl, final boolean calledFromWebUI,
         final String companyName) {
         try (final var suppression = ThreadLocalHTTPAuthenticator.suppressAuthenticationPopups()) {
             var urlBuilder = new URIBuilder(endpointUrl) //

@@ -57,7 +57,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.utils.URIBuilder;
 import org.eclipse.core.runtime.Platform;
 import org.knime.core.internal.CorePlugin;
@@ -151,8 +150,7 @@ public final class WelcomeAPEndpoint {
             return Optional.empty();
         }
 
-        var responseFromCustomEndpoint = uiCustomization.getWelcomeAPEndpointURL() //
-            .map(WelcomeAPEndpoint::replaceUserFieldInEndpointURLIfPresent) //
+        var responseFromCustomEndpoint = uiCustomization.getWelcomeAPEndpointURL(WelcomeAPEndpoint::getUserId) //
             .flatMap(endpoint -> performRequest(endpoint, calledFromWebUI, companyName));
         return responseFromCustomEndpoint.isPresent() ? responseFromCustomEndpoint : responseFromKnimeEndpoint;
     }
@@ -195,26 +193,13 @@ public final class WelcomeAPEndpoint {
         }
     }
 
-    /**
-     * For user-defined endpoints, replace the placeholder "{user}" with the actual user name. In most cases (99.9%+)
-     * this method does nothing as the default endpoint in the public KNIME distribution is used (see
-     * {@link #KNIME_COM_ENDPOINT}). Custom Business-Hubs might deliver AP customizations with custom endpoints having
-     * place holders for the user name. The user name is determined by {@link User#getUsername()}.
-     *
-     * @return The modified endpoint URL in case it contains the placeholder "{user}". Otherwise the input is returned.
-     */
-    private static String replaceUserFieldInEndpointURLIfPresent(final String rawEndpointURLAsString) {
-        if (rawEndpointURLAsString.contains("{user}")) {
-            String userid;
-            try {
-                userid = User.getUsername();
-            } catch (Exception ex) {
-                NodeLogger.getLogger(WelcomeAPEndpoint.class).warn("Could not determine user name", ex);
-                userid = System.getProperty("user.name");
-            }
-            return StringUtils.replace(rawEndpointURLAsString, "{user}", userid);
+    private static String getUserId() {
+        try {
+            return User.getUsername();
+        } catch (Exception ex) {
+            NodeLogger.getLogger(WelcomeAPEndpoint.class).warn("Could not determine user name", ex);
+            return System.getProperty("user.name");
         }
-        return rawEndpointURLAsString;
     }
 
     private static JSONCategory[] parseResponse(final InputStream response) throws IOException {

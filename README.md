@@ -18,3 +18,5 @@ Run maven with the *local-build* profile enabled: `mvn verify -P local-build`.
 
 ### Join the Community!
 * [KNIME Forum](https://tech.knime.org/forum)
+
+...

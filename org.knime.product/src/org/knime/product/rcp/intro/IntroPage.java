@@ -56,23 +56,16 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.TransformerFactoryConfigurationError;
-import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import org.apache.http.NameValuePair;
@@ -107,15 +100,11 @@ import org.knime.core.util.EclipseUtil;
 import org.knime.core.util.FileUtil;
 import org.knime.product.customizations.ICustomizationService;
 import org.knime.workbench.editor2.WorkflowEditor;
-import org.knime.workbench.explorer.ExplorerMountTable;
 import org.knime.workbench.explorer.filesystem.AbstractExplorerFileStore;
-import org.knime.workbench.explorer.view.AbstractContentProvider;
 import org.knime.workbench.explorer.view.ContentDelegator;
 import org.knime.workbench.explorer.view.ExplorerView;
 import org.knime.workbench.explorer.view.actions.NewWorkflowWizard;
 import org.knime.workbench.explorer.view.actions.NewWorkflowWizardPage;
-import org.knime.workbench.explorer.view.preferences.EditMountPointDialog;
-import org.knime.workbench.explorer.view.preferences.MountSettings;
 import org.knime.workbench.ui.KNIMEUIPlugin;
 import org.knime.workbench.ui.hub.HubLinkHandlerExtension;
 import org.knime.workbench.ui.p2.actions.InvokeInstallSiteAction;
@@ -125,8 +114,6 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
-import org.osgi.service.prefs.BackingStoreException;
-import org.xml.sax.SAXException;
 
 /**
  * Class for showing and handling events in the intro page.
@@ -201,8 +188,7 @@ public final class IntroPage implements LocationListener {
 
             updateTiles();
 
-        } catch (IOException | ParserConfigurationException | SAXException | XPathExpressionException
-                | TransformerFactoryConfigurationError | TransformerException ex) {
+        } catch (IOException | TransformerFactoryConfigurationError ex) {
             LOGGER.error("Could not copy welcome page: " + ex.getMessage(), ex);
         }
     }
@@ -248,8 +234,7 @@ public final class IntroPage implements LocationListener {
      * @return the modified temporary file
      */
     private File copyTemplate(final String templateFile, final boolean replaceExisting)
-        throws IOException, ParserConfigurationException, SAXException, XPathExpressionException,
-        TransformerFactoryConfigurationError, TransformerException {
+        throws IOException, TransformerFactoryConfigurationError {
         File tempTemplate = m_introFile;
         if (!replaceExisting) {
             tempTemplate = FileUtil.createTempFile("intro", ".html", true);
@@ -408,7 +393,7 @@ public final class IntroPage implements LocationListener {
     }
 
     private void setIntroProperty(final URI command) {
-        for (NameValuePair param : URLEncodedUtils.parse(command, Charset.forName("UTF-8"))) {
+        for (NameValuePair param : URLEncodedUtils.parse(command, StandardCharsets.UTF_8)) {
             m_prefs.putBoolean("org.knime.product.intro." + param.getName(), Boolean.parseBoolean(param.getValue()));
         }
     }
@@ -479,47 +464,9 @@ public final class IntroPage implements LocationListener {
     }
 
     private static void mountServer() {
-        // AP-8989 switching to IEclipsePreferences
-        List<MountSettings> mountSettingsList = new ArrayList<>();
-
-        try {
-            mountSettingsList = MountSettings.loadSortedMountSettingsFromPreferences();
-        } catch (BackingStoreException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-
-        Set<String> idSet = new LinkedHashSet<>();
-        for (MountSettings settings : mountSettingsList) {
-            idSet.add(settings.getFactoryID());
-        }
-        List<String> contentProviderIDs = new ArrayList<String>(idSet);
-
-        List<String> mountIDs = new ArrayList<String>(mountSettingsList.size());
-        for (MountSettings settings : mountSettingsList) {
-            mountIDs.add(settings.getMountID());
-        }
-
-        EditMountPointDialog dlg = new EditMountPointDialog(Display.getDefault().getActiveShell(),
-            ExplorerMountTable.getAddableContentProviders(contentProviderIDs), mountIDs);
-        if (dlg.open() != Window.OK) {
-            return;
-        }
-        AbstractContentProvider newCP = dlg.getContentProvider();
-        if (newCP != null) {
-            MountSettings mountSettings = new MountSettings(newCP);
-            if (mountSettings.getDefaultMountID() == null) {
-                mountSettings.setDefaultMountID(dlg.getDefaultMountID());
-            }
-            mountSettingsList.add(mountSettings);
-
-            //store new mount point settings
-            MountSettings.saveMountSettings(mountSettingsList);
-        }
+        // AP-23812: only referenced on the old intro page, which is not shown any more
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void changed(final LocationEvent event) {
         // nothing to do here

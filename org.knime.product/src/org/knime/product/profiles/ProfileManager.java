@@ -94,6 +94,7 @@ import org.eclipse.core.runtime.Platform;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.util.KNIMEServerHostnameVerifier;
 import org.knime.core.util.PathUtils;
+import org.knime.core.util.proxy.URLConnectionFactory;
 import org.osgi.framework.FrameworkUtil;
 
 /**
@@ -327,24 +328,18 @@ public class ProfileManager {
             m_collectedLogs
                 .add(() -> NodeLogger.getLogger(ProfileManager.class).info("Downloading profiles from " + profileUri));
 
-            // proxies
+            // proxy and timeout configuration
             final var proxy = ProxySelector.getDefault().select(profileUri).stream() //
                 .filter(p -> p != null && p.address() != null) //
                 .findFirst().map(p -> ((InetSocketAddress)p.address())) //
                 .map(p -> new HttpHost(p.getHostString(), p.getPort())) //
                 .orElse(null);
-
-            // timeout; we cannot access KNIMEConstants here because that would access preferences
-            var timeout = 2000;
-            String to = System.getProperty("knime.url.timeout", Integer.toString(timeout));
-            try {
-                timeout = Integer.parseInt(to);
-            } catch (NumberFormatException ex) {
-                m_collectedLogs.add(() -> NodeLogger.getLogger(ProfileManager.class)
-                    .warn("Illegal value for system property knime.url.timeout :" + to, ex));
-            }
-            final var requestConfig = RequestConfig.custom().setConnectTimeout(timeout).setProxy(proxy)
-                .setConnectionRequestTimeout(timeout).build();
+            final var requestConfig = RequestConfig.custom() //
+                .setConnectTimeout(URLConnectionFactory.getDefaultURLConnectTimeoutMillis()) //
+                .setConnectionRequestTimeout(URLConnectionFactory.getDefaultURLConnectTimeoutMillis()) //
+                .setSocketTimeout(URLConnectionFactory.getDefaultURLReadTimeoutMillis()) //
+                .setProxy(proxy) //
+                .build();
 
             try (CloseableHttpClient client = HttpClients.custom().setDefaultRequestConfig(requestConfig)
                 .setSSLHostnameVerifier(KNIMEServerHostnameVerifier.getInstance())

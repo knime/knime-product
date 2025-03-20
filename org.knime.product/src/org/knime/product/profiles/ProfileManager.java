@@ -51,20 +51,16 @@ package org.knime.product.profiles;
 import static java.util.Collections.unmodifiableList;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.Reader;
-import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -75,13 +71,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -99,7 +94,6 @@ import org.eclipse.core.runtime.Platform;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.util.KNIMEServerHostnameVerifier;
 import org.knime.core.util.PathUtils;
-import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
 
 /**
@@ -109,10 +103,16 @@ import org.osgi.framework.FrameworkUtil;
  *
  * @author Thorsten Meinl, KNIME AG, Zurich, Switzerland
  */
+@SuppressWarnings("restriction")
 public class ProfileManager {
+
     private static final ProfileManager INSTANCE = new ProfileManager();
 
     private static final String PROFILES_FOLDER = "profiles";
+
+    private static final String ORIGIN_HEADERS_FILE = ".originHeaders";
+
+    private static final Pattern DOUBLE_DOLLAR_PATTERN = Pattern.compile("\\$(\\$\\{[^:\\}]+:[^\\}]+\\})");
 
     private final List<Runnable> m_collectedLogs = new ArrayList<>(2);
 
@@ -130,14 +130,16 @@ public class ProfileManager {
     private final IProfileProvider m_provider;
 
     private ProfileManager() {
-        List<Supplier<IProfileProvider>> potentialProviders = Arrays.asList(
-            () -> new CommandlineProfileProvider(),
-            () -> new WorkspaceProfileProvider(),
+        List<Supplier<IProfileProvider>> potentialProviders = Arrays.asList( //
+            CommandlineProfileProvider::new, //
+            WorkspaceProfileProvider::new, //
             getExtensionPointProviderSupplier());
 
-        m_provider = potentialProviders.stream().map(s -> s.get())
-                .filter(p -> !p.getRequestedProfiles().isEmpty())
-                .findFirst().orElse(new EmptyProfileProvider());
+        m_provider = potentialProviders.stream() //
+            .map(s -> s.get()) //
+            .filter(p -> !p.getRequestedProfiles().isEmpty()) //
+            .findFirst() //
+            .orElse(new EmptyProfileProvider());
     }
 
     private Supplier<IProfileProvider> getExtensionPointProviderSupplier() {
@@ -146,16 +148,16 @@ public class ProfileManager {
             IExtensionPoint point = registry.getExtensionPoint("org.knime.product.profileProvider");
 
             Optional<IConfigurationElement> extension =
-                    Stream.of(point.getExtensions()).flatMap(ext -> Stream.of(ext.getConfigurationElements())).findFirst();
+                Stream.of(point.getExtensions()).flatMap(ext -> Stream.of(ext.getConfigurationElements())).findFirst();
 
             IProfileProvider provider = new EmptyProfileProvider();
             if (extension.isPresent()) {
                 try {
                     provider = (IProfileProvider)extension.get().createExecutableExtension("class");
                 } catch (CoreException ex) {
-                    m_collectedLogs.add(() -> NodeLogger.getLogger(ProfileManager.class).error(
-                        "Could not create profile provider instance from class "
-                            + extension.get().getAttribute("class") + ". No profiles will be processed.",
+                    m_collectedLogs.add(() -> NodeLogger.getLogger(ProfileManager.class).error( //
+                        "Could not create profile provider instance from class " //
+                            + extension.get().getAttribute("class") + ". No profiles will be processed.", //
                         ex));
                 }
             }
@@ -172,7 +174,8 @@ public class ProfileManager {
         List<Path> localProfiles = fetchProfileContents();
         try {
             applyPreferences(localProfiles);
-        } catch (IOException | NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException ex) {
+        } catch (IOException | NoSuchFieldException | SecurityException | IllegalArgumentException
+                | IllegalAccessException ex) {
             m_collectedLogs.add(() -> NodeLogger.getLogger(ProfileManager.class)
                 .error("Could not apply preferences from profiles: " + ex.getMessage(), ex));
         }
@@ -180,75 +183,75 @@ public class ProfileManager {
         m_collectedLogs.stream().forEach(r -> r.run());
     }
 
-
-    @SuppressWarnings("restriction")
-    private void applyPreferences(final List<Path> profiles) throws IOException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+    private void applyPreferences(final List<Path> profiles)
+        throws IOException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
 
         // This field was made private in a recent eclipse upgrade so we need to use reflection ot access it
-        Field pluginCustomizationFileField = DefaultPreferences.class.getDeclaredField("pluginCustomizationFile");
+        final var pluginCustomizationFileField = DefaultPreferences.class.getDeclaredField("pluginCustomizationFile");
         pluginCustomizationFileField.setAccessible(true);
 
         if ((String)pluginCustomizationFileField.get(null) != null) {
             return; // plugin customizations are already explicitly provided by someone else
         }
 
-        Properties combinedProperties = new Properties();
+        final var combinedProperties = new Properties();
         for (Path dir : profiles) {
-            List<Path> prefFiles = Files.walk(dir)
-                    .filter(f -> Files.isRegularFile(f) && f.toString().endsWith(".epf"))
-                    .sorted()
-                    .collect(Collectors.toList());
+            try (var stream = Files.walk(dir)) {
+                List<Path> prefFiles = stream //
+                    .filter(f -> Files.isRegularFile(f) && f.toString().endsWith(".epf")) //
+                    .sorted().toList();
 
-            Properties props = new Properties();
-            for (Path f : prefFiles) {
-                try (Reader r = Files.newBufferedReader(f, Charset.forName("UTF-8"))) {
-                    props.load(r);
+                final var props = new Properties();
+                for (Path f : prefFiles) {
+                    try (var reader = Files.newBufferedReader(f, StandardCharsets.UTF_8)) {
+                        props.load(reader);
+                    }
                 }
+                replaceVariables(props, dir);
+                combinedProperties.putAll(props);
             }
-            replaceVariables(props, dir);
-            combinedProperties.putAll(props);
         }
 
         // remove "/instance" prefixes from preferences because otherwise they are not applied as default preferences
         // (because they are instance preferences...)
-        for (Object key : new HashSet<>(combinedProperties.keySet())) {
+        for (var key : new HashSet<>(combinedProperties.keySet())) {
             if (key.toString().startsWith("/instance/")) {
                 Object value = combinedProperties.remove(key);
                 combinedProperties.put(key.toString().substring("/instance/".length()), value);
             }
         }
 
-        Path pluginCustFile = getStateLocation().resolve("combined-preferences.epf");
+        var pluginCustFile = getStateLocation().resolve("combined-preferences.epf");
         if (Files.exists(pluginCustFile) && !Files.isWritable(pluginCustFile)) {
-            Path tempCustFile = PathUtils.createTempFile("combined-preferences", ".epf");
-            Path nonWorkingFile = pluginCustFile;
+            final var tempCustFile = PathUtils.createTempFile("combined-preferences", ".epf");
+            final var nonWorkingFile = pluginCustFile;
             pluginCustFile = tempCustFile;
 
-            m_collectedLogs.add(() -> NodeLogger.getLogger(ProfileManager.class)
-                .warn("Could not write combined preferences file '" + nonWorkingFile + "', will use temporary file '"
-                    + tempCustFile + "' instead."));
+            m_collectedLogs
+                .add(() -> NodeLogger.getLogger(ProfileManager.class).warn("Could not write combined preferences file '"
+                    + nonWorkingFile + "', will use temporary file '" + tempCustFile + "' instead."));
         }
 
         // It's important here to write to a stream and not a reader because when reading the file back in
         // org.eclipse.core.internal.preferences.DefaultPreferences.loadProperties(String) also reads from a stream
         // and therefore assumes it's ISO-8859-1 encoded (with replacement for UTF characters).
-        try (OutputStream out = Files.newOutputStream(pluginCustFile)) {
+        try (var out = Files.newOutputStream(pluginCustFile)) {
             combinedProperties.store(out, "");
         }
         pluginCustomizationFileField.set(null, pluginCustFile.toAbsolutePath().toString());
     }
 
     private void replaceVariables(final Properties props, final Path profileLocation) throws IOException {
-        List<VariableReplacer> replacers = Arrays.asList(
+        final var originFile = profileLocation.getParent().resolve(ORIGIN_HEADERS_FILE);
+        List<VariableReplacer> replacers = Arrays.asList( //
             new VariableReplacer.EnvVariableReplacer(m_collectedLogs),
             new VariableReplacer.SyspropVariableReplacer(m_collectedLogs),
             new VariableReplacer.ProfileVariableReplacer(profileLocation, m_collectedLogs),
-            new VariableReplacer.OriginVariableReplacer(profileLocation.getParent().resolve(".originHeaders"),
-                m_collectedLogs),
+            new VariableReplacer.OriginVariableReplacer(originFile, m_collectedLogs),
             new VariableReplacer.CustomVariableReplacer(m_provider, m_collectedLogs));
 
-        for (String key : props.stringPropertyNames()) {
-            String value = props.getProperty(key);
+        for (var key : props.stringPropertyNames()) {
+            var value = props.getProperty(key);
 
             for (VariableReplacer rep : replacers) {
                 value = rep.replaceVariables(value);
@@ -258,10 +261,9 @@ public class ProfileManager {
             //     /instance/org.knime.product/non-variable=bla/$${custom:var}/foo
             // becomes
             //     /instance/org.knime.product/non-variable=bla/${custom:var}/foo
-            props.replace(key, value.replaceAll("\\$(\\$\\{[^:\\}]+:[^\\}]+\\})", "$1"));
+            props.replace(key, DOUBLE_DOLLAR_PATTERN.matcher(value).replaceAll("$1"));
         }
     }
-
 
     private List<Path> fetchProfileContents() {
         List<String> profiles = m_provider.getRequestedProfiles();
@@ -280,12 +282,14 @@ public class ProfileManager {
         }
 
         Path localProfileLocationNormalized = localProfileLocation.normalize();
-        return profiles.stream().map(p -> localProfileLocation.resolve(p).normalize())
-                .filter(p -> Files.isDirectory(p))
-                // remove profiles that are outside the profile root (e.g. with "../" in their name)
-                // Use normalized profile root s.t. the `startsWith` check considers the real paths.
-                .filter(p -> p.startsWith(localProfileLocationNormalized))
-                .collect(Collectors.toList());
+
+        // remove profiles that are outside the profile root (e.g. with "../" in their name)
+        // Use normalized profile root s.t. the `startsWith` check considers the real paths.
+        return profiles.stream() //
+            .map(p -> localProfileLocation.resolve(p).normalize()) //
+            .filter(Files::isDirectory) //
+            .filter(p -> p.startsWith(localProfileLocationNormalized)) //
+            .toList();
     }
 
     private static boolean isLocalProfile(final URI profileLocation) {
@@ -297,42 +301,41 @@ public class ProfileManager {
     }
 
     private Path getStateLocation() {
-        Bundle myself = FrameworkUtil.getBundle(getClass());
+        final var myself = FrameworkUtil.getBundle(getClass());
         return Platform.getStateLocation(myself).toFile().toPath();
     }
 
     private Path downloadProfiles(final URI profileLocation) {
-        Path stateDir = getStateLocation();
-        Path profileDir = stateDir.resolve(PROFILES_FOLDER);
+        final var stateDir = getStateLocation();
+        final var profileDir = stateDir.resolve(PROFILES_FOLDER);
 
         try {
             // compute list of profiles that are requested but not present locally yet
             List<String> newRequestedProfiles = new ArrayList<>(m_provider.getRequestedProfiles());
             if (Files.isDirectory(profileDir)) {
-                try (DirectoryStream<Path> stream = Files.newDirectoryStream(profileDir, p -> Files.isDirectory(p))) {
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(profileDir, Files::isDirectory)) {
                     stream.forEach(p -> newRequestedProfiles.remove(p.getFileName().toString()));
                 }
             }
 
             Files.createDirectories(stateDir);
 
-            URIBuilder builder = new URIBuilder(profileLocation);
-            builder.addParameter("profiles", String.join(",", m_provider.getRequestedProfiles()));
-            URI profileUri = builder.build();
+            final var builder = new URIBuilder(profileLocation);
+            builder.addParameter(PROFILES_FOLDER, String.join(",", m_provider.getRequestedProfiles()));
+            final var profileUri = builder.build();
 
             m_collectedLogs
                 .add(() -> NodeLogger.getLogger(ProfileManager.class).info("Downloading profiles from " + profileUri));
 
             // proxies
-            HttpHost proxy = ProxySelector.getDefault().select(profileUri).stream()
-                    .filter(p -> p != null && p.address() != null)
-                    .findFirst()
-                    .map(p -> ((InetSocketAddress) p.address()))
-                    .map(p -> new HttpHost(p.getHostString(), p.getPort()))
-                    .orElse(null);
+            final var proxy = ProxySelector.getDefault().select(profileUri).stream() //
+                .filter(p -> p != null && p.address() != null) //
+                .findFirst().map(p -> ((InetSocketAddress)p.address())) //
+                .map(p -> new HttpHost(p.getHostString(), p.getPort())) //
+                .orElse(null);
 
             // timeout; we cannot access KNIMEConstants here because that would access preferences
-            int timeout = 2000;
+            var timeout = 2000;
             String to = System.getProperty("knime.url.timeout", Integer.toString(timeout));
             try {
                 timeout = Integer.parseInt(to);
@@ -340,22 +343,17 @@ public class ProfileManager {
                 m_collectedLogs.add(() -> NodeLogger.getLogger(ProfileManager.class)
                     .warn("Illegal value for system property knime.url.timeout :" + to, ex));
             }
-            RequestConfig requestConfig = RequestConfig.custom()
-                    .setConnectTimeout(timeout)
-                    .setProxy(proxy)
-                    .setConnectionRequestTimeout(timeout)
-                    .build();
+            final var requestConfig = RequestConfig.custom().setConnectTimeout(timeout).setProxy(proxy)
+                .setConnectionRequestTimeout(timeout).build();
 
-
-            try (CloseableHttpClient client = HttpClients.custom()
-                    .setDefaultRequestConfig(requestConfig)
-                    .setSSLHostnameVerifier(KNIMEServerHostnameVerifier.getInstance())
-                    .setRedirectStrategy(new DefaultRedirectStrategy()).build()) {
-                HttpGet get = new HttpGet(profileUri);
+            try (CloseableHttpClient client = HttpClients.custom().setDefaultRequestConfig(requestConfig)
+                .setSSLHostnameVerifier(KNIMEServerHostnameVerifier.getInstance())
+                .setRedirectStrategy(new DefaultRedirectStrategy()).build()) {
+                final var get = new HttpGet(profileUri);
 
                 if (newRequestedProfiles.isEmpty() && Files.isDirectory(profileDir)) {
                     // if new profiles are requested we must not make a conditional request
-                    Instant lastModified = Files.getLastModifiedTime(profileDir).toInstant();
+                    final var lastModified = Files.getLastModifiedTime(profileDir).toInstant();
                     get.setHeader("If-Modified-Since",
                         DateTimeFormatter.RFC_1123_DATE_TIME.format(lastModified.atZone(ZoneId.of("GMT"))));
                 }
@@ -363,20 +361,20 @@ public class ProfileManager {
                 try (CloseableHttpResponse response = client.execute(get)) {
                     int code = response.getStatusLine().getStatusCode();
                     if ((code >= 200) && (code < 300)) {
-                        Header ct = response.getFirstHeader("Content-Type");
+                        final var ct = response.getFirstHeader("Content-Type");
                         if ((ct == null) || (ct.getValue() == null) || !ct.getValue().startsWith("application/zip")) {
                             // this is a workaround because ZipInputStream doesn't complain when the read contents are
                             // no zip file - it just processes an empty zip
                             throw new IOException("Server did not return a ZIP file containing the selected profiles");
                         }
 
-                        Path tempFile = PathUtils.createTempFile("profile-download", ".zip");
-                        try (OutputStream os = Files.newOutputStream(tempFile)) {
+                        final var tempFile = PathUtils.createTempFile("profile-download", ".zip");
+                        try (var os = Files.newOutputStream(tempFile)) {
                             IOUtils.copyLarge(response.getEntity().getContent(), os);
                         }
 
-                        Path tempDir = PathUtils.createTempDir("profile-download", stateDir);
-                        try (ZipFile zf = new ZipFile(tempFile.toFile())) {
+                        final var tempDir = PathUtils.createTempDir("profile-download", stateDir);
+                        try (var zf = new ZipFile(tempFile.toFile())) {
                             PathUtils.unzip(zf, tempDir);
                         }
 
@@ -389,14 +387,14 @@ public class ProfileManager {
                     } else if (code == 304) { // 304 = Not Modified
                         writeOriginHeaders(response.getAllHeaders(), profileDir);
                     } else {
-                        HttpEntity body = response.getEntity();
+                        final var body = response.getEntity();
                         String msg;
                         if ((body != null) && (body.getContentType() != null)
                             && (body.getContentType().getValue() != null)
                             && body.getContentType().getValue().startsWith("text/")) {
-                            byte[] buf = new byte[Math.min(4096, Math.max(4096, (int)body.getContentLength()))];
-                            int read = body.getContent().read(buf);
-                            msg = new String(buf, 0, read, "US-ASCII").trim();
+                            final var buf = new byte[Math.min(4096, Math.max(4096, (int)body.getContentLength()))];
+                            final var read = body.getContent().read(buf);
+                            msg = new String(buf, 0, read, StandardCharsets.US_ASCII).trim();
                         } else if (!response.getStatusLine().getReasonPhrase().isEmpty()) {
                             msg = response.getStatusLine().getReasonPhrase();
                         } else {
@@ -420,12 +418,12 @@ public class ProfileManager {
     }
 
     private static void writeOriginHeaders(final Header[] allHeaders, final Path profileDir) throws IOException {
-        Path originHeadersCache = profileDir.resolve(".originHeaders");
-        Properties props = new Properties();
-        for (Header h : allHeaders) {
+        final var originHeadersCache = profileDir.resolve(ORIGIN_HEADERS_FILE);
+        final var props = new Properties();
+        for (var h : allHeaders) {
             props.put(h.getName(), h.getValue());
         }
-        try (OutputStream os = Files.newOutputStream(originHeadersCache)) {
+        try (var os = Files.newOutputStream(originHeadersCache)) {
             props.store(os, "");
         }
     }

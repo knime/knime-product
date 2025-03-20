@@ -48,8 +48,6 @@
  */
 package org.knime.product.profiles;
 
-import static java.util.Collections.unmodifiableList;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ProxySelector;
@@ -67,20 +65,26 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.stream.Streams;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultRedirectStrategy;
@@ -89,10 +93,10 @@ import org.eclipse.core.internal.preferences.DefaultPreferences;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionPoint;
-import org.eclipse.core.runtime.IExtensionRegistry;
 import org.eclipse.core.runtime.Platform;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.util.KNIMEServerHostnameVerifier;
+import org.knime.core.util.Pair;
 import org.knime.core.util.PathUtils;
 import org.knime.core.util.proxy.URLConnectionFactory;
 import org.osgi.framework.FrameworkUtil;
@@ -117,8 +121,6 @@ public class ProfileManager {
 
     private final List<Runnable> m_collectedLogs = new ArrayList<>(2);
 
-    private Boolean m_profileDownloadSuccessful;
-
     /**
      * Returns the singleton instance.
      *
@@ -128,42 +130,39 @@ public class ProfileManager {
         return INSTANCE;
     }
 
-    private final IProfileProvider m_provider;
+    private final ProfileDownloader m_downloader;
 
     private ProfileManager() {
-        List<Supplier<IProfileProvider>> potentialProviders = Arrays.asList( //
-            CommandlineProfileProvider::new, //
-            WorkspaceProfileProvider::new, //
-            getExtensionPointProviderSupplier());
+        // potential providers, increasing in priority (next overwrites previous)
+        List<Supplier<IProfileProvider>> potentialProviders = getExtensionPointProviderSuppliers();
+        potentialProviders.add(WorkspaceProfileProvider::new);
+        potentialProviders.add(CommandlineProfileProvider::new);
 
-        m_provider = potentialProviders.stream() //
+        final var providers = potentialProviders.stream() //
             .map(s -> s.get()) //
             .filter(p -> !p.getRequestedProfiles().isEmpty()) //
-            .findFirst() //
-            .orElse(new EmptyProfileProvider());
+            .toList();
+        m_downloader = new ProfileDownloader(providers);
     }
 
-    private Supplier<IProfileProvider> getExtensionPointProviderSupplier() {
-        return () -> {
-            IExtensionRegistry registry = Platform.getExtensionRegistry();
-            IExtensionPoint point = registry.getExtensionPoint("org.knime.product.profileProvider");
-
-            Optional<IConfigurationElement> extension =
-                Stream.of(point.getExtensions()).flatMap(ext -> Stream.of(ext.getConfigurationElements())).findFirst();
-
-            IProfileProvider provider = new EmptyProfileProvider();
-            if (extension.isPresent()) {
-                try {
-                    provider = (IProfileProvider)extension.get().createExecutableExtension("class");
-                } catch (CoreException ex) {
-                    m_collectedLogs.add(() -> NodeLogger.getLogger(ProfileManager.class).error( //
-                        "Could not create profile provider instance from class " //
-                            + extension.get().getAttribute("class") + ". No profiles will be processed.", //
-                        ex));
-                }
+    private List<Supplier<IProfileProvider>> getExtensionPointProviderSuppliers() {
+        // maps from an extension to a creator of an profile provider
+        Function<IConfigurationElement, Supplier<IProfileProvider>> mapper = extension -> () -> {
+            try {
+                return (IProfileProvider)extension.createExecutableExtension("class");
+            } catch (CoreException ex) {
+                m_collectedLogs.add(() -> NodeLogger.getLogger(ProfileManager.class).error( //
+                    "Could not create profile provider instance from class " //
+                        + extension.getAttribute("class") + ". No profiles will be processed.", ex));
+                return new EmptyProfileProvider();
             }
-            return provider;
         };
+
+        IExtensionPoint point = Platform.getExtensionRegistry().getExtensionPoint("org.knime.product.profileProvider");
+        return Stream.of(point.getExtensions()) //
+            .flatMap(ext -> Stream.of(ext.getConfigurationElements())) //
+            .map(mapper) //
+            .collect(Collectors.toList()); // NOSONAR, we want to add other providers after collecting extensions
     }
 
     /**
@@ -171,8 +170,9 @@ public class ProfileManager {
      * supplementary files to instance's configuration area.
      */
     public void applyProfiles() {
-        m_profileDownloadSuccessful = null;
-        List<Path> localProfiles = fetchProfileContents();
+        List<Profile> localProfiles = Streams.of(m_downloader.iterator()) //
+            // Flatten all profiles from different providers into one stream.
+            .flatMap(Function.identity()).toList();
         try {
             applyPreferences(localProfiles);
         } catch (IOException | NoSuchFieldException | SecurityException | IllegalArgumentException
@@ -184,7 +184,7 @@ public class ProfileManager {
         m_collectedLogs.stream().forEach(r -> r.run());
     }
 
-    private void applyPreferences(final List<Path> profiles)
+    private void applyPreferences(final List<Profile> profiles)
         throws IOException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
 
         // This field was made private in a recent eclipse upgrade so we need to use reflection ot access it
@@ -196,8 +196,8 @@ public class ProfileManager {
         }
 
         final var combinedProperties = new Properties();
-        for (Path dir : profiles) {
-            try (var stream = Files.walk(dir)) {
+        for (var profile : profiles) {
+            try (var stream = Files.walk(profile.localPath())) {
                 List<Path> prefFiles = stream //
                     .filter(f -> Files.isRegularFile(f) && f.toString().endsWith(".epf")) //
                     .sorted().toList();
@@ -208,9 +208,11 @@ public class ProfileManager {
                         props.load(reader);
                     }
                 }
-                replaceVariables(props, dir);
+                replaceVariables(props, profile);
                 combinedProperties.putAll(props);
             }
+            m_collectedLogs.add(() -> NodeLogger.getLogger(ProfileManager.class).debug(String.format( //
+                "Applied profile \"%s\" from %s", profile.name(), profile.provider().getProfilesLocation())));
         }
 
         // remove "/instance" prefixes from preferences because otherwise they are not applied as default preferences
@@ -242,14 +244,15 @@ public class ProfileManager {
         pluginCustomizationFileField.set(null, pluginCustFile.toAbsolutePath().toString());
     }
 
-    private void replaceVariables(final Properties props, final Path profileLocation) throws IOException {
+    private void replaceVariables(final Properties props, final Profile profile) throws IOException {
+        final var profileLocation = profile.localPath();
         final var originFile = profileLocation.getParent().resolve(ORIGIN_HEADERS_FILE);
         List<VariableReplacer> replacers = Arrays.asList( //
             new VariableReplacer.EnvVariableReplacer(m_collectedLogs),
             new VariableReplacer.SyspropVariableReplacer(m_collectedLogs),
             new VariableReplacer.ProfileVariableReplacer(profileLocation, m_collectedLogs),
             new VariableReplacer.OriginVariableReplacer(originFile, m_collectedLogs),
-            new VariableReplacer.CustomVariableReplacer(m_provider, m_collectedLogs));
+            new VariableReplacer.CustomVariableReplacer(profile.provider(), m_collectedLogs));
 
         for (var key : props.stringPropertyNames()) {
             var value = props.getProperty(key);
@@ -266,33 +269,6 @@ public class ProfileManager {
         }
     }
 
-    private List<Path> fetchProfileContents() {
-        List<String> profiles = m_provider.getRequestedProfiles();
-        if (profiles.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        URI profileLocation = m_provider.getProfilesLocation();
-        Path localProfileLocation;
-        if (isLocalProfile(profileLocation)) {
-            localProfileLocation = Paths.get(profileLocation);
-        } else if (isRemoteProfile(profileLocation)) {
-            localProfileLocation = downloadProfiles(profileLocation);
-        } else {
-            throw new IllegalArgumentException("Profiles from '" + profileLocation.getScheme() + " are not supported");
-        }
-
-        Path localProfileLocationNormalized = localProfileLocation.normalize();
-
-        // remove profiles that are outside the profile root (e.g. with "../" in their name)
-        // Use normalized profile root s.t. the `startsWith` check considers the real paths.
-        return profiles.stream() //
-            .map(p -> localProfileLocation.resolve(p).normalize()) //
-            .filter(Files::isDirectory) //
-            .filter(p -> p.startsWith(localProfileLocationNormalized)) //
-            .toList();
-    }
-
     private static boolean isLocalProfile(final URI profileLocation) {
         return "file".equalsIgnoreCase(profileLocation.getScheme());
     }
@@ -301,141 +277,40 @@ public class ProfileManager {
         return profileLocation.getScheme().startsWith("http");
     }
 
-    private Path getStateLocation() {
-        final var myself = FrameworkUtil.getBundle(getClass());
+    private static Path getStateLocation() {
+        final var myself = FrameworkUtil.getBundle(ProfileManager.class);
         return Platform.getStateLocation(myself).toFile().toPath();
     }
 
-    private Path downloadProfiles(final URI profileLocation) {
-        final var stateDir = getStateLocation();
-        final var profileDir = stateDir.resolve(PROFILES_FOLDER);
-
-        try {
-            // compute list of profiles that are requested but not present locally yet
-            List<String> newRequestedProfiles = new ArrayList<>(m_provider.getRequestedProfiles());
-            if (Files.isDirectory(profileDir)) {
-                try (DirectoryStream<Path> stream = Files.newDirectoryStream(profileDir, Files::isDirectory)) {
-                    stream.forEach(p -> newRequestedProfiles.remove(p.getFileName().toString()));
-                }
-            }
-
-            Files.createDirectories(stateDir);
-
-            final var builder = new URIBuilder(profileLocation);
-            builder.addParameter(PROFILES_FOLDER, String.join(",", m_provider.getRequestedProfiles()));
-            final var profileUri = builder.build();
-
-            m_collectedLogs
-                .add(() -> NodeLogger.getLogger(ProfileManager.class).info("Downloading profiles from " + profileUri));
-
-            // proxy and timeout configuration
-            final var proxy = ProxySelector.getDefault().select(profileUri).stream() //
-                .filter(p -> p != null && p.address() != null) //
-                .findFirst().map(p -> ((InetSocketAddress)p.address())) //
-                .map(p -> new HttpHost(p.getHostString(), p.getPort())) //
-                .orElse(null);
-            final var requestConfig = RequestConfig.custom() //
-                .setConnectTimeout(URLConnectionFactory.getDefaultURLConnectTimeoutMillis()) //
-                .setConnectionRequestTimeout(URLConnectionFactory.getDefaultURLConnectTimeoutMillis()) //
-                .setSocketTimeout(URLConnectionFactory.getDefaultURLReadTimeoutMillis()) //
-                .setProxy(proxy) //
-                .build();
-
-            try (CloseableHttpClient client = HttpClients.custom().setDefaultRequestConfig(requestConfig)
-                .setSSLHostnameVerifier(KNIMEServerHostnameVerifier.getInstance())
-                .setRedirectStrategy(new DefaultRedirectStrategy()).build()) {
-                final var get = new HttpGet(profileUri);
-
-                if (newRequestedProfiles.isEmpty() && Files.isDirectory(profileDir)) {
-                    // if new profiles are requested we must not make a conditional request
-                    final var lastModified = Files.getLastModifiedTime(profileDir).toInstant();
-                    get.setHeader("If-Modified-Since",
-                        DateTimeFormatter.RFC_1123_DATE_TIME.format(lastModified.atZone(ZoneId.of("GMT"))));
-                }
-
-                try (CloseableHttpResponse response = client.execute(get)) {
-                    int code = response.getStatusLine().getStatusCode();
-                    if ((code >= 200) && (code < 300)) {
-                        final var ct = response.getFirstHeader("Content-Type");
-                        if ((ct == null) || (ct.getValue() == null) || !ct.getValue().startsWith("application/zip")) {
-                            // this is a workaround because ZipInputStream doesn't complain when the read contents are
-                            // no zip file - it just processes an empty zip
-                            throw new IOException("Server did not return a ZIP file containing the selected profiles");
-                        }
-
-                        final var tempFile = PathUtils.createTempFile("profile-download", ".zip");
-                        try (var os = Files.newOutputStream(tempFile)) {
-                            IOUtils.copyLarge(response.getEntity().getContent(), os);
-                        }
-
-                        final var tempDir = PathUtils.createTempDir("profile-download", stateDir);
-                        try (var zf = new ZipFile(tempFile.toFile())) {
-                            PathUtils.unzip(zf, tempDir);
-                        }
-
-                        // replace profiles only if new data has been downloaded successfully
-                        PathUtils.deleteDirectoryIfExists(profileDir);
-                        Files.move(tempDir, profileDir, StandardCopyOption.ATOMIC_MOVE);
-                        Files.delete(tempFile);
-
-                        writeOriginHeaders(response.getAllHeaders(), profileDir);
-                    } else if (code == 304) { // 304 = Not Modified
-                        writeOriginHeaders(response.getAllHeaders(), profileDir);
-                    } else {
-                        final var body = response.getEntity();
-                        String msg;
-                        if ((body != null) && (body.getContentType() != null)
-                            && (body.getContentType().getValue() != null)
-                            && body.getContentType().getValue().startsWith("text/")) {
-                            final var buf = new byte[Math.min(4096, Math.max(4096, (int)body.getContentLength()))];
-                            final var read = body.getContent().read(buf);
-                            msg = new String(buf, 0, read, StandardCharsets.US_ASCII).trim();
-                        } else if (!response.getStatusLine().getReasonPhrase().isEmpty()) {
-                            msg = response.getStatusLine().getReasonPhrase();
-                        } else {
-                            msg = "Server returned status " + response.getStatusLine().getStatusCode();
-                        }
-
-                        throw new IOException(msg);
-                    }
-                }
-            }
-            m_profileDownloadSuccessful = true;
-        } catch (IOException | URISyntaxException ex) {
-            m_profileDownloadSuccessful = false;
-            String msg = "Could not download profiles from " + profileLocation + ": " + ex.getMessage() + ". "
-                + (Files.isDirectory(profileDir) ? "Will use existing but potentially outdated profiles."
-                    : "No profiles will be applied.");
-            m_collectedLogs.add(() -> NodeLogger.getLogger(ProfileManager.class).error(msg, ex));
-        }
-
-        return profileDir;
-    }
-
-    private static void writeOriginHeaders(final Header[] allHeaders, final Path profileDir) throws IOException {
-        final var originHeadersCache = profileDir.resolve(ORIGIN_HEADERS_FILE);
-        final var props = new Properties();
-        for (var h : allHeaders) {
-            props.put(h.getName(), h.getValue());
-        }
-        try (var os = Files.newOutputStream(originHeadersCache)) {
-            props.store(os, "");
-        }
-    }
-
     /**
-     * The path to the local profiles directory (either a local profiles folder or download and 'cached' profiles from a
-     * remote location).
+     * The path to the local profiles of the last (highest priority) {@link IProfileProvider}
+     * that the downloader used. Use {@link ProfileManager#getLocalProfilesLocation(IProfileProvider)}
+     * for more control over which profile provider you want the local path from.
      *
      * @return the local profiles directory or an empty optional if no profiles available
      */
     public Optional<Path> getLocalProfilesLocation() {
-        URI profileLocation = m_provider.getProfilesLocation();
+        return getLocalProfilesLocation(m_downloader.m_current);
+    }
+
+    /**
+     * The path to the local profiles directory (either a local profiles folder or
+     * download and 'cached' profiles from a remote location).
+     *
+     * @param provider the source of the profiles
+     * @return the local profiles directory or an empty optional if no profiles available
+     * @since 5.5
+     */
+    public static Optional<Path> getLocalProfilesLocation(final IProfileProvider provider) {
+        if (provider == null) {
+            return Optional.empty();
+        }
+        URI profileLocation = provider.getProfilesLocation();
         if (profileLocation == null) {
             return Optional.empty();
         }
         if (isLocalProfile(profileLocation)) {
-            return Optional.of(Paths.get(m_provider.getProfilesLocation()));
+            return Optional.of(Paths.get(profileLocation));
         } else if (isRemoteProfile(profileLocation)) {
             return Optional.of(getStateLocation().resolve(PROFILES_FOLDER));
         } else {
@@ -449,7 +324,7 @@ public class ProfileManager {
      * @return the list, never <code>null</code> but can be empty
      */
     public List<String> getRequestProfiles() {
-        return unmodifiableList(m_provider.getRequestedProfiles());
+        return m_downloader.m_providers.stream().flatMap(p -> p.getRequestedProfiles().stream()).toList();
     }
 
     /**
@@ -460,6 +335,257 @@ public class ProfileManager {
      *         optional
      */
     public Optional<Boolean> downloadWasSuccessful() {
-        return Optional.ofNullable(m_profileDownloadSuccessful);
+        return Optional.ofNullable(m_downloader.m_downloadSuccessful);
+    }
+
+    /**
+     * A downloading {@link Iterator} for applying profiles from multiple {@link IProfileProvider}.
+     * Iteratively downloads the profiles from each provider, given that it specified a non-zero amount
+     * of profile names and a valid profile location.
+     * <p>
+     * The {@link #iterator()} method provides streamed batches of profiles, each containing profiles
+     * from only one (the {@link #m_current}) profile provider. Skips and logs failed downloads.
+     * </p>
+     *
+     * @author Leon Wenzler, KNIME GmbH, Konstanz, Germany
+     * @since 5.5
+     */
+    private final class ProfileDownloader implements Iterable<Stream<Profile>> {
+
+        private final List<IProfileProvider> m_providers;
+
+        private IProfileProvider m_current;
+
+        private Boolean m_downloadSuccessful;
+
+        public ProfileDownloader(final List<IProfileProvider> providers) {
+            if (providers == null || providers.isEmpty()) {
+                m_providers = Collections.singletonList(new EmptyProfileProvider());
+            } else {
+                m_providers = Collections.unmodifiableList(providers);
+            }
+        }
+
+        @Override
+        public Iterator<Stream<Profile>> iterator() {
+            return new Iterator<Stream<Profile>>() {  // NOSONAR, only needed once
+
+                private final Iterator<IProfileProvider> m_inner = m_providers.iterator();
+
+                private Path m_next;
+
+                @Override
+                public Stream<Profile> next() {
+                    if (m_next == null) {
+                        throw new NoSuchElementException();
+                    }
+                    final var basePath = m_next;
+                    m_next = null;
+                    return Profile.stream(m_current, basePath);
+                }
+
+                @Override
+                public boolean hasNext() {
+                    while (m_next == null && m_inner.hasNext()) {
+                        m_current = m_inner.next();
+                        if (m_current.getRequestedProfiles().isEmpty()) {
+                            continue;
+                        }
+                        m_next = fetchNext();
+                    }
+                    return m_next != null;
+                }
+
+                private Path fetchNext() throws IllegalArgumentException {
+                    final var profileLocation = m_current.getProfilesLocation();
+                    if (isLocalProfile(profileLocation)) {
+                        return Paths.get(profileLocation);
+                    } else if (isRemoteProfile(profileLocation)) {
+                        final var result = createHttpRequest(m_current, m_collectedLogs);
+                        if (result != null) {
+                            return download(m_current, result.getFirst(), result.getSecond(), m_collectedLogs);
+                        }
+                    } else {
+                        final var scheme = profileLocation.getScheme();
+                        throw new IllegalArgumentException("Profiles from '" + scheme + "' are not supported");
+                    }
+                    return null;
+                }
+            };
+        }
+
+        private Path download(final IProfileProvider provider, final CloseableHttpClient client,
+            final HttpUriRequest request, final List<Runnable> logs) {
+            final var stateDir = getStateLocation();
+            final var profileDir = stateDir.resolve(PROFILES_FOLDER);
+
+            try (client) {
+                // compute list of profiles that are requested but not present locally yet
+                List<String> newRequestedProfiles = new ArrayList<>(provider.getRequestedProfiles());
+                if (Files.isDirectory(profileDir)) {
+                    try (DirectoryStream<Path> stream = Files.newDirectoryStream(profileDir, Files::isDirectory)) {
+                        stream.forEach(p -> newRequestedProfiles.remove(p.getFileName().toString()));
+                    }
+                }
+                Files.createDirectories(stateDir);
+                if (newRequestedProfiles.isEmpty() && Files.isDirectory(profileDir)) {
+                    // if new profiles are requested we must not make a conditional request
+                    final var lastModified = Files.getLastModifiedTime(profileDir).toInstant();
+                    request.setHeader("If-Modified-Since",
+                        DateTimeFormatter.RFC_1123_DATE_TIME.format(lastModified.atZone(ZoneId.of("GMT"))));
+                }
+
+                try (var response = client.execute(request)) {
+                    processHttpResponse(response);
+                    // if it was null (uninitialized) set `true`, otherwise keep previous status
+                    m_downloadSuccessful = m_downloadSuccessful == null || m_downloadSuccessful;
+                }
+            } catch (IOException ex) {
+                m_downloadSuccessful = false;
+                String msg = "Could not download profiles from " + provider.getProfilesLocation() + ": "
+                    + ex.getMessage() + ". " + (Files.isDirectory(profileDir)
+                        ? "Will use existing but potentially outdated profiles." : "No profiles will be applied.");
+                logs.add(() -> NodeLogger.getLogger(ProfileManager.class).error(msg, ex));
+                return null;
+            }
+
+            return profileDir;
+        }
+
+        // -- REQUEST PREPARATION & RESPONSE HANDLING --
+
+        @SuppressWarnings("resource")
+        private static Pair<CloseableHttpClient, HttpUriRequest> createHttpRequest(final IProfileProvider provider,
+            final List<Runnable> logs) {
+            try {
+                final var builder = new URIBuilder(provider.getProfilesLocation());
+                builder.addParameter(PROFILES_FOLDER, String.join(",", provider.getRequestedProfiles()));
+                final var profileUri = builder.build();
+
+                logs.add(
+                    () -> NodeLogger.getLogger(ProfileManager.class).info("Downloading profiles from " + profileUri));
+
+                // proxy and timeout configuration
+                final var proxy = ProxySelector.getDefault().select(profileUri).stream() //
+                    .filter(p -> p != null && p.address() != null) //
+                    .findFirst().map(p -> ((InetSocketAddress)p.address())) //
+                    .map(p -> new HttpHost(p.getHostString(), p.getPort())) //
+                    .orElse(null);
+                final var requestConfig = RequestConfig.custom() //
+                    .setConnectTimeout(URLConnectionFactory.getDefaultURLConnectTimeoutMillis()) //
+                    .setConnectionRequestTimeout(URLConnectionFactory.getDefaultURLConnectTimeoutMillis()) //
+                    .setSocketTimeout(URLConnectionFactory.getDefaultURLReadTimeoutMillis()) //
+                    .setProxy(proxy) //
+                    .build();
+
+                // creating the client for provider target
+                final var client = HttpClients.custom() //
+                    .setDefaultRequestConfig(requestConfig) //
+                    .setSSLHostnameVerifier(KNIMEServerHostnameVerifier.getInstance()) //
+                    .setRedirectStrategy(new DefaultRedirectStrategy()) //
+                    .build();
+
+                return Pair.create(client, new HttpGet(profileUri));
+            } catch (URISyntaxException ex) {
+                String msg = "Could not create HTTP client for downloading profiles from "
+                    + provider.getProfilesLocation() + ": " + ex.getMessage();
+                logs.add(() -> NodeLogger.getLogger(ProfileManager.class).error(msg, ex));
+                return null;
+            }
+        }
+
+        private static void processHttpResponse(final CloseableHttpResponse response) throws IOException {
+            final var stateDir = getStateLocation();
+            final var profileDir = stateDir.resolve(PROFILES_FOLDER);
+
+            int code = response.getStatusLine().getStatusCode();
+            if ((code >= 200) && (code < 300)) {
+                final var ct = response.getFirstHeader("Content-Type");
+                if ((ct == null) || (ct.getValue() == null) || !ct.getValue().startsWith("application/zip")) {
+                    // this is a workaround because ZipInputStream doesn't complain when the read contents are
+                    // no zip file - it just processes an empty zip
+                    throw new IOException("Server did not return a ZIP file containing the selected profiles");
+                }
+
+                final var tempFile = PathUtils.createTempFile("profile-download", ".zip");
+                try (var os = Files.newOutputStream(tempFile)) {
+                    IOUtils.copyLarge(response.getEntity().getContent(), os);
+                }
+
+                final var tempDir = PathUtils.createTempDir("profile-download", stateDir);
+                try (var zf = ZipFile.builder().setFile(tempFile.toFile()).get()) {
+                    PathUtils.unzip(zf, tempDir);
+                }
+
+                // replace profiles only if new data has been downloaded successfully
+                PathUtils.deleteDirectoryIfExists(profileDir);
+                Files.move(tempDir, profileDir, StandardCopyOption.ATOMIC_MOVE);
+                Files.delete(tempFile);
+
+                writeOriginHeaders(response.getAllHeaders(), profileDir);
+            } else if (code == 304) { // 304 = Not Modified
+                writeOriginHeaders(response.getAllHeaders(), profileDir);
+            } else {
+                final var body = response.getEntity();
+                String msg;
+                if ((body != null) && (body.getContentType() != null) && (body.getContentType().getValue() != null)
+                    && body.getContentType().getValue().startsWith("text/")) {
+                    final var buf = new byte[Math.min(4096, Math.max(4096, (int)body.getContentLength()))];
+                    final var read = body.getContent().read(buf);
+                    msg = new String(buf, 0, read, StandardCharsets.US_ASCII).trim();
+                } else if (!response.getStatusLine().getReasonPhrase().isEmpty()) {
+                    msg = response.getStatusLine().getReasonPhrase();
+                } else {
+                    msg = "Server returned status " + response.getStatusLine().getStatusCode();
+                }
+
+                throw new IOException(msg);
+            }
+        }
+
+        private static void writeOriginHeaders(final Header[] allHeaders, final Path profileDir) throws IOException {
+            final var originHeadersCache = profileDir.resolve(ORIGIN_HEADERS_FILE);
+            final var props = new Properties();
+            for (var h : allHeaders) {
+                props.put(h.getName(), h.getValue());
+            }
+            try (var os = Files.newOutputStream(originHeadersCache)) {
+                props.store(os, "");
+            }
+        }
+    }
+
+    /**
+     * Triple uniquely identifying a locally-resolved profile containing a type of {@link Properties},
+     * resolving to local "Eclipse Preferences" (i.e. *.epf files).
+     *
+     * @param name The name of the Eclipse preference profile.
+     * @param provider The source where it was specified to use this profile.
+     * @param localPath The local path where this profile resides or was downloaded to.
+     *
+     * @author Leon Wenzler, KNIME GmbH, Konstanz, Germany
+     * @since 5.5
+     */
+    public static record Profile(String name, IProfileProvider provider, Path localPath) {
+
+        /**
+         * Given an {@link IProfileProvider} containing a list of profile names and a base {@link Path}
+         * where its contents reside, streams each valid {@link Profile} contained at that path.
+         *
+         * @param provider The source of profiles.
+         * @param basePath The local path where all profiles of this provider reside.
+         * @return {@link Stream} of valid preference {@link Profile}s from this provider.
+         */
+        public static Stream<Profile> stream(final IProfileProvider provider, final Path basePath) {
+            final var basePathNormalized = basePath.normalize();
+
+            return provider.getRequestedProfiles().stream() //
+                // Map each profile location to multiple local profiles.
+                .map(name -> new Profile(name, provider, basePath.resolve(name).normalize())) //
+                .filter(p -> Files.isDirectory(p.localPath())) //
+                // Remove profiles that are outside the profile root (e.g. with "../" in their name).
+                // Use normalized profile root s.t. the `startsWith` check considers the real paths.
+                .filter(p -> p.localPath().startsWith(basePathNormalized));
+        }
     }
 }

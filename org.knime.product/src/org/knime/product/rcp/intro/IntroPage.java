@@ -492,7 +492,7 @@ public final class IntroPage implements LocationListener {
         if (dlg.open() != Window.OK) {
             return;
         }
-        MountSettings mountSettings = dlg.getMountSettings(0);
+        MountSettings mountSettings = dlg.getMountSettings().orElse(null);
         if (mountSettings != null) {
             mountSettingsList.add(mountSettings);
 

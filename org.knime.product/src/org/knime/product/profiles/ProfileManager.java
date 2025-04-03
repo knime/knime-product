@@ -78,6 +78,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.function.FailableConsumer;
 import org.apache.commons.lang3.stream.Streams;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -151,6 +152,41 @@ public class ProfileManager {
         m_profileResolver = new ProfileResolver(providers);
     }
 
+    /**
+     * Returns a setter (a {@link FailableConsumer}) that takes a {@link Path} of the "combined-preferences.epf" file
+     * and sets it reflectively within Eclipse's {@link DefaultPreferences}. If the overwrite flag is set to {@code false},
+     * that field being non-null causes this method to signal not overwriting preferences by returning {@link Optional#empty()}.
+     *
+     * @param overwrite whether to overwrite preferences if defaults are already set
+     * @return reflective setter of the preferences file (that is used as defaults)
+     * @throws ReflectiveOperationException
+     */
+    private static Optional<FailableConsumer<Path, ReflectiveOperationException>>
+        getReflectiveCustomizationSetter(final boolean overwrite) throws ReflectiveOperationException {
+        // This field was made private in a recent eclipse upgrade, so we need to use reflection to access it.
+        // Also, it is not possible to set it via the "eclipse.pluginCustomization" property in the bundle context of
+        // this `ProductPlugin.getDefault().getBundle().getBundleContext()` (which itself is accessible).
+        final var pluginCustomization = DefaultPreferences.class.getDeclaredField("pluginCustomizationFile");
+        pluginCustomization.setAccessible(true); // NOSONAR
+
+        // If plugin customizations were already explicitly provided by someone else, and we do no want to
+        // overwrite it, signal an "abort" via empty setter.
+        if (!overwrite && (String)pluginCustomization.get(null) != null) {
+            return Optional.empty();
+        }
+
+        // It is required that this field is `null`, it is checked before loading from our plugin customizations
+        // file. Only after that, the contents of that file are loaded into this field as `Properties`.
+        final var pluginProperties = DefaultPreferences.class.getDeclaredField("commandLineCustomization");
+        pluginProperties.setAccessible(true); // NOSONAR
+
+        FailableConsumer<Path, ReflectiveOperationException> setter = path -> {
+            pluginCustomization.set(null, path.toAbsolutePath().toString()); // NOSONAR
+            pluginProperties.set(null, null); // NOSONAR
+        };
+        return Optional.of(setter);
+    }
+
     private List<Supplier<IProfileProvider>> getExtensionPointProviderSuppliers() {
         // maps from an extension to a creator of an profile provider
         Function<IConfigurationElement, Supplier<IProfileProvider>> mapper = extension -> () -> {
@@ -179,14 +215,19 @@ public class ProfileManager {
         applyProfiles(false);
     }
 
+    /**
+     * Only used in tests with overwrite being {@code true} to ensure that profiles can be applied
+     * multiple times. Hands the overwrite flag to {@link #getReflectiveCustomizationSetter(boolean)}.
+     *
+     * @param overwrite whether to overwrite preferences if defaults are already set
+     */
     void applyProfiles(final boolean overwrite) {
         List<Profile> localProfiles = Streams.of(m_profileResolver.iterator()) //
             // Flatten all profiles from different providers into one stream.
             .flatMap(Function.identity()).toList();
         try {
             applyPreferences(localProfiles, overwrite);
-        } catch (IOException | NoSuchFieldException | SecurityException | IllegalArgumentException
-                | IllegalAccessException ex) {
+        } catch (IOException | ReflectiveOperationException ex) {
             m_collectedLogs.add(() -> NodeLogger.getLogger(ProfileManager.class)
                 .error("Could not apply preferences from profiles: " + ex.getMessage(), ex));
         }
@@ -195,14 +236,11 @@ public class ProfileManager {
     }
 
     private void applyPreferences(final List<Profile> profiles, final boolean overwrite)
-        throws IOException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+        throws IOException, ReflectiveOperationException {
 
-        // This field was made private in a recent eclipse upgrade so we need to use reflection ot access it
-        final var pluginCustomizationFileField = DefaultPreferences.class.getDeclaredField("pluginCustomizationFile");
-        pluginCustomizationFileField.setAccessible(true);
-
-        if (!overwrite && (String)pluginCustomizationFileField.get(null) != null) {
-            return; // plugin customizations are already explicitly provided by someone else
+        final var setter = getReflectiveCustomizationSetter(overwrite);
+        if (setter.isEmpty()) {
+            return;
         }
         m_appliedProfiles.clear();
 
@@ -251,7 +289,9 @@ public class ProfileManager {
         try (var out = Files.newOutputStream(pluginCustFile)) {
             combinedProperties.store(out, "");
         }
-        pluginCustomizationFileField.set(null, pluginCustFile.toAbsolutePath().toString());
+
+        // This is the important line! It sets our "combined-preferences.epf" as default preferences.
+        setter.get().accept(pluginCustFile);
     }
 
     private void replaceVariables(final Properties props, final Profile profile) throws IOException {

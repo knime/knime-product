@@ -62,24 +62,52 @@ import org.osgi.framework.FrameworkUtil;
 
 /**
  * Profile provider for testing the {@link ProfileManager}.
+ * <p>
+ * This file additionally provides two different instances of this {@link TestProfileProvider}, whose return values
+ * (profile list and location) can be edited via static instance getters.
+ * </p>
  *
  * @author Thorsten Meinl, KNIME AG, Zurich, Switzerland
+ * @author Leon Wenzler, KNIME GmbH, Konstanz, Germany
  */
-public class TestProfileProvider implements IProfileProvider {
+public abstract class TestProfileProvider implements IProfileProvider {
+
+    static final String TEST_PROFILES_LOCATION = "test-profiles";
+
+    private List<String> m_profiles = Arrays.asList("base", "custom");
+
+    private Optional<URI> m_location = Optional.empty();
+
     /**
-     * {@inheritDoc}
+     * Sets the list of profiles returned by {@link #getRequestedProfiles()}.
+     *
+     * @param profiles list of profiles
      */
+    public void setRequestedProfiles(final List<String> profiles) {
+        m_profiles = profiles;
+    }
+
     @Override
     public List<String> getRequestedProfiles() {
-        return Arrays.asList("base", "custom");
+        return m_profiles;
     }
 
     /**
-     * {@inheritDoc}
+     * Sets the profiles location returned by {@link #getProfilesLocation()}.
+     *
+     * @param location URI of the profiles location
      */
+    public void setProfilesLocation(final URI location) {
+        m_location = Optional.ofNullable(location);
+    }
+
     @Override
     public URI getProfilesLocation() {
-        Enumeration<URL> profileUrls = FrameworkUtil.getBundle(getClass()).findEntries("/", "test-profiles", false);
+        if (m_location.isPresent()) {
+            return m_location.get();
+        }
+        Enumeration<URL> profileUrls =
+            FrameworkUtil.getBundle(getClass()).findEntries("/", TEST_PROFILES_LOCATION, false);
         try {
             String url = FileLocator.toFileURL(profileUrls.nextElement()).toString();
             return new URI(url.replace(" ", "%20")).normalize();
@@ -88,11 +116,56 @@ public class TestProfileProvider implements IProfileProvider {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Optional<String> resolveVariable(final String name) {
         return Optional.ofNullable("var".equals(name) ? "replaced-value" : null);
+    }
+
+    /**
+     * Low-priority profile provider, loaded before {@link HighPriority}.
+     */
+    public static class LowPriority extends TestProfileProvider {
+
+        private static TestProfileProvider instance = null;
+
+        /**
+         * Creates an instance of a {@link TestProfileProvider}.
+         */
+        public LowPriority() {
+            instance = this;
+        }
+
+        /**
+         * Returns the last-created instance of this class.
+         *
+         * @return (high-priority) profile provider for testing
+         */
+        public static TestProfileProvider getInstance() {
+            return instance;
+        }
+    }
+
+    /**
+     * High-priority profile provider, overwrites preferences from {@link LowPriority}.
+     */
+    public static class HighPriority extends TestProfileProvider {
+
+        private static TestProfileProvider instance = null;
+
+        /**
+         * Creates an instance of a {@link TestProfileProvider}.
+         */
+        public HighPriority() {
+            instance = this;
+        }
+
+        /**
+         * Returns the last-created instance of this class.
+         *
+         * @return (high-priority) profile provider for testing
+         */
+        public static TestProfileProvider getInstance() {
+            return instance;
+        }
     }
 }

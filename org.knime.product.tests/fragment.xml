@@ -7,11 +7,12 @@
             TestcaseCollector="org.knime.product.testing.ProductTestcaseCollector">
       </TestcaseCollector>
    </extension>
-   <extension
-         point="org.knime.product.profileProvider">
+   <extension point="org.knime.product.profileProvider">
       <profileProvider
-            class="org.knime.product.profiles.TestProfileProvider">
+            class="org.knime.product.profiles.TestProfileProvider$LowPriority">
+      </profileProvider>
+      <profileProvider
+            class="org.knime.product.profiles.TestProfileProvider$HighPriority">
       </profileProvider>
    </extension>
-
 </fragment>

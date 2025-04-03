@@ -50,16 +50,15 @@ package org.knime.product.profiles;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.knime.product.profiles.TestPreferencesContext.getDefaultPreferences;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Optional;
 
-import org.eclipse.core.runtime.preferences.DefaultScope;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.knime.product.ProductPlugin;
 import org.osgi.service.prefs.Preferences;
 
 /**
@@ -67,13 +66,14 @@ import org.osgi.service.prefs.Preferences;
  *
  * @author Thorsten Meinl, KNIME AG, Zurich, Switzerland
  */
-public class ProfileManagerTest {
+final class ProfileManagerTest {
+
     /**
      * Sets up the test environment.
      */
-    @BeforeClass
-    public static void applyProfiles() {
-        ProfileManager.getInstance().applyProfiles();
+    @BeforeAll
+    static void applyProfiles() {
+        ProfileManager.getInstance().applyProfiles(true);
     }
 
     /**
@@ -83,16 +83,15 @@ public class ProfileManagerTest {
      * @throws Exception if an error occurs
      */
     @Test
-    public void testAppliedPreferences() throws Exception {
-        assertThat("Unexpected value for successful profile download for local profile",
-            ProfileManager.getInstance().downloadWasSuccessful(), is(Optional.empty()));
+    void testAppliedPreferences() throws Exception {
+        getDefaultPreferences(ProductPlugin.PLUGIN_ID, prefs -> {
+            assertThat("Unexpected preferences value for 'test-pref'", prefs.get("test-pref", "XXX"), is("custom"));
+        });
 
-        IEclipsePreferences productPrefs = DefaultScope.INSTANCE.getNode("org.knime.product");
-        assertThat("Unexpected preferences value for 'test-pref'", productPrefs.get("test-pref", ""), is("custom"));
-
-        IEclipsePreferences workbenchPrefs = DefaultScope.INSTANCE.getNode("org.knime.workbench.ui");
-        assertThat("Unexpected preferences value", workbenchPrefs.get("knime.gridsize.x", ""), is("3333"));
-        assertThat("Unexpected preferences value", workbenchPrefs.get("knime.gridsize.y", ""), is("5555"));
+        getDefaultPreferences("org.knime.workbench.ui", prefs -> {
+            assertThat("Unexpected preferences value", prefs.get("knime.gridsize.x", "XXX"), is("3333"));
+            assertThat("Unexpected preferences value", prefs.get("knime.gridsize.y", "XXX"), is("5555"));
+        });
     }
 
     /**
@@ -101,43 +100,46 @@ public class ProfileManagerTest {
      * @throws Exception if an error occurs
      */
     @Test
-    public void testVariablesReplacement() throws Exception {
-        IEclipsePreferences prefs = DefaultScope.INSTANCE.getNode("org.knime.product");
+    void testVariablesReplacement() throws Exception {
+        getDefaultPreferences(ProductPlugin.PLUGIN_ID, prefs -> {
+            String expectedEnv = System.getenv("USER");
+            assertThat("Unexpected value for environment variable", prefs.get("environment-variable", "XXX"),
+                is(expectedEnv));
 
-        String expectedEnv = System.getenv("USER");
-        assertThat("Unexpected value for environment variable", prefs.get("environment-variable", "XXX"),
-            is(expectedEnv));
+            String expectedSysprop = System.getProperty("user.name");
+            assertThat("Unexpected value for system property", prefs.get("system-property", "XXX"),
+                is(expectedSysprop));
 
-        String expectedSysprop = System.getProperty("user.name");
-        assertThat("Unexpected value for system property", prefs.get("system-property", "XXX"), is(expectedSysprop));
+            assertThat("Unexpected value for profile name", prefs.get("profile-name", "XXX"), is("base"));
+            Path profileLocation = Paths.get(prefs.get("profile-location", "XXX"));
+            assertThat("Returned profile location " + profileLocation + " does not exist",
+                Files.isDirectory(profileLocation), is(true));
 
-        assertThat("Unexpected value for profile name", prefs.get("profile-name", "XXX"), is("base"));
-        Path profileLocation = Paths.get(prefs.get("profile-location", "XXX"));
-        assertThat("Returned profile location " + profileLocation + " does not exist",
-            Files.isDirectory(profileLocation), is(true));
+            assertThat("Unexpected value for custom variable", prefs.get("custom-variable", "XXX"),
+                is("replaced-value"));
 
-        assertThat("Unexpected value for custom variable", prefs.get("custom-variable", "XXX"), is("replaced-value"));
+            // unknown variables => no replacement
+            assertThat("Unexpected value for unknown environment variable",
+                prefs.get("unknown-environment-variable", "XXX"), is("${env:unknown}"));
+            assertThat("Unexpected value for unknown system property", prefs.get("unknown-system-property", "XXX"),
+                is("${sysprop:unknown}"));
+            assertThat("Unexpected value for unknown custom variable", prefs.get("unknown-custom-variable", "XXX"),
+                is("${custom:unknown}"));
+            assertThat("Unexpected value for unknown profile variable", prefs.get("unknown-profile-variable", "XXX"),
+                is("${profile:unknown}"));
 
-        // unknown variables => no replacement
-        assertThat("Unexpected value for unknown environment variable", prefs.get("unknown-environment-variable", "XXX"),
-            is("${env:unknown}"));
-        assertThat("Unexpected value for unknown system property", prefs.get("unknown-system-property", "XXX"),
-            is("${sysprop:unknown}"));
-        assertThat("Unexpected value for unknown custom variable", prefs.get("unknown-custom-variable", "XXX"),
-            is("${custom:unknown}"));
-        assertThat("Unexpected value for unknown profile variable", prefs.get("unknown-profile-variable", "XXX"),
-            is("${profile:unknown}"));
+            // escaped "variable" (with $$) => no replacement
+            assertThat("Unexpected value for escaped variable", prefs.get("non-variable", "XXX"),
+                is("bla/${custom:var}/foo"));
+        });
 
-        // escaped "variable" (with $$) => no replacement
-        assertThat("Unexpected value for escaped variable", prefs.get("non-variable", "XXX"),
-            is("bla/${custom:var}/foo"));
-
-        // "origin" variable replacement
-        IEclipsePreferences explorerPrefs = DefaultScope.INSTANCE.getNode("org.knime.workbench.explorer.view");
-        Preferences mpPrefs = explorerPrefs.node("mountpointNode/test-mountpoint2");
-        assertThat("Unexpected value for origin variable", mpPrefs.get("address", "XXX"),
-            is("http://localhost:12345/tomee/ejb"));
-        assertThat("Unexpected value for origin variable", mpPrefs.get("mountID", "XXX"),
-            is("test-mountpoint2"));
+        getDefaultPreferences("org.knime.workbench.explorer.view", prefs -> {
+            // "origin" variable replacement
+            Preferences mpPrefs = prefs.node("mountpointNode/test-mountpoint2");
+            assertThat("Unexpected value for origin variable", mpPrefs.get("address", "XXX"), //
+                is("http://localhost:12345/tomee/ejb"));
+            assertThat("Unexpected value for origin variable", mpPrefs.get("mountID", "XXX"), //
+                is("test-mountpoint2"));
+        });
     }
 }

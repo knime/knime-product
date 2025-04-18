@@ -342,9 +342,15 @@ public class ProfileManager {
      * The path to the local profiles of the last (highest priority) {@link IProfileProvider}
      * that the resolver used. Use {@link ProfileManager#getLocalProfilesLocation(IProfileProvider)}
      * for more control over which profile provider you want the local path from.
+     * <p>
+     * You really want to use {@link #getAllRequestedProfiles()} instead since this method here
+     * only returns the local profiles location of the last-resolved {@link IProfileProvider}!
+     * </p>
      *
      * @return the local profiles directory or an empty optional if no profiles available
+     * @deprecated use {@link #getAllRequestedProfiles()} instead
      */
+    @Deprecated(since = "5.5", forRemoval = false)
     public Optional<Path> getLocalProfilesLocation() {
         return getLocalProfilesLocation(m_profileResolver.m_currentProvider);
     }
@@ -376,13 +382,45 @@ public class ProfileManager {
 
     /**
      * Returns the list of requested profiles. See also {@link IProfileProvider#getRequestedProfiles()}.
+     * <p>
+     * You really want to use {@link #getAllRequestedProfiles()} instead since this method here
+     * only returns the profiles list of the last-resolved {@link IProfileProvider}!
+     * </p>
      *
      * @return the list, never <code>null</code> but can be empty
+     * @deprecated use {@link #getAllRequestedProfiles()} instead
      */
+    @Deprecated(since = "5.5", forRemoval = false)
     public List<String> getRequestProfiles() {
+        return m_profileResolver.m_currentProvider.getRequestedProfiles();
+    }
+
+    /**
+     * Returns the list of requested profiles. The profile records returned by this method
+     * do *not* take into account the validity of the {@link Profile}, yet.
+     * It simply queries all active {@link IProfileProvider}s and accumulates their local paths
+     * (see {@link #getLocalProfilesLocation(IProfileProvider)}) and profiles as {@link Profile} list.
+     * <p>
+     * In contrast to {@link #getLocalProfilesLocation(IProfileProvider)}, this method here
+     * additionally filters the list for non-empty local {@link Path} values.
+     * </p>
+     * Note: if you are interested in which profiles are actually applied, use the method
+     * {@link #getAllAppliedProfiles()} instead, it contains validated profiles.
+     *
+     * @return the list, never <code>null</code> but can be empty
+     * @since 5.5
+     */
+    public List<Profile> getAllRequestedProfiles() {
         return m_profileResolver.m_providers.stream() //
             .map(Supplier::get) //
-            .flatMap(p -> p.getRequestedProfiles().stream()).toList();
+            .flatMap(p -> {
+                final var basePath = getLocalProfilesLocation(p);
+                if (basePath.isEmpty()) {
+                    return Stream.empty();
+                }
+                return Profile.stream(p, basePath.get());
+            }) //
+            .toList();
     }
 
     /**
@@ -393,7 +431,7 @@ public class ProfileManager {
      * @return the list, never <code>null</code> but can be empty
      * @since 5.5
      */
-    public List<Profile> getAppliedProfiles() {
+    public List<Profile> getAllAppliedProfiles() {
         return Collections.unmodifiableList(m_appliedProfiles);
     }
 

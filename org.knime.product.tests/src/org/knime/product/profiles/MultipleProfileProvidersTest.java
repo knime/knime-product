@@ -335,7 +335,7 @@ final class MultipleProfileProvidersTest {
             ProfileManager.getInstance().applyProfiles();
             final var expected = new LinkedList<>(lowPriorityProfiles);
             expected.addAll(highPriorityProfiles);
-            final var actual = ProfileManager.getInstance().getAppliedProfiles().stream() //
+            final var actual = ProfileManager.getInstance().getAllAppliedProfiles().stream() //
                 .map(Profile::name) //
                 .toList();
             assertEquals(expected, actual, "Different to expected profiles were applied");

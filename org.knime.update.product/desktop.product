@@ -32,7 +32,7 @@ All other trademarks are the property of their respective owners.
 openFile
       </programArgsWin>
       <programArgsLin>--launcher.library
-plugins/com.equo.chromium.cef.gtk.linux.x86_64_128.0.11/
+plugins/com.equo.chromium.cef.gtk.linux.x86_64_128.0.12/
       </programArgsLin>
       <vmArgs>-server
 -Dsun.java2d.d3d=false

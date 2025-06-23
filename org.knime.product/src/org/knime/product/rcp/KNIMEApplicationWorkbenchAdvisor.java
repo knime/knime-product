@@ -62,6 +62,7 @@ import org.eclipse.ui.application.WorkbenchAdvisor;
 import org.eclipse.ui.application.WorkbenchWindowAdvisor;
 import org.knime.core.eclipseUtil.EclipseProxyServiceInitializer;
 import org.knime.core.node.KNIMEConstants;
+import org.knime.core.node.NodeLogger;
 import org.knime.core.ui.util.SWTUtilities;
 import org.knime.core.util.EclipseUtil;
 import org.knime.product.rcp.shutdown.PreShutdown;
@@ -79,6 +80,8 @@ import org.osgi.service.prefs.Preferences;
  */
 @SuppressWarnings("restriction") // internal SDK scheduler class usage.
 public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
+
+    private static final NodeLogger LOGGER = NodeLogger.getLogger(KNIMEApplicationWorkbenchAdvisor.class);
 
     private final KNIMEOpenDocumentEventProcessor m_openDocProcessor;
 
@@ -146,6 +149,11 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
         m_openDocProcessor.openFiles();
         m_openUrlProcessor.openUrls();
         super.eventLoopIdle(display);
+    }
+
+    @Override
+    public void eventLoopException(final Throwable exception) {
+        LOGGER.error("Uncaught exception in event loop", exception);
     }
 
     @Override

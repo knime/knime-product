@@ -5,20 +5,20 @@
 # state and name are not needed for "remove"
 #
 # Remove old update sites
-https://update.knime.com/analytics-platform/5.3,remove
-https://update.knime.com/partner/5.3,remove
-https://update.knime.com/community-contributions/trusted/5.3,remove
-https://update.knime.com/community-contributions/5.3,remove
-
 https://update.knime.com/analytics-platform/5.4,remove
 https://update.knime.com/partner/5.4,remove
 https://update.knime.com/community-contributions/trusted/5.4,remove
 https://update.knime.com/community-contributions/5.4,remove
 
-https://update.knime.com/analytics-platform/5.5,add,enabled,KNIME Analytics Platform Update Site
-https://update.knime.com/partner/5.5,add,enabled,KNIME Partner Extensions
-https://update.knime.com/community-contributions/trusted/5.5,add,enabled,KNIME Community Extensions (Trusted)
-https://update.knime.com/community-contributions/5.5,add,disabled,KNIME Community Extensions (Experimental)
+https://update.knime.com/analytics-platform/5.5,remove
+https://update.knime.com/partner/5.5,remove
+https://update.knime.com/community-contributions/trusted/5.5,remove
+https://update.knime.com/community-contributions/5.5,remove
+
+https://update.knime.com/analytics-platform/5.6,add,enabled,KNIME Analytics Platform Update Site
+https://update.knime.com/partner/5.6,add,enabled,KNIME Partner Extensions
+https://update.knime.com/community-contributions/trusted/5.6,add,enabled,KNIME Community Extensions (Trusted)
+https://update.knime.com/community-contributions/5.6,add,disabled,KNIME Community Extensions (Experimental)
 
 # remove birt update sites
 https://download.eclipse.org/birt/updates/release/latest,force-remove

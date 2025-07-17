@@ -59,8 +59,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.equinox.internal.provisional.p2.core.eventbus.IProvisioningEventBus;
 import org.eclipse.equinox.internal.provisional.p2.core.eventbus.ProvisioningListener;
 import org.eclipse.equinox.internal.provisional.p2.repository.RepositoryEvent;
@@ -160,9 +158,6 @@ public class RepositoryUpdater implements ProvisioningListener {
         Set<URI> knownRepositories =
             new HashSet<>(Arrays.asList(repoManager.getKnownRepositories(IRepositoryManager.REPOSITORIES_NON_LOCAL)));
 
-        IEclipsePreferences preferences =
-            InstanceScope.INSTANCE.getNode(FrameworkUtil.getBundle(getClass()).getSymbolicName());
-
         try (BufferedReader in = new BufferedReader(new InputStreamReader(usFileUrl.openStream()))) {
             String line;
             while ((line = in.readLine()) != null) {
@@ -173,25 +168,16 @@ public class RepositoryUpdater implements ProvisioningListener {
                 String[] parts = line.split(",");
                 URI uri = new URI(parts[0]);
 
-                String oldPrefName = uri.toString(); // preference key until 2.11
-                String newPrefName = "us_info-" + uri; // preference key since 2.12
-
-                // Only make any modification if this is the first time. We store the information and if the user
-                // has re-added or removed an entry himself, we don't try it a second time
                 if ("force-remove".equals(parts[1]) && repoManager.contains(uri)) {
                     repoManager.removeRepository(uri);
-                } else if ("remove".equals(parts[1]) && !preferences.getBoolean(oldPrefName + "-removed", false)
-                    && !preferences.getBoolean(newPrefName + "-removed", false)) {
+                } else if ("remove".equals(parts[1])) {
                     repoManager.removeRepository(uri);
-                    preferences.putBoolean(newPrefName + "-removed", true);
                 } else if ("add".equals(parts[1])) {
                     m_defaultRepositories.add(uri);
 
                     boolean noKnownRepos = knownRepositories.isEmpty();
                     boolean newRepo = !knownRepositories.contains(uri);
-                    boolean added211 = preferences.getBoolean(oldPrefName + "-added", false);
-                    boolean added212 = preferences.getBoolean(newPrefName + "-added", false);
-                    if (noKnownRepos || (newRepo && !added211 && !added212)) {
+                    if (noKnownRepos || newRepo) {
                         m_addedDefaultRepositories.add(uri);
 
                         repoManager.addRepository(uri);
@@ -199,8 +185,6 @@ public class RepositoryUpdater implements ProvisioningListener {
                         if (parts.length > 3) {
                             repoManager.setRepositoryProperty(uri, IRepository.PROP_NAME, parts[3]);
                         }
-
-                        preferences.putBoolean(newPrefName + "-added", true);
                     }
                 }
             }

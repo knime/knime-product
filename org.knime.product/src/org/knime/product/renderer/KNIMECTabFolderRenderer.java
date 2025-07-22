@@ -14,8 +14,6 @@ package org.knime.product.renderer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-import javax.inject.Inject;
-
 import org.eclipse.e4.ui.css.swt.dom.CTabFolderElement;
 import org.eclipse.e4.ui.css.swt.dom.CompositeElement;
 import org.eclipse.e4.ui.internal.css.swt.ICTabRendering;
@@ -37,6 +35,8 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.ToolBar;
 import org.knime.core.util.ColorUtilities;
+
+import jakarta.inject.Inject;
 
 /**
  * This class is a copy of the org.eclipse.e4.ui.workbench.renderers.swt.CTabRendering class with

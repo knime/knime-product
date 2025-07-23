@@ -46,11 +46,6 @@
 			<layout>p2</layout>
 		</repository>
 		<repository>
-			<id>p2-knime-node</id>
-			<url>${knime.node.p2}</url>
-			<layout>p2</layout>
-		</repository>
-		<repository>
 			<id>knime.shared.p2</id>
 			<layout>p2</layout>
 			<url>${knime.shared.p2}</url>

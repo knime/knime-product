@@ -818,7 +818,6 @@ propagated with or for interoperation with KNIME.
       <feature id="org.eclipse.equinox.p2.user.ui"/>
       <feature id="org.knime.features.core"/>
       <feature id="org.knime.features.core.ui"/>
-      <feature id="org.knime.features.node"/>
       <feature id="org.knime.features.base"/>
       <feature id="org.knime.features.filehandling.core"/>
       <feature id="org.knime.features.workbench"/>

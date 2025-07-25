@@ -157,8 +157,10 @@ public class RepositoryUpdater implements ProvisioningListener {
     }
 
     private void processDefaultRepositories(final IMetadataRepositoryManager repoManager, final URL usFileUrl) {
-        Set<URI> knownRepositories =
+        Set<URI> enabledRepositories =
             new HashSet<>(Arrays.asList(repoManager.getKnownRepositories(IRepositoryManager.REPOSITORIES_NON_LOCAL)));
+        Set<URI> disabledRepositories = new HashSet<>(
+                Arrays.asList(repoManager.getKnownRepositories(IRepositoryManager.REPOSITORIES_DISABLED)));
 
         try (final InputStream inStream = usFileUrl.openStream();
                 final BufferedReader in = new BufferedReader(new InputStreamReader(inStream, StandardCharsets.UTF_8))) {
@@ -180,9 +182,26 @@ public class RepositoryUpdater implements ProvisioningListener {
                 } else if ("add".equals(parts[1])) {
                     m_defaultRepositories.add(uri);
 
-                    boolean noKnownRepos = knownRepositories.isEmpty();
-                    boolean newRepo = !knownRepositories.contains(uri);
-                    if (noKnownRepos || newRepo) {
+                    // We only want to add a default update site under the following conditions:
+                    //
+                    // Case 1:  Default update site not enabled & Default update site not disabled
+                    // Example: The default site was not added yet (on update or new installation).
+                    // Action:  Add default update site.
+                    //
+                    // Case 2:  Default update site not enabled & Default update site disabled
+                    // Example: The default site is enabled (see note above) and disabled.
+                    // Action:  Don't add default update site.
+                    //
+                    // Case 3:  Default update site enabled & Default update site not disabled
+                    // Example: The default is enabled.
+                    // Action:  Don't add default update site.
+                    //
+                    // Case 4: Default update site enabled & Default update site disabled
+                    // Action: <invalid case>
+
+                    final var isEnabeldDefaultUpdateSite = enabledRepositories.contains(uri);
+                    final var isDisabledDefaultUpdateSite = disabledRepositories.contains(uri);
+                    if (!isEnabeldDefaultUpdateSite && !isDisabledDefaultUpdateSite) {
                         m_addedDefaultRepositories.add(uri);
 
                         repoManager.addRepository(uri);

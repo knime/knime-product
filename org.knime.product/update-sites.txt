@@ -30,3 +30,7 @@ https://download.eclipse.org/egit/updates,force-remove
 https://download.eclipse.org/modeling/emf/emf/builds,force-remove
 https://download.eclipse.org/modeling/gmp/gmf-runtime/updates/releases,force-remove
 https://download.eclipse.org/tools/gef/classic/releases/latest,force-remove
+
+# remove exorbyte update sites (see AP-24751, 08-2025 - a partner accidentally promoted their home page as update site)
+http://www.exorbyte.com,force-remove
+https://www.exorbyte.com,force-remove

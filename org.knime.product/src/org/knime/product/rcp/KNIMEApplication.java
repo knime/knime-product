@@ -187,9 +187,6 @@ public class KNIMEApplication implements IApplication {
 
             parseApplicationArguments(appContext);
 
-            // initialize common classes early in order to avoid deadlocks
-            NodeLogger.class.getName();
-
             RepositoryUpdater.INSTANCE.addDefaultRepositories();
             RepositoryUpdater.INSTANCE.updateArtifactRepositoryURLs();
 

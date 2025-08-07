@@ -28,6 +28,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Properties;
 
 import javax.swing.SwingUtilities;
@@ -171,6 +172,10 @@ public class KNIMEApplication implements IApplication {
             LongStartupHandler.getInstance().onStartupCommenced("startup-dialog-noshow", !defenderDialogShown, display);
 
             ViewUtils.setLookAndFeel();
+
+            if (checkLinuxWaylandUsersAndAbort()) {
+                return EXIT_OK;
+            }
 
             ProfileManager.getInstance().applyProfiles();
             // this application is "profile aware" and special-cased in IEarlyStartup, so follow the contract
@@ -689,6 +694,43 @@ public class KNIMEApplication implements IApplication {
             // cannot log because instance area has not been set
             return null;
         }
+    }
+
+    /**
+     * Detects if the application is run within Wayland and warns the user that this is not yet supported and will
+     * likely cause display bugs. See https://knime-com.atlassian.net/browse/AP-24801
+     *
+     * @return true if the user has chosen to exit the application, false otherwise
+     */
+    private static boolean checkLinuxWaylandUsersAndAbort() {
+        // Check if GDK_BACKEND is already set to x11
+        var gdkBackend = System.getenv("GDK_BACKEND");
+        if ("x11".equals(gdkBackend)) {
+            return false; // User has already applied the workaround
+        }
+
+        var sessionType = System.getenv("XDG_SESSION_TYPE");
+        if (Platform.OS_LINUX.equals(Platform.getOS()) && Objects.equals(sessionType, "wayland")) {
+            var message = """
+                We have detected that your system is running Wayland, which is known to cause issues with \
+                KNIME Analytics Platform. You may encounter empty dialogs and other weird behavior. \
+                To work around this problem, set the GDK_BACKEND environment variable before launching KNIME. \
+                For example, launch KNIME from a terminal using:
+
+                GDK_BACKEND=x11 ./knime""";
+            var dialog = new MessageDialog(Display.getCurrent().getActiveShell(), //
+                "KNIME Analytics Platform on Wayland", // Dialog title
+                null, // image
+                message, // message
+                MessageDialog.WARNING, // kind
+                new String[]{"Exit", "Continue"}, // button labels
+                1); // default button
+            var code = dialog.open();
+            if (code == 0) { // the user pressed the "Exit" button
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

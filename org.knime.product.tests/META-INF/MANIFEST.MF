@@ -10,5 +10,5 @@ Require-Bundle: org.knime.testing;bundle-version="[5.6.0,6.0.0)",
  junit-jupiter-params;bundle-version="[5.10.2,6.0.0)",
  org.junit;bundle-version="[4.13.2,5.0.0)",
  com.github.tomakehurst.wiremock-jre8-standalone;bundle-version="[2.33.2,3.0.0)"
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Automatic-Module-Name: org.knime.product.tests

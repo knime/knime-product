@@ -61,9 +61,9 @@ import org.eclipse.ui.IViewReference;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
-import org.knime.core.internal.KNIMEPath;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.util.FileUtil;
+import org.knime.core.workbench.KNIMEWorkspacePath;
 import org.knime.product.ProductPlugin;
 import org.knime.workbench.explorer.view.ExplorerView;
 
@@ -94,7 +94,7 @@ class ExampleWorkflowExtractor implements Runnable {
         }
 
 
-        File workspace = KNIMEPath.getWorkspaceDirPath();
+        File workspace = KNIMEWorkspacePath.getWorkspaceDirPath();
         try (ZipInputStream is = new ZipInputStream(Files.newInputStream(initialWorkspace))) {
             FileUtil.unzip(is, workspace, 0);
         } catch (IOException ex) {

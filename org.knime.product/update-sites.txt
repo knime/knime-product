@@ -15,10 +15,10 @@ https://update.knime.com/partner/5.5,remove
 https://update.knime.com/community-contributions/trusted/5.5,remove
 https://update.knime.com/community-contributions/5.5,remove
 
-https://update.knime.com/analytics-platform/latest,add,enabled,KNIME Analytics Platform Update Site
-https://update.knime.com/partner/latest,add,enabled,KNIME Partner Extensions
-https://update.knime.com/community-contributions/trusted/latest,add,enabled,KNIME Community Extensions (Trusted)
-https://update.knime.com/community-contributions/latest,add,disabled,KNIME Community Extensions (Experimental)
+https://update.knime.com/analytics-platform/nightly,add,enabled,KNIME Analytics Platform Update Site
+https://update.knime.com/partner/nightly,add,enabled,KNIME Partner Extensions
+https://update.knime.com/community-contributions/trusted/nightly,add,enabled,KNIME Community Extensions (Trusted)
+https://update.knime.com/community-contributions/nightly,add,disabled,KNIME Community Extensions (Experimental)
 
 # remove birt update sites
 https://download.eclipse.org/birt/updates/release/latest,force-remove
@@ -30,3 +30,7 @@ https://download.eclipse.org/egit/updates,force-remove
 https://download.eclipse.org/modeling/emf/emf/builds,force-remove
 https://download.eclipse.org/modeling/gmp/gmf-runtime/updates/releases,force-remove
 https://download.eclipse.org/tools/gef/classic/releases/latest,force-remove
+
+# remove exorbyte update sites (see AP-24751, 08-2025 - a partner accidentally promoted their home page as update site)
+http://www.exorbyte.com,force-remove
+https://www.exorbyte.com,force-remove

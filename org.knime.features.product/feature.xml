@@ -2,7 +2,7 @@
 <feature
       id="org.knime.features.product"
       label="KNIME Analytics Platform Product"
-      version="5.6.1.qualifier"
+      version="5.7.0.qualifier"
       provider-name="KNIME AG, Zurich, Switzerland">
 
    <description>
@@ -733,16 +733,11 @@ propagated with or for interoperation with KNIME.
 
    <plugin
          id="org.knime.product"
-         download-size="0"
-         install-size="0"
          version="0.0.0"/>
 
    <plugin
          id="org.knime.startup.macosx"
          os="macosx"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
+         version="0.0.0"/>
 
 </feature>

@@ -551,7 +551,6 @@ public class ProfileManager {
                     + ex.getMessage() + ". " + (Files.isDirectory(profileDir)
                         ? "Will use existing but potentially outdated profiles." : "No profiles will be applied.");
                 logs.add(() -> NodeLogger.getLogger(ProfileManager.class).error(msg, ex));
-                return null;
             }
 
             return profileDir;

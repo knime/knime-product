@@ -155,7 +155,7 @@ public final class LongStartupHandler {
         final NodeLogger logger = NodeLogger.getLogger(LongStartupHandler.class);
         m_logger.logQueuedMessaged(logger);
         final long startupTime = (System.currentTimeMillis() - m_timestampOnStartup);
-        final String startupTimeMsg = String.format("Startup took %d seconds.", startupTime);
+        final String startupTimeMsg = String.format("Startup took %d milliseconds.", startupTime);
 
         if (m_showWarn && startupTime >= STARTUP_TIME_THRESHOLD_MILLIS) {
             logger.warn(startupTimeMsg);

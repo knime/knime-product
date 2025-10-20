@@ -131,16 +131,51 @@ public final class LongStartupHandler {
         // look up the Eclipse configuration area to determine if we should even check for Windows Defender
         if (showDialogAndWarn && Platform.OS_WIN32.equals(Platform.getOS()) && !flag.isFlagSet()) {
             m_showWarn = true;
+            m_logger.queueDebug("Setting up long startup detection timer for " + (STARTUP_TIME_THRESHOLD_MILLIS / 1000) + " seconds");
             display.timerExec(STARTUP_TIME_THRESHOLD_MILLIS, () -> {
                 if (!m_startupConcluded) {
-                    final var dialog = new LongStartupDetectedDialog(display, m_logger);
-                    long timestampOnOpen = System.currentTimeMillis();
-                    dialog.open();
-                    // while waiting for the dialog to close, we should not log startup time
-                    m_timestampOnStartup += System.currentTimeMillis() - timestampOnOpen;
-                    if (dialog.getToggleState()) {
-                        flag.setFlag(true);
+                    long currentElapsed = System.currentTimeMillis() - m_timestampOnStartup;
+                    m_logger.queueDebug("Long startup timer triggered after " + (currentElapsed / 1000) + " seconds. Startup not yet concluded, checking conda installation status...");
+                    
+                    // Check if conda environment installation is in progress - if so, don't show the dialog
+                    boolean isCondaInstallInProgress = isCondaEnvironmentInstallationInProgress();
+                    m_logger.queueDebug("Conda installation in progress check result: " + isCondaInstallInProgress);
+                    
+                    if (!isCondaInstallInProgress) {
+                        m_logger.queueDebug("Showing long startup dialog to user.");
+                        final var dialog = new LongStartupDetectedDialog(display, m_logger);
+                        long timestampOnOpen = System.currentTimeMillis();
+                        dialog.open();
+                        // while waiting for the dialog to close, we should not log startup time
+                        m_timestampOnStartup += System.currentTimeMillis() - timestampOnOpen;
+                        if (dialog.getToggleState()) {
+                            flag.setFlag(true);
+                        }
+                    } else {
+                        m_logger.queueDebug("Skipping long startup dialog because conda environment installation is in progress. Setting up another timer to check again in 30 seconds...");
+                        // Set up another timer to check again after conda installation might be done
+                        display.timerExec(30000, () -> {
+                            if (!m_startupConcluded) {
+                                long newElapsed = System.currentTimeMillis() - m_timestampOnStartup;
+                                m_logger.queueDebug("Secondary timer triggered after " + (newElapsed / 1000) + " seconds total. Checking conda status again...");
+                                boolean isStillInProgress = isCondaEnvironmentInstallationInProgress();
+                                if (!isStillInProgress && newElapsed >= STARTUP_TIME_THRESHOLD_MILLIS) {
+                                    m_logger.queueDebug("Conda installation completed but startup still taking long - showing dialog.");
+                                    final var delayedDialog = new LongStartupDetectedDialog(display, m_logger);
+                                    long delayedTimestampOnOpen = System.currentTimeMillis();
+                                    delayedDialog.open();
+                                    m_timestampOnStartup += System.currentTimeMillis() - delayedTimestampOnOpen;
+                                    if (delayedDialog.getToggleState()) {
+                                        flag.setFlag(true);
+                                    }
+                                } else {
+                                    m_logger.queueDebug("Secondary check: conda still in progress or startup completed - no dialog needed.");
+                                }
+                            }
+                        });
                     }
+                } else {
+                    m_logger.queueDebug("Long startup timer triggered but startup already concluded.");
                 }
             });
         }
@@ -150,17 +185,63 @@ public final class LongStartupHandler {
      * Method that should be invoked once startup concluded.
      */
     public void onStartupConcluded() {
+        final long startupTime = (System.currentTimeMillis() - m_timestampOnStartup);
+        m_logger.queueDebug("onStartupConcluded called after " + (startupTime / 1000) + " seconds");
+        
         m_startupConcluded = true;
 
         final NodeLogger logger = NodeLogger.getLogger(LongStartupHandler.class);
         m_logger.logQueuedMessaged(logger);
-        final long startupTime = (System.currentTimeMillis() - m_timestampOnStartup);
-        final String startupTimeMsg = String.format("Startup took %d seconds.", startupTime);
+        final String startupTimeMsg = String.format("Startup took %d seconds.", startupTime / 1000);
 
         if (m_showWarn && startupTime >= STARTUP_TIME_THRESHOLD_MILLIS) {
-            logger.warn(startupTimeMsg);
+            logger.warn(startupTimeMsg + " Long startup dialog should have been shown if conda environment installation was not in progress.");
         } else {
             logger.debug(startupTimeMsg);
+        }
+    }
+
+    /**
+     * Checks if conda environment installation is currently in progress by using reflection
+     * to avoid direct dependency on the conda module.
+     * 
+     * @return true if conda environment installation is in progress, false otherwise
+     */
+    private boolean isCondaEnvironmentInstallationInProgress() {
+        try {
+            m_logger.queueDebug("Attempting to check if conda environment installation is in progress...");
+            
+            Class<?> registryClass = Class.forName("org.knime.conda.envbundling.environment.CondaEnvironmentRegistry");
+            m_logger.queueDebug("Successfully loaded CondaEnvironmentRegistry class");
+            
+            java.lang.reflect.Method method = registryClass.getMethod("isEnvironmentInstallationInProgress");
+            m_logger.queueDebug("Successfully found isEnvironmentInstallationInProgress method");
+            
+            Boolean result = (Boolean) method.invoke(null);
+            m_logger.queueDebug("Conda environment installation in progress: " + result);
+            
+            // Additional debug: try to check environment count to see if environments are being processed
+            try {
+                java.lang.reflect.Method getEnvsMethod = registryClass.getMethod("getEnvironments");
+                Object environments = getEnvsMethod.invoke(null);
+                if (environments instanceof java.util.Map) {
+                    int envCount = ((java.util.Map<?, ?>) environments).size();
+                    m_logger.queueDebug("Number of conda environments registered: " + envCount);
+                }
+            } catch (Exception e2) {
+                m_logger.queueDebug("Could not get environment count: " + e2.getMessage());
+            }
+            
+            return result;
+        } catch (ClassNotFoundException e) {
+            m_logger.queueDebug("CondaEnvironmentRegistry class not found - conda module likely not present: " + e.getMessage());
+            return false;
+        } catch (NoSuchMethodException e) {
+            m_logger.queueDebug("isEnvironmentInstallationInProgress method not found: " + e.getMessage());
+            return false;
+        } catch (Exception e) {
+            m_logger.queueDebug("Error checking conda environment installation status: " + e.getMessage());
+            return false; // default to false if any error occurs
         }
     }
 }

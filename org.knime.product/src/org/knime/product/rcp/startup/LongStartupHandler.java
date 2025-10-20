@@ -133,13 +133,17 @@ public final class LongStartupHandler {
             m_showWarn = true;
             display.timerExec(STARTUP_TIME_THRESHOLD_MILLIS, () -> {
                 if (!m_startupConcluded) {
-                    final var dialog = new LongStartupDetectedDialog(display, m_logger);
-                    long timestampOnOpen = System.currentTimeMillis();
-                    dialog.open();
-                    // while waiting for the dialog to close, we should not log startup time
-                    m_timestampOnStartup += System.currentTimeMillis() - timestampOnOpen;
-                    if (dialog.getToggleState()) {
-                        flag.setFlag(true);
+                    // Check if conda environment installation is in progress - if so, don't show the dialog
+                    boolean isCondaInstallInProgress = isCondaEnvironmentInstallationInProgress();
+                    if (!isCondaInstallInProgress) {
+                        final var dialog = new LongStartupDetectedDialog(display, m_logger);
+                        long timestampOnOpen = System.currentTimeMillis();
+                        dialog.open();
+                        // while waiting for the dialog to close, we should not log startup time
+                        m_timestampOnStartup += System.currentTimeMillis() - timestampOnOpen;
+                        if (dialog.getToggleState()) {
+                            flag.setFlag(true);
+                        }
                     }
                 }
             });
@@ -161,6 +165,22 @@ public final class LongStartupHandler {
             logger.warn(startupTimeMsg);
         } else {
             logger.debug(startupTimeMsg);
+        }
+    }
+
+    /**
+     * Checks if conda environment installation is currently in progress by using reflection
+     * to avoid direct dependency on the conda module.
+     * 
+     * @return true if conda environment installation is in progress, false otherwise
+     */
+    private static boolean isCondaEnvironmentInstallationInProgress() {
+        try {
+            Class<?> registryClass = Class.forName("org.knime.conda.envbundling.environment.CondaEnvironmentRegistry");
+            java.lang.reflect.Method method = registryClass.getMethod("isEnvironmentInstallationInProgress");
+            return (Boolean) method.invoke(null);
+        } catch (Exception e) {
+            return false; // default to false if any error occurs or conda module is not present
         }
     }
 }

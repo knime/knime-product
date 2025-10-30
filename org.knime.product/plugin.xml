@@ -71,6 +71,15 @@
       </application>
    </extension>
    <extension
+         id="KNIME_WARMSTART_APPLICATION"
+         point="org.eclipse.core.runtime.applications">
+      <application>
+         <run
+               class="org.knime.product.headless.KNIMEWarmstartApplication">
+         </run>
+      </application>
+   </extension>
+   <extension
          point="org.eclipse.ui.splashHandlers">
       <splashHandler
             class="org.knime.product.KNIMESplashHandler"

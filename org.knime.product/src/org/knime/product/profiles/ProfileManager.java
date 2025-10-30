@@ -90,7 +90,6 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultRedirectStrategy;
-import org.apache.http.impl.client.HttpClients;
 import org.eclipse.core.internal.preferences.DefaultPreferences;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
@@ -101,6 +100,7 @@ import org.knime.core.util.KNIMEServerHostnameVerifier;
 import org.knime.core.util.Pair;
 import org.knime.core.util.PathUtils;
 import org.knime.core.util.proxy.URLConnectionFactory;
+import org.knime.core.util.proxy.apache.ProxyHttpClients;
 import org.osgi.framework.FrameworkUtil;
 
 import com.google.common.base.Supplier;
@@ -583,7 +583,7 @@ public class ProfileManager {
                     .build();
 
                 // creating the client for provider target
-                final var client = HttpClients.custom() //
+                final var client = ProxyHttpClients.custom() //
                     .setDefaultRequestConfig(requestConfig) //
                     .setSSLHostnameVerifier(KNIMEServerHostnameVerifier.getInstance()) //
                     .setRedirectStrategy(new DefaultRedirectStrategy()) //

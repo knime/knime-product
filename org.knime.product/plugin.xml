@@ -5,6 +5,7 @@
    <extension-point id="splashExtension" name="KNIME Splash Extensions" schema="schema/splashExtension.exsd"/>
    <extension-point id="profileProvider" name="KNIME Profile Provider" schema="schema/profileProvider.exsd"/>
    <extension-point id="preShutdown" name="Pre-Shutdown callback" schema="schema/preShutdown.exsd"/>
+   <extension-point id="warmstartAction" name="KNIME Warmstart Action" schema="schema/warmstartAction.exsd"/>
 
    <extension
          id="KNIME_APPLICATION"
@@ -67,6 +68,15 @@
       <application>
          <run
                class="org.knime.product.headless.KNIMEBatchApplication">
+         </run>
+      </application>
+   </extension>
+   <extension
+         id="KNIME_WARMSTART_APPLICATION"
+         point="org.eclipse.core.runtime.applications">
+      <application>
+         <run
+               class="org.knime.product.headless.KNIMEWarmstartApplication">
          </run>
       </application>
    </extension>

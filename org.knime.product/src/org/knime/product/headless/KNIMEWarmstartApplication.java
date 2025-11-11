@@ -54,16 +54,16 @@ import org.knime.product.rcp.StatusLoggerHelper;
 import org.osgi.framework.Bundle;
 
 /**
- * A minimal KNIME application for warm-starting KNIME in containers. This application initializes the core plugin,
- * runs all early startup stages, applies profiles, and executes all registered warmstart actions without executing 
- * any workflows.
- * 
+ * A minimal KNIME application for warm-starting KNIME in containers. This application initializes the core plugin, runs
+ * all early startup stages, applies profiles, and executes all registered warmstart actions without executing any
+ * workflows.
+ *
  * <p>
- * The application discovers and executes all warmstart actions registered via the 
+ * The application discovers and executes all warmstart actions registered via the
  * {@code org.knime.product.warmstartAction} extension point. This makes the system extensible and allows different
  * components to contribute their own initialization logic without tight coupling.
  * </p>
- * 
+ *
  * <p>
  * It's particularly useful for pre-warming Docker containers to reduce startup time for subsequent application runs.
  * </p>
@@ -76,14 +76,25 @@ public class KNIMEWarmstartApplication implements IApplication {
     private static final NodeLogger LOGGER = NodeLogger.getLogger(KNIMEWarmstartApplication.class);
 
     static {
-        // Set headless mode - no GUI components will be loaded
-        if (System.getProperty("java.awt.headless") == null) {
-            System.setProperty("java.awt.headless", "true");
-        }
+        // Force headless mode - no GUI components will be loaded
+        System.setProperty("java.awt.headless", "true");
     }
 
     private static final int EXIT_CODE_OK = 0;
+
     private static final int EXIT_CODE_ERROR = 1;
+
+    /**
+     * Prints a message to stdout and flushes immediately for visibility in Docker logs.
+     * We use this instead of the logger to ensure messages appear during the warmstart process,
+     * even if the logging level is set to a higher threshold. (default in Docker is WARN)
+     *
+     * @param message the message to print
+     */
+    private static void printAndFlush(final String message) {
+        System.out.println(message); // NOSONAR - needed for Docker container logging visibility
+        System.out.flush();
+    }
 
     /**
      * {@inheritDoc}
@@ -91,16 +102,14 @@ public class KNIMEWarmstartApplication implements IApplication {
     @Override
     public Object start(final IApplicationContext context) throws Exception {
         // Force early logging to make sure we can see this in Docker logs
-        System.out.println("=== KNIME WARMSTART APPLICATION STARTING ===");
-        System.out.flush();
+        printAndFlush("=== KNIME WARMSTART APPLICATION STARTING ===");
 
         LOGGER.info("Starting KNIME Warmstart Application");
 
         try {
             // Starting the Core plugin initializes `IEarlyStartup` and runs the `EARLIEST` stage
             LOGGER.debug("Initializing CorePlugin");
-            System.out.println("=== WARMSTART: Initializing CorePlugin ===");
-            System.out.flush();
+            printAndFlush("=== WARMSTART: Initializing CorePlugin ===");
             CorePlugin.getInstance();
 
             // Silence Log4j2's StatusLogger used for internal framework logging
@@ -108,8 +117,7 @@ public class KNIMEWarmstartApplication implements IApplication {
 
             // Load the UI plugin to read the preferences - needed for proper initialization
             LOGGER.debug("Loading workbench core plugin");
-            System.out.println("=== WARMSTART: Loading workbench core plugin ===");
-            System.out.flush();
+            printAndFlush("=== WARMSTART: Loading workbench core plugin ===");
             try {
                 Platform.getBundle("org.knime.workbench.core").start(Bundle.START_TRANSIENT);
                 LOGGER.debug("Successfully loaded workbench core plugin");
@@ -118,44 +126,38 @@ public class KNIMEWarmstartApplication implements IApplication {
             }
 
             // Execute all registered warmstart actions
-            System.out.println("=== WARMSTART: Executing warmstart actions ===");
-            System.out.flush();
+            printAndFlush("=== WARMSTART: Executing warmstart actions ===");
             LOGGER.info("Executing all registered warmstart actions");
-            
+
             WarmstartExecutionSummary summary = WarmstartActionRegistry.executeAllActions();
-            
+
             // Report final results
-            System.out.println("=== WARMSTART: Execution Summary ===");
-            System.out.println("Total actions: " + summary.totalActions());
-            System.out.println("Executed: " + summary.executedActions());
-            System.out.println("Successful: " + summary.successfulActions());
-            System.out.println("Failed: " + summary.failedActions());
-            System.out.println("Skipped: " + summary.skippedActions());
-            System.out.flush();
-            
+            printAndFlush("=== WARMSTART: Execution Summary ===");
+            printAndFlush("Total actions: " + summary.totalActions());
+            printAndFlush("Executed: " + summary.executedActions());
+            printAndFlush("Successful: " + summary.successfulActions());
+            printAndFlush("Failed: " + summary.failedActions());
+            printAndFlush("Skipped: " + summary.skippedActions());
+
             if (summary.hasFailures()) {
                 LOGGER.warn("Warmstart completed with " + summary.failedActions() + " failures");
-                System.out.println("=== WARMSTART: COMPLETED WITH FAILURES ===");
+                printAndFlush("=== WARMSTART: COMPLETED WITH FAILURES ===");
             } else if (summary.executedActions() > 0) {
                 LOGGER.info("Warmstart completed successfully");
-                System.out.println("=== WARMSTART: COMPLETED SUCCESSFULLY ===");
+                printAndFlush("=== WARMSTART: COMPLETED SUCCESSFULLY ===");
             } else {
                 LOGGER.info("Warmstart completed (no actions to execute)");
-                System.out.println("=== WARMSTART: COMPLETED (NO ACTIONS) ===");
+                printAndFlush("=== WARMSTART: COMPLETED (NO ACTIONS) ===");
             }
-            System.out.flush();
 
             return summary.hasFailures() ? EXIT_CODE_ERROR : EXIT_CODE_OK;
 
         } catch (Exception e) {
             LOGGER.error("Warmstart application failed with exception", e);
-            System.out.println("=== WARMSTART: FAILED WITH EXCEPTION ===");
-            System.out.flush();
+            printAndFlush("=== WARMSTART: FAILED WITH EXCEPTION ===");
             return EXIT_CODE_ERROR;
         }
     }
-
-
 
     /**
      * {@inheritDoc}

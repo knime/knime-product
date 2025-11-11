@@ -11,13 +11,10 @@
          Warmstart actions are designed to perform expensive initialization tasks that would normally slow down regular application startup. By executing these during a separate warmstart phase (e.g., in Docker container preparation), subsequent application starts can be significantly faster.
          &lt;/p&gt;
          &lt;p&gt;
-         Common use cases include:
-         &lt;ul&gt;
-         &lt;li&gt;Pre-installing conda environments&lt;/li&gt;
-         &lt;li&gt;Initializing caches&lt;/li&gt;
-         &lt;li&gt;Preparing configuration files&lt;/li&gt;
-         &lt;li&gt;Downloading and extracting resources&lt;/li&gt;
-         &lt;/ul&gt;
+         All action metadata (name, priority, executeAfterFailures) must be specified in the extension point declaration. The implementing class should only contain the execution logic via the execute() method.
+         &lt;/p&gt;
+         &lt;p&gt;
+         Only intended for internal use by KNIME. All other other warmstart actions must be taken into account when adding new ones
          &lt;/p&gt;
       </documentation>
    </annotation>
@@ -97,12 +94,7 @@
             <annotation>
                <documentation>
                   The execution priority of this action. Actions with higher priority values are executed first. If not specified, defaults to 100.
-                  
-                  Common priority ranges:
-                  - 1000+ : Critical infrastructure (e.g., core plugin initialization)
-                  - 500-999 : Important preparatory tasks (e.g., environment setup)  
-                  - 100-499 : Standard initialization tasks
-                  - 1-99 : Low priority tasks
+                  Look at the existing warmstart actions to choose an appropriate priority.
                </documentation>
             </annotation>
          </attribute>

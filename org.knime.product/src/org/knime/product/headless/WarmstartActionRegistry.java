@@ -1,5 +1,6 @@
 /*
  * ------------------------------------------------------------------------
+ *
  *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
@@ -40,7 +41,10 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ----------------------------------------------------------------------------
+ * ---------------------------------------------------------------------
+ *
+ * History
+ *   Nov 07, 2025 (marc lehner): created
  */
 package org.knime.product.headless;
 
@@ -59,74 +63,74 @@ import org.knime.product.headless.IWarmstartAction.WarmstartResult;
 /**
  * Registry for discovering and executing warmstart actions contributed via the
  * {@code org.knime.product.warmstartAction} extension point.
- * 
+ *
  * <p>
- * This registry handles the discovery, sorting by priority, and execution of all registered
- * warmstart actions. It provides comprehensive logging and error handling to ensure that
- * failures in individual actions don't prevent other actions from executing.
+ * This registry handles the discovery, sorting by priority, and execution of all registered warmstart actions. It
+ * provides comprehensive logging and error handling to ensure that failures in individual actions don't prevent other
+ * actions from executing and lets the application finish the warmstart phase properly to report all failures.
  * </p>
- * 
+ *
  * @author Marc Lehner, KNIME AG, Zurich, Switzerland
  * @since 5.9
  */
 public final class WarmstartActionRegistry {
 
     private static final NodeLogger LOGGER = NodeLogger.getLogger(WarmstartActionRegistry.class);
-    
+
     private static final String EXTENSION_POINT_ID = "org.knime.product.warmstartAction";
-    
+
     private WarmstartActionRegistry() {
         // Utility class - no instantiation
     }
-    
+
     /**
      * Discovers and executes all registered warmstart actions.
-     * 
+     *
      * <p>
-     * Actions are executed in priority order (highest priority first). If an action fails
-     * and {@code executeAfterFailures} is false, subsequent actions are skipped unless
-     * they have {@code executeAfterFailures} set to true.
+     * Actions are executed in priority order (highest priority first). if an action fails, subsequent actions are only
+     * run if their executeAfterFailures flag is set to true
      * </p>
-     * 
+     *
      * @return a summary of the execution results
      */
     public static WarmstartExecutionSummary executeAllActions() {
         LOGGER.info("=== STARTING WARMSTART ACTION EXECUTION ===");
-        
+
         List<WarmstartActionDescriptor> descriptors = discoverWarmstartActions();
-        
+
         if (descriptors.isEmpty()) {
             LOGGER.info("No warmstart actions found");
             return new WarmstartExecutionSummary(0, 0, 0, 0);
         }
-        
+
         // Sort by priority (highest first)
         descriptors.sort(Comparator.comparingInt(WarmstartActionDescriptor::priority).reversed());
-        
+
         LOGGER.info("Found " + descriptors.size() + " warmstart action(s)");
-        
+
         int executed = 0;
         int successful = 0;
         int failed = 0;
         int skipped = 0;
         boolean hasFailure = false;
-        
+
         for (WarmstartActionDescriptor descriptor : descriptors) {
-            LOGGER.info("--- Executing warmstart action: " + descriptor.name() + " (priority: " + descriptor.priority() + ") ---");
-            
+            LOGGER.info("--- Executing warmstart action: " + descriptor.name() + " (priority: " + descriptor.priority()
+                + ") ---");
+
             // Check if we should skip due to previous failures
             if (hasFailure && !descriptor.executeAfterFailures()) {
                 LOGGER.info("Skipping '" + descriptor.name() + "' due to previous failures");
                 skipped++;
                 continue;
             }
-            
+
             executed++;
-            
+
             try {
                 IWarmstartAction action = createActionInstance(descriptor);
                 WarmstartResult result = action.execute();
-                
+
                 if (result.isSuccessful()) {
                     successful++;
                     String message = result.message() != null ? result.message() : "completed successfully";
@@ -141,70 +145,72 @@ public final class WarmstartActionRegistry {
                         LOGGER.error("✗ '" + descriptor.name() + "' " + message);
                     }
                 }
-                
+
             } catch (Exception e) {
                 failed++;
                 hasFailure = true;
                 LOGGER.error("✗ '" + descriptor.name() + "' failed with exception", e);
             }
         }
-        
-        WarmstartExecutionSummary summary = new WarmstartExecutionSummary(
-                descriptors.size(), executed, successful, failed);
-        
+
+        WarmstartExecutionSummary summary =
+            new WarmstartExecutionSummary(descriptors.size(), executed, successful, failed);
+
         LOGGER.info("=== WARMSTART ACTION EXECUTION COMPLETE ===");
-        LOGGER.info("Total actions: " + summary.totalActions() + ", Executed: " + summary.executedActions() + 
-                ", Successful: " + summary.successfulActions() + ", Failed: " + summary.failedActions() + 
-                ", Skipped: " + skipped);
-        
+        LOGGER.info(
+            "Total actions: " + summary.totalActions() + ", Executed: " + summary.executedActions() + ", Successful: "
+                + summary.successfulActions() + ", Failed: " + summary.failedActions() + ", Skipped: " + skipped);
+
         return summary;
     }
-    
+
     /**
      * Discovers all warmstart actions registered via the extension point.
-     * 
+     *
      * @return list of warmstart action descriptors, never null
      */
     private static List<WarmstartActionDescriptor> discoverWarmstartActions() {
         List<WarmstartActionDescriptor> descriptors = new ArrayList<>();
-        
+
         IExtensionRegistry registry = Platform.getExtensionRegistry();
         IExtensionPoint extensionPoint = registry.getExtensionPoint(EXTENSION_POINT_ID);
-        
+
         if (extensionPoint == null) {
             LOGGER.debug("Extension point '" + EXTENSION_POINT_ID + "' not found");
             return descriptors;
         }
-        
+
         for (IConfigurationElement element : extensionPoint.getConfigurationElements()) {
             if ("warmstartAction".equals(element.getName())) {
                 try {
                     WarmstartActionDescriptor descriptor = parseActionDescriptor(element);
                     descriptors.add(descriptor);
-                    LOGGER.debug("Discovered warmstart action: " + descriptor.name() + " (class: " + 
-                            descriptor.className() + ", priority: " + descriptor.priority() + ")");
-                } catch (Exception e) {
-                    LOGGER.error("Failed to parse warmstart action from extension: " + 
-                            element.getContributor().getName(), e);
+                    LOGGER.debug("Discovered warmstart action: " + descriptor.name() + " (class: "
+                        + descriptor.className() + ", priority: " + descriptor.priority() + ")");
+                } catch (RuntimeException e) {
+                    // Handle unexpected runtime exceptions during parsing (e.g., malformed extension data)
+                    String contributorName = element != null && element.getContributor() != null
+                        ? element.getContributor().getName() : "unknown";
+                    LOGGER.error("Failed to parse warmstart action from extension: " + contributorName, e);
                 }
             }
         }
-        
+
         return descriptors;
     }
-    
+
     /**
      * Parses a warmstart action descriptor from a configuration element.
-     * 
+     *
      * @param element the configuration element
      * @return the parsed descriptor
      */
-    private static WarmstartActionDescriptor parseActionDescriptor(IConfigurationElement element) {
+    private static WarmstartActionDescriptor parseActionDescriptor(final IConfigurationElement element) {
         String id = element.getAttribute("id");
         String name = element.getAttribute("name");
         String className = element.getAttribute("class");
         String description = element.getAttribute("description");
-        
+
         // Parse priority (default to 100)
         int priority = 100;
         String priorityStr = element.getAttribute("priority");
@@ -212,44 +218,43 @@ public final class WarmstartActionRegistry {
             try {
                 priority = Integer.parseInt(priorityStr.trim());
             } catch (NumberFormatException e) {
-                LOGGER.warn("Invalid priority value '" + priorityStr + "' for warmstart action '" + name + 
-                        "', using default: " + priority);
+                LOGGER.warn("Invalid priority value '" + priorityStr + "' for warmstart action '" + name
+                    + "', using default: " + priority);
             }
         }
-        
+
         // Parse executeAfterFailures (default to false)
         boolean executeAfterFailures = false;
         String executeAfterFailuresStr = element.getAttribute("executeAfterFailures");
         if (executeAfterFailuresStr != null && !executeAfterFailuresStr.trim().isEmpty()) {
             executeAfterFailures = Boolean.parseBoolean(executeAfterFailuresStr.trim());
         }
-        
-        return new WarmstartActionDescriptor(id, name, className, description, priority, 
-                executeAfterFailures, element);
+
+        return new WarmstartActionDescriptor(id, name, className, description, priority, executeAfterFailures, element);
     }
-    
+
     /**
      * Creates an instance of a warmstart action from its descriptor.
-     * 
+     *
      * @param descriptor the action descriptor
      * @return the created action instance
      * @throws CoreException if the action cannot be created
      */
-    private static IWarmstartAction createActionInstance(WarmstartActionDescriptor descriptor) 
-            throws CoreException {
+    private static IWarmstartAction createActionInstance(final WarmstartActionDescriptor descriptor)
+        throws CoreException {
         Object actionObj = descriptor.configElement().createExecutableExtension("class");
-        
+
         if (!(actionObj instanceof IWarmstartAction)) {
-            throw new CoreException(org.eclipse.core.runtime.Status.error(
-                    "Class '" + descriptor.className() + "' does not implement IWarmstartAction"));
+            throw new CoreException(org.eclipse.core.runtime.Status
+                .error("Class '" + descriptor.className() + "' does not implement IWarmstartAction"));
         }
-        
-        return (IWarmstartAction) actionObj;
+
+        return (IWarmstartAction)actionObj;
     }
-    
+
     /**
      * Descriptor for a warmstart action discovered from the extension point.
-     * 
+     *
      * @param id unique identifier
      * @param name human-readable name
      * @param className fully qualified class name
@@ -258,44 +263,35 @@ public final class WarmstartActionRegistry {
      * @param executeAfterFailures whether to execute after failures
      * @param configElement the configuration element (for creating instances)
      */
-    private record WarmstartActionDescriptor(
-            String id,
-            String name, 
-            String className,
-            String description,
-            int priority,
-            boolean executeAfterFailures,
-            IConfigurationElement configElement) {
+    private record WarmstartActionDescriptor(String id, String name, String className, String description, int priority,
+        boolean executeAfterFailures, IConfigurationElement configElement) {
     }
-    
+
     /**
      * Summary of warmstart action execution results.
-     * 
+     *
      * @param totalActions total number of actions discovered
      * @param executedActions number of actions that were executed
      * @param successfulActions number of actions that completed successfully
      * @param failedActions number of actions that failed
      */
-    public record WarmstartExecutionSummary(
-            int totalActions,
-            int executedActions, 
-            int successfulActions,
-            int failedActions) {
-        
+    public record WarmstartExecutionSummary(int totalActions, int executedActions, int successfulActions,
+        int failedActions) {
+
         /**
          * @return number of actions that were skipped due to failures
          */
         public int skippedActions() {
             return totalActions - executedActions;
         }
-        
+
         /**
          * @return true if all executed actions were successful
          */
         public boolean allSuccessful() {
             return executedActions > 0 && failedActions == 0;
         }
-        
+
         /**
          * @return true if any actions failed
          */

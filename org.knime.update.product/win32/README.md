@@ -17,8 +17,9 @@ You need access to a windows machine or VM to run the commands on.
 to have access to the following tools and files
 
 - `osslsigncode` <https://github.com/mtrojnar/osslsigncode>
-- `signtool.exe` found in `knime-ap-build/tools/windows/`
-- `knime.p12` code signing certificate.
+- `CODE_SIGNING_KEY_ID` found in DEVOPS AWS secret manager <https://eu-west-1.console.aws.amazon.com/secretsmanager/secret?name=jenkins%2Fcode-signing-key-id&region=eu-west-1>
+- `knime-code-signing.pem` found in `jenkins-pipeline-libraries/resources/knime-code-signing.pem`
+- `jsign.jar` download from maven central repository <https://repo1.maven.org/maven2/net/jsign/jsign/>
 
 ### Steps
 
@@ -27,7 +28,7 @@ to have access to the following tools and files
 3. Copy the `knime.exe` from `org.knime.update.product/target/products/org.knime.desktop.product/win32/win32/x86_64/` to `org.knime.update.product/win32/` and then go to that folder.
 4. Remove the signature from `knime.exe` by running `osslsigncode remove-signature -in knime.exe -out knime-stripped.exe`, then replace `knime.exe` with `knime-stripped.exe`.
 5. Add the manifest to the executable by running `mt.exe -manifest knime.exe.manifest -outputresource:knime.exe;1`.
-6. Sign the executable by running `signtool.exe sign /f <path/to/knime.p12> /a /tr http://timestamp.digicert.com/ /fd SHA256 /p "<code signing password>" knime.exe`
+6. Sign the executable by running `java -jar <path/to/jsing.jar> --storetype AWS --keystore eu-west-1 --alias <CODE_SIGNING_KEY_ID> --certfile "<path/to/knime-code-signing.pem>" --tsaurl http://timestamp.sectigo.com --tsretries 3 --tsretrywait 5 --verbose knime.exe`
 7. Move the signed executable to `org.knime.update.product/win32/x86_64/`, replacing the old one.
 8. Re-enable the `Fix Windows executable` execution in `org.knime.update.product/pom.xml` of by uncommenting the `exec-maven-plugin`.
 9. Run `mvn clean package -P local-build` in the `knime-product` folder, to create a build with our the modified launcher executable.

@@ -48,10 +48,14 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
 import org.knime.core.internal.CorePlugin;
-import org.knime.core.node.workflow.BatchExecutor;
+import org.knime.core.node.util.CheckUtils;
 import org.knime.core.node.workflow.NodeTimer;
+import org.knime.product.ProductPlugin;
 import org.knime.product.rcp.StatusLoggerHelper;
 import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceReference;
 
 /**
  * The run method of this class is executed when KNIME is run headless, that is in batch mode.
@@ -85,21 +89,41 @@ public class KNIMEBatchApplication implements IApplication {
         Platform.getBundle("org.knime.workbench.core").start(Bundle.START_TRANSIENT);
 
         String[] stringArgs = retrieveApplicationArguments(context);
-        // this actually returns with a non-0 value when failed,
-        // we ignore it here
 
-        int exit = runBatchExecutor(stringArgs);
-        switch (exit) {
-            // only report usage when the batch executor actually ran
-            case BatchExecutor.EXIT_ERR_EXECUTION:
-            case BatchExecutor.EXIT_WARN:
-            case BatchExecutor.EXIT_SUCCESS:
-                NodeTimer.GLOBAL_TIMER.performShutdown();
-                break;
-            default:
-                // don't report errors during workflow load and/or batch executor usage problem (cmd line errors)
+        Bundle bundle = FrameworkUtil.getBundle(ProductPlugin.class);
+        CheckUtils.checkState(bundle != null, "Cannot find bundle for ProductPlugin class");
+        @SuppressWarnings("null")
+        final BundleContext bundleContext = bundle.getBundleContext();
+        final IBatchExecutor executor;
+        final ServiceReference<IBatchExecutor> serviceRef = bundleContext.getServiceReference(IBatchExecutor.class);
+        if (serviceRef == null) {
+            return printMissingExtensionMessage();
         }
-        return exit;
+        executor = bundleContext.getService(serviceRef);
+        try {
+            if (executor == null) {
+                return printMissingExtensionMessage();
+            }
+            final int exit = runBatchExecutor(executor, stringArgs);
+            switch (exit) {
+                // only report usage when the batch executor actually ran
+                case IBatchExecutor.EXIT_ERR_EXECUTION, IBatchExecutor.EXIT_WARN, IBatchExecutor.EXIT_SUCCESS:
+                    NodeTimer.GLOBAL_TIMER.performShutdown();
+                    break;
+                default:
+                    // don't report errors during workflow load and/or batch executor usage problem (cmd line errors)
+            }
+            return exit;
+        } finally {
+            bundleContext.ungetService(serviceRef);
+        }
+
+    }
+
+    private static int printMissingExtensionMessage() {
+        System.err.println("KNIME Batch Executor is not installed. Visit "
+            + "https://www.knime.com/batch-execution-in-knime to download and install the extension, then try again.");
+        return IBatchExecutor.EXIT_ERR_NOT_INSTALLED;
     }
 
     /**
@@ -134,8 +158,8 @@ public class KNIMEBatchApplication implements IApplication {
      * @param args the command line arguments
      * @return the return value
      */
-    protected int runBatchExecutor(final String[] args) {
-        return BatchExecutor.mainRun(args);
+    protected int runBatchExecutor(final IBatchExecutor executor, final String[] args) {
+        return executor.run(args);
     }
 
     /**

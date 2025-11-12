@@ -19,7 +19,6 @@ package org.knime.product.rcp;
 import java.awt.EventQueue;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -73,7 +72,7 @@ import org.knime.core.node.KNIMEConstants;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.extension.NodeSpecCollectionProvider;
 import org.knime.core.node.util.ViewUtils;
-import org.knime.core.node.workflow.BatchExecutor;
+import org.knime.core.util.EclipseUtil;
 import org.knime.core.util.GUIDeadlockDetector;
 import org.knime.core.util.IEarlyStartup;
 import org.knime.core.util.MutableBoolean;
@@ -322,7 +321,7 @@ public class KNIMEApplication implements IApplication {
     }
 
     private void parseApplicationArguments(final IApplicationContext context)
-        throws FileNotFoundException, CoreException {
+        throws IOException, CoreException {
         Object args = context.getArguments().get(IApplicationContext.APPLICATION_ARGS);
         if (args == null) {
             return;
@@ -342,7 +341,7 @@ public class KNIMEApplication implements IApplication {
                     throw new IllegalArgumentException("Missing path argument for -preferences");
                 }
                 i++; // get next argument
-                BatchExecutor.setPreferences(new File(stringArgs[i]));
+                EclipseUtil.setPreferences(new File(stringArgs[i]));
             }
         }
     }

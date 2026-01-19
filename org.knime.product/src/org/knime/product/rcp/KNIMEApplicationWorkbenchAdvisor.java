@@ -44,6 +44,7 @@
  */
 package org.knime.product.rcp;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
@@ -53,6 +54,7 @@ import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.equinox.internal.p2.ui.sdk.scheduler.AutomaticUpdatePlugin;
 import org.eclipse.jface.preference.IPreferenceNode;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
@@ -82,6 +84,8 @@ import org.osgi.service.prefs.Preferences;
 public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
 
     private static final NodeLogger LOGGER = NodeLogger.getLogger(KNIMEApplicationWorkbenchAdvisor.class);
+
+    private static final String PROP_DISABLE_MODAL_FOCUS_FIX = "knime.swt.disableModalFocusFix";
 
     private final KNIMEOpenDocumentEventProcessor m_openDocProcessor;
 
@@ -215,6 +219,31 @@ public class KNIMEApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
             shell.setMaximized(true);
             System.out.println( "[UI Testing Mode]: maximizing window to: width = " + area.width + "; height = " + area.height); // NOSONAR
         }
+
+        if (SystemUtils.IS_OS_WINDOWS && !Boolean.getBoolean(PROP_DISABLE_MODAL_FOCUS_FIX)) {
+            // fix a weird focus issue with modal dialogs on Windows
+            installModalFocusFix(SWTUtilities.getKNIMEWorkbenchShell().getDisplay());
+        }
+    }
+
+    private static final int MODAL_FOCUS_FIX_DELAY_MS = 100;
+
+    private static final int MODAL_MASK = SWT.APPLICATION_MODAL | SWT.PRIMARY_MODAL | SWT.SYSTEM_MODAL;
+
+    private static void installModalFocusFix(final Display workbenchDisplay) {
+        workbenchDisplay.addFilter(SWT.Show, e -> {
+            if (e.widget instanceof Shell shell             // has to be a shell
+                    && shell.getParent() != null            // don't mess with top-level shells
+                    && !shell.isDisposed()                  // unlikely, but let's be safe
+                    && (shell.getStyle() & MODAL_MASK) != 0 // modal window
+                    ) {
+                workbenchDisplay.timerExec(MODAL_FOCUS_FIX_DELAY_MS, () -> {
+                    if (!shell.isDisposed()) {
+                        shell.setActive();
+                    }
+                });
+            }
+        });
     }
 
     /**

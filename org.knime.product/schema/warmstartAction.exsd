@@ -1,0 +1,181 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Schema file written by PDE -->
+<schema targetNamespace="org.knime.product" xmlns="http://www.w3.org/2001/XMLSchema">
+<annotation>
+      <appinfo>
+         <meta.schema plugin="org.knime.product" id="warmstartAction" name="KNIME Warmstart Action"/>
+      </appinfo>
+      <documentation>
+         This extension point allows plug-ins to contribute warmstart actions that are executed during the KNIME warmstart application phase.
+         &lt;p&gt;
+         Warmstart actions are designed to perform expensive initialization tasks that would normally slow down regular application startup. By executing these during a separate warmstart phase (e.g., in Docker container preparation), subsequent application starts can be significantly faster.
+         &lt;/p&gt;
+         &lt;p&gt;
+         All action metadata (name, priority, executeAfterFailures) must be specified in the extension point declaration. The implementing class should only contain the execution logic via the execute() method.
+         &lt;/p&gt;
+         &lt;p&gt;
+         Only intended for internal use by KNIME. All other other warmstart actions must be taken into account when adding new ones
+         &lt;/p&gt;
+      </documentation>
+   </annotation>
+
+   <element name="extension">
+      <annotation>
+         <appinfo>
+            <meta.element />
+         </appinfo>
+      </annotation>
+      <complexType>
+         <sequence minOccurs="1" maxOccurs="unbounded">
+            <element ref="warmstartAction"/>
+         </sequence>
+         <attribute name="point" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="id" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="name" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appinfo>
+                  <meta.attribute translatable="true"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="warmstartAction">
+      <annotation>
+         <documentation>
+            A warmstart action that will be executed during the warmstart application phase.
+         </documentation>
+      </annotation>
+      <complexType>
+         <attribute name="id" type="string" use="required">
+            <annotation>
+               <documentation>
+                  A unique identifier for this warmstart action.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="name" type="string" use="required">
+            <annotation>
+               <documentation>
+                  A human-readable name for this warmstart action. This will be used in logging and diagnostic output.
+               </documentation>
+               <appinfo>
+                  <meta.attribute translatable="true"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+         <attribute name="class" type="string" use="required">
+            <annotation>
+               <documentation>
+                  The fully qualified name of a class that implements &lt;code&gt;org.knime.product.headless.IWarmstartAction&lt;/code&gt;.
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java" basedOn=":org.knime.product.headless.IWarmstartAction"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+         <attribute name="priority" type="string">
+            <annotation>
+               <documentation>
+                  The execution priority of this action. Actions with higher priority values are executed first. If not specified, defaults to 100.
+                  Look at the existing warmstart actions to choose an appropriate priority.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="executeAfterFailures" type="boolean">
+            <annotation>
+               <documentation>
+                  Whether this action should be executed even if previous actions have failed. Defaults to false.
+                  
+                  By default, if any warmstart action fails, subsequent actions are skipped to prevent cascading failures. However, some actions (like cleanup tasks) might need to run regardless of previous failures.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="description" type="string">
+            <annotation>
+               <documentation>
+                  An optional description of what this warmstart action does. Used for documentation and diagnostic purposes.
+               </documentation>
+               <appinfo>
+                  <meta.attribute translatable="true"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="since"/>
+      </appinfo>
+      <documentation>
+         5.9
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="examples"/>
+      </appinfo>
+      <documentation>
+         The following is an example of a warmstart action extension:
+&lt;p&gt;
+&lt;pre&gt;
+   &lt;extension point=&quot;org.knime.product.warmstartAction&quot;&gt;
+      &lt;warmstartAction
+            id=&quot;com.example.myWarmstartAction&quot;
+            name=&quot;My Warmstart Action&quot;
+            class=&quot;com.example.MyWarmstartActionImpl&quot;
+            priority=&quot;500&quot;
+            description=&quot;Initializes my component during warmstart&quot;&gt;
+      &lt;/warmstartAction&gt;
+   &lt;/extension&gt;
+&lt;/pre&gt;
+&lt;/p&gt;
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="apiinfo"/>
+      </appinfo>
+      <documentation>
+         The value of the &lt;code&gt;class&lt;/code&gt; attribute must represent a fully qualified name of a class that implements &lt;code&gt;org.knime.product.headless.IWarmstartAction&lt;/code&gt;.
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="implementation"/>
+      </appinfo>
+      <documentation>
+         KNIME provides built-in warmstart actions for common initialization tasks. Additional actions can be contributed by any plug-in.
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="copyright"/>
+      </appinfo>
+      <documentation>
+         Copyright by KNIME AG, Zurich, Switzerland. All rights reserved.
+      </documentation>
+   </annotation>
+
+</schema>

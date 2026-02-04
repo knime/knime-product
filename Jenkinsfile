@@ -15,8 +15,11 @@ properties([
 ])
 
 try {
+	withEnv([
+        'MAVEN_OPTS=-Dtycho.surefire.headless=true'
+    ]){
     knimetools.defaultTychoBuild('org.knime.update.product')
-
+	}
     stage('Sonarqube analysis') {
         env.lastStage = env.STAGE_NAME
         workflowTests.runSonar([])

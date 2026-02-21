@@ -5,15 +5,15 @@
 # state and name are not needed for "remove"
 #
 # Remove old update sites
-https://update.knime.com/analytics-platform/5.4,remove
-https://update.knime.com/partner/5.4,remove
-https://update.knime.com/community-contributions/trusted/5.4,remove
-https://update.knime.com/community-contributions/5.4,remove
+https://update.knime.com/analytics-platform/5.9,remove
+https://update.knime.com/partner/5.9,remove
+https://update.knime.com/community-contributions/trusted/5.9,remove
+https://update.knime.com/community-contributions/5.9,remove
 
-https://update.knime.com/analytics-platform/5.5,remove
-https://update.knime.com/partner/5.5,remove
-https://update.knime.com/community-contributions/trusted/5.5,remove
-https://update.knime.com/community-contributions/5.5,remove
+https://update.knime.com/analytics-platform/5.10,remove
+https://update.knime.com/partner/5.10,remove
+https://update.knime.com/community-contributions/trusted/5.10,remove
+https://update.knime.com/community-contributions/5.10,remove
 
 https://update.knime.com/analytics-platform/latest,add,enabled,KNIME Analytics Platform Update Site
 https://update.knime.com/partner/latest,add,enabled,KNIME Partner Extensions

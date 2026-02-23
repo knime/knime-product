@@ -6,11 +6,11 @@
 	<text style="text-align:center; font-size:10px;fill:#6E6E6E;font-family:sans-serif;" text-anchor="middle" width="454" x="227" y="201">© KNIME AG, Zurich, Switzerland · www.knime.com · contact@knime.com</text>
 	<!-- Version text -->
 	<text id="KNIME-Version" style="font-size:18px;text-align:end;text-anchor:end;fill:#3E3A39;font-family:sans-serif;font-weight:bold" x="400" y="90">
-		<tspan style="text-align:end;text-anchor:end">Version 5.8.3</tspan>
+		<tspan style="text-align:end;text-anchor:end">Version 5.8.3 LTS</tspan>
 	</text>
 	<!-- Nightly text -->
 	<text id="KNIME-Builddate" style="font-size:11px;text-align:end;text-anchor:end;fill:#6E6E6E;font-family:sans-serif" x="400" y="105">
-		<tspan style="text-align:end;text-anchor:end">(Nightly build)</tspan>
+		<tspan style="text-align:end;text-anchor:end">(Build February 24, 2026)</tspan>
 	</text>
 	<!-- Logo -->
 	<g transform="matrix(0.75,0,0,0.75,38,-70)">

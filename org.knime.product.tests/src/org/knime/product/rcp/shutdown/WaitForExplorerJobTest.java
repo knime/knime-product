@@ -49,7 +49,9 @@
 package org.knime.product.rcp.shutdown;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.awt.GraphicsEnvironment;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
@@ -68,6 +70,36 @@ class WaitForExplorerJobTest {
 
     private static final String PROPERTY_HEADLESS = "java.awt.headless";
 
+    /**
+     * Unfortunately, {@link GraphicsEnvironment#isHeadless()} caches its value after being
+     * queried once. Below, we want to set {@code java.awt.headless=true} in a section,
+     * irrespective of what other tests do (incl. querying {@link GraphicsEnvironment}).
+     * <p>
+     * Using reflection, this method resets the cached value in {@link GraphicsEnvironment},
+     * sets @{code java.awt.headless=newValue} and returns the previous {@code oldValue}.
+     * </p>
+     *
+     * @param newValue new value to be set as headless property.
+     * @return oldValue {@link String} value to what {@value #PROPERTY_HEADLESS} was set before.
+     */
+    private static final String setHeadlessPropertyReflective(final boolean newValue) {
+        final var oldValue = System.setProperty(PROPERTY_HEADLESS, Boolean.toString(newValue));
+        resetHeadlessCacheReflective();
+        assertEquals(newValue, GraphicsEnvironment.isHeadless(),
+            "GraphicsEnvironment should have picked up new headless value");
+        return oldValue;
+    }
+
+    private static void resetHeadlessCacheReflective() {
+        try {
+            final var field = GraphicsEnvironment.class.getDeclaredField("headless");
+            field.setAccessible(true);
+            field.set(/*static*/null, null);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private static Map<IConfigurationElement, PreShutdown> createWaitForExplorerJobMap() {
         final var waitForExplorerHook = new WaitForExplorerJob();
         final var configElement = new PreShutdownTest.TestingConfigurationElement() {
@@ -82,7 +114,7 @@ class WaitForExplorerJobTest {
 
     @Test
     void testNoRunningJobs() {
-        assertThat("Should not have detected any running jobs", PreShutdown.preShutdown(createWaitForExplorerJobMap()));
+        assertThat("Should not have detected any running jobs", WaitForExplorerJob.hasRunningExplorerJobs());
     }
 
     @Test
@@ -91,8 +123,8 @@ class WaitForExplorerJobTest {
         job.schedule();
         assertThat("Should have detected running jobs", WaitForExplorerJob.hasRunningExplorerJobs());
 
-        // ensure that we are not trying to open the dialog in tests
-        final var value = System.setProperty(PROPERTY_HEADLESS, Boolean.toString(true));
+        // ensure that we are not trying to open the dialog in tests (AP-24775)
+        final var value = setHeadlessPropertyReflective(true);
         try {
             final var shutdown = PreShutdown.preShutdown(createWaitForExplorerJobMap());
             assertThat("Jobs should be terminated since we are in headless environment", shutdown);
@@ -102,6 +134,8 @@ class WaitForExplorerJobTest {
             } else {
                 System.clearProperty(PROPERTY_HEADLESS);
             }
+            // ensure that next queries to `GraphicsEnvironment#isHeadless` use System property
+            resetHeadlessCacheReflective();
             job.terminate();
         }
     }

@@ -10,8 +10,8 @@
   
     <properties>
         <revision>5.11.0</revision>
-	<sonar.sources/>
-	<sonar.tests>src</sonar.tests>
+        <sonar.sources/>
+        <sonar.tests>src</sonar.tests>
     </properties>
 
 	<build>
@@ -30,6 +30,14 @@
 							</requirement>
 						</extraRequirements>
 					</dependency-resolution>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.eclipse.tycho</groupId>
+				<artifactId>tycho-surefire-plugin</artifactId>
+				<version>${tycho.version}</version>
+				<configuration>
+					<argLine> ${failsafeArgLine} ${knime.tycho.test.configuration} --add-opens=java.desktop/java.awt=ALL-UNNAMED </argLine>
 				</configuration>
 			</plugin>
 		</plugins>

@@ -2,9 +2,9 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Testcase for org.knime.product
 Bundle-SymbolicName: org.knime.product.tests;singleton:=true
-Bundle-Version: 5.11.0.qualifier
+Bundle-Version: 5.12.0.qualifier
 Bundle-ClassPath: product-test.jar
-Fragment-Host: org.knime.product;bundle-version="[5.11.0,6.0.0)"
+Fragment-Host: org.knime.product;bundle-version="[5.12.0,6.0.0)"
 Require-Bundle: org.knime.testing;bundle-version="[5.10.0,6.0.0)",
  junit-jupiter-api;bundle-version="[5.10.2,6.0.0)",
  junit-jupiter-params;bundle-version="[5.10.2,6.0.0)",
